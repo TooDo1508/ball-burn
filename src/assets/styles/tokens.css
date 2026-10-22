@@ -1,0 +1,14 @@
+:root {
+    --color-brand: #f36b32;
+    --color-brand-hover: #dc5520;
+    --color-ink: #17211d;
+    --color-ink-muted: #68716c;
+    --color-green: #0b382c;
+    --color-green-deep: #082d23;
+    --color-green-light: #74bda6;
+    --color-surface: #fffefa;
+    --color-surface-muted: #f4f2eb;
+    --color-border: #e4e1d8;
+    --font-body: 'Be Vietnam Pro', sans-serif;
+    --font-heading: 'Playfair Display', serif;
+}

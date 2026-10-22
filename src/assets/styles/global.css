@@ -1,0 +1,596 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import './tokens.css';
+@import './typography.css';
+@import './reset.css';
+@import 'tailwindcss';
+
+@source '../../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../../storage/framework/views/*.php';
+@source '../../**/*.vue';
+
+.site-shell,
+.app-container {
+    width: min(1440px, 100%);
+    margin-inline: auto;
+    padding-inline: clamp(20px, 5vw, 76px);
+}
+
+.site-header {
+    min-height: 82px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.brand {
+    position: relative;
+    color: var(--color-brand);
+    font-size: 1.27rem;
+    font-weight: 900;
+    letter-spacing: -.09em;
+}
+
+.brand span {
+    position: absolute;
+    top: 0;
+    right: -10px;
+    font-size: .48rem;
+    letter-spacing: 0;
+}
+
+.main-nav {
+    display: flex;
+    align-items: center;
+    gap: clamp(20px, 3vw, 42px);
+    color: var(--color-ink-muted);
+    font-size: .84rem;
+    font-weight: 600;
+}
+
+.main-nav a,
+.site-footer a {
+    transition: color .2s ease;
+}
+
+.main-nav a:hover,
+.site-footer a:hover {
+    color: var(--color-brand);
+}
+
+.button {
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 21px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font: inherit;
+    font-size: .83rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
+}
+
+.button:hover {
+    transform: translateY(-1px);
+}
+
+.button--primary {
+    background: var(--color-brand);
+    color: #fff;
+}
+
+.button--primary:hover {
+    background: var(--color-brand-hover);
+}
+
+.button--light {
+    border-color: rgb(255 255 255 / 42%);
+    background: transparent;
+    color: #fff;
+}
+
+.button--light:hover {
+    background: rgb(255 255 255 / 10%);
+}
+
+.button--outline {
+    border-color: var(--color-border);
+    background: transparent;
+    color: var(--color-green);
+}
+
+.button--outline:hover {
+    border-color: var(--color-green);
+}
+
+.button--small {
+    min-height: 40px;
+    padding-inline: 18px;
+}
+
+.hero {
+    position: relative;
+    margin-inline: calc(-1 * clamp(20px, 5vw, 76px));
+    min-height: 590px;
+    display: grid;
+    grid-template-columns: .86fr 1.14fr;
+    align-items: center;
+    gap: clamp(32px, 6vw, 86px);
+    overflow: hidden;
+    padding: clamp(56px, 8vw, 110px) clamp(20px, 5vw, 76px);
+    background: var(--color-green-deep);
+}
+
+.hero-copy {
+    position: relative;
+    z-index: 1;
+    max-width: 525px;
+}
+
+.eyebrow {
+    margin: 0 0 18px;
+    color: var(--color-brand);
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .16em;
+    line-height: 1.5;
+}
+
+.heading-block {
+    display: grid;
+    justify-items: start;
+}
+
+.heading-block .eyebrow {
+    margin-bottom: 15px;
+}
+
+.heading-title {
+    margin: 0;
+    color: var(--color-green);
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    font-weight: 800;
+    letter-spacing: -.055em;
+    line-height: 1.04;
+}
+
+.heading-description {
+    max-width: 570px;
+    margin: 18px 0 0;
+    color: var(--color-ink-muted);
+    font-size: .98rem;
+    line-height: 1.8;
+}
+
+.heading-block--display .heading-title,
+.heading-block--statement .heading-title {
+    font-family: var(--font-heading);
+    font-weight: 500;
+    letter-spacing: -.045em;
+}
+
+.heading-block--display .heading-title {
+    max-width: 540px;
+    color: #fff;
+    font-size: clamp(3.7rem, 7.5vw, 6.8rem);
+    line-height: .96;
+}
+
+.heading-block--display .heading-description {
+    max-width: 440px;
+    color: rgb(255 255 255 / 76%);
+}
+
+.hero-eyebrow {
+    margin-bottom: 24px;
+}
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 30px;
+}
+
+.hero-note {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 34px;
+    color: rgb(255 255 255 / 68%);
+    font-size: .78rem;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-green-light);
+    box-shadow: 0 0 0 4px rgb(116 189 166 / 15%);
+}
+
+.court-visual {
+    position: relative;
+    min-height: 400px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 16%);
+    border-radius: 8px;
+    background-color: #174f3d;
+    background-image:
+        linear-gradient(90deg, transparent 49.8%, rgb(255 255 255 / 14%) 50%, transparent 50.2%),
+        linear-gradient(0deg, transparent 24.8%, rgb(255 255 255 / 12%) 25%, transparent 25.2%, transparent 74.8%, rgb(255 255 255 / 12%) 75%, transparent 75.2%);
+    box-shadow: 0 26px 70px rgb(0 0 0 / 22%);
+}
+
+.court-visual::before,
+.court-visual::after {
+    position: absolute;
+    content: '';
+    border: 1px solid rgb(255 255 255 / 34%);
+    pointer-events: none;
+}
+
+.court-visual::before {
+    inset: 11%;
+}
+
+.court-visual::after {
+    inset: 11% 29%;
+}
+
+.court-label,
+.court-visual-index {
+    position: absolute;
+    z-index: 2;
+    color: rgb(255 255 255 / 83%);
+    font-size: .64rem;
+    font-weight: 800;
+    letter-spacing: .14em;
+}
+
+.court-label {
+    top: 27px;
+    left: 28px;
+}
+
+.court-visual-index {
+    right: 25px;
+    bottom: 24px;
+}
+
+.court-lines {
+    position: absolute;
+    inset: 11%;
+    border: 1px solid rgb(255 255 255 / 34%);
+}
+
+.court-net {
+    position: absolute;
+    top: 50%;
+    left: -1px;
+    width: calc(100% + 2px);
+    border-top: 2px dashed rgb(255 255 255 / 45%);
+}
+
+.court-ball {
+    position: relative;
+    z-index: 1;
+    width: 42px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--color-brand);
+    box-shadow: 0 14px 35px rgb(0 0 0 / 28%);
+}
+
+.hero-index {
+    position: absolute;
+    right: 0;
+    bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: rgb(255 255 255 / 64%);
+    font-size: .68rem;
+    font-weight: 700;
+}
+
+.index-rule {
+    width: 50px;
+    border-top: 1px solid rgb(255 255 255 / 35%);
+}
+
+.section {
+    padding-block: clamp(64px, 9vw, 112px);
+}
+
+.courts-section {
+    border-top: 1px solid var(--color-border);
+}
+
+.section-heading-row {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 28px;
+    margin-bottom: 34px;
+}
+
+.court-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.base-card {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.court-card-art {
+    position: relative;
+    min-height: 190px;
+    overflow: hidden;
+    background-color: var(--color-green);
+    background-image:
+        linear-gradient(90deg, transparent 49.5%, rgb(255 255 255 / 19%) 50%, transparent 50.5%),
+        linear-gradient(0deg, transparent 32.8%, rgb(255 255 255 / 19%) 33.3%, transparent 33.8%, transparent 66.1%, rgb(255 255 255 / 19%) 66.6%, transparent 67.1%);
+}
+
+.court-card:nth-child(2) .court-card-art {
+    background-color: #16513e;
+}
+
+.court-card:nth-child(3) .court-card-art {
+    background-color: #254d42;
+}
+
+.mini-court-lines {
+    position: absolute;
+    inset: 16px;
+    border: 1px solid rgb(255 255 255 / 42%);
+}
+
+.mini-court-net {
+    position: absolute;
+    top: 50%;
+    left: 16px;
+    right: 16px;
+    border-top: 2px dashed rgb(255 255 255 / 44%);
+}
+
+.court-card-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 19px 20px 21px;
+}
+
+.card-number {
+    color: var(--color-brand);
+    font-size: .64rem;
+    font-weight: 800;
+    letter-spacing: .13em;
+}
+
+.court-card-info h3 {
+    margin: 6px 0 4px;
+    color: var(--color-green);
+    font-size: 1.05rem;
+}
+
+.court-card-info p {
+    margin: 0;
+    color: var(--color-ink-muted);
+    font-size: .77rem;
+}
+
+.court-card-info > a {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    color: var(--color-green);
+    transition: color .2s ease, background-color .2s ease, border-color .2s ease;
+}
+
+.court-card-info > a:hover {
+    border-color: var(--color-brand);
+    background: var(--color-brand);
+    color: #fff;
+}
+
+.statement-section {
+    position: relative;
+    display: grid;
+    justify-items: start;
+    overflow: hidden;
+    padding: clamp(44px, 7vw, 88px);
+    border-radius: 8px;
+    background: var(--color-green-deep);
+}
+
+.statement-section::after {
+    position: absolute;
+    right: -100px;
+    bottom: -180px;
+    width: 430px;
+    aspect-ratio: 1;
+    border: 1px solid rgb(255 255 255 / 10%);
+    border-radius: 50%;
+    box-shadow: 0 0 0 42px rgb(255 255 255 / 3%), 0 0 0 84px rgb(255 255 255 / 3%);
+    content: '';
+    pointer-events: none;
+}
+
+.statement-mark {
+    position: absolute;
+    top: 8px;
+    right: 52px;
+    color: rgb(255 255 255 / 9%);
+    font-family: var(--font-display);
+    font-size: 13rem;
+    line-height: 1;
+}
+
+.heading-block--statement {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+}
+
+.heading-block--statement .heading-title {
+    color: #fff;
+    font-size: clamp(2.5rem, 5vw, 4.8rem);
+}
+
+.heading-block--statement .heading-description {
+    color: rgb(255 255 255 / 68%);
+}
+
+.statement-section > .button {
+    position: relative;
+    z-index: 1;
+    margin-top: 28px;
+}
+
+.booking-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding-block: clamp(56px, 8vw, 90px);
+}
+
+.booking-strip .eyebrow {
+    margin-bottom: 10px;
+}
+
+.booking-strip h2 {
+    margin: 0;
+    color: var(--color-green);
+    font-family: var(--font-heading);
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 500;
+    letter-spacing: -.035em;
+}
+
+.site-footer {
+    min-height: 105px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    border-top: 1px solid var(--color-border);
+    color: var(--color-ink-muted);
+    font-size: .78rem;
+}
+
+.site-footer p {
+    margin: 0;
+}
+
+@media (max-width: 760px) {
+    .site-shell,
+    .app-container {
+        padding-inline: 20px;
+    }
+
+    .site-header {
+        min-height: 70px;
+    }
+
+    .main-nav {
+        gap: 15px;
+        font-size: .73rem;
+    }
+
+    .main-nav a:nth-child(2) {
+        display: none;
+    }
+
+    .hero {
+        margin-inline: -20px;
+        min-height: auto;
+        grid-template-columns: 1fr;
+        gap: 36px;
+        padding-block: 64px 76px;
+    }
+
+    .heading-block--display .heading-title {
+        max-width: 440px;
+        font-size: clamp(3.6rem, 16vw, 6rem);
+    }
+
+    .court-visual {
+        min-height: 300px;
+    }
+
+    .hero-index {
+        bottom: 25px;
+    }
+
+    .section-heading-row,
+    .booking-strip {
+        align-items: start;
+        flex-direction: column;
+    }
+
+    .court-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .court-card-art {
+        min-height: 220px;
+    }
+
+    .statement-section {
+        padding: 38px 25px;
+    }
+
+    .statement-mark {
+        right: 12px;
+        font-size: 9rem;
+    }
+
+    .site-footer {
+        align-items: start;
+        flex-direction: column;
+        justify-content: center;
+        gap: 9px;
+        padding-block: 24px;
+    }
+}
+
+@media (max-width: 430px) {
+    .main-nav a:nth-child(3) {
+        display: none;
+    }
+
+    .site-header > .button {
+        min-height: 38px;
+        padding-inline: 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+    }
+}

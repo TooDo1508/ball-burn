@@ -44,7 +44,7 @@ docker compose exec app php artisan migrate
 
 Open [http://localhost:8000](http://localhost:8000). The `frontend` service runs Vite at port 5173. Stop the containers with `docker compose down`; keep the database when stopping. To also delete all database data, use `docker compose down -v`.
 
-The frontend uses Vue 3 with Vite. Add Vue single-file components under `resources/js/` and import them from `resources/js/app.js`. Vite serves frontend assets from the `frontend` container.
+The frontend uses Vue 3 with Vite and Vue Router. Add pages, reusable components, composables, and assets under `src/`; the app entry and shared styles are `src/app.js` and `src/assets/styles/global.css`. Vite serves frontend assets from the `frontend` container.
 
 For a fresh checkout, copy `.env.example` to `.env`, then run `docker compose up -d --build`, `docker compose exec app composer install`, `docker compose exec app php artisan key:generate`, and `docker compose exec app php artisan migrate`.
 

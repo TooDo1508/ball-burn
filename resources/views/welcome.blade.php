@@ -7,8 +7,7 @@
 
         <title>{{ config('app.name', 'BALLBURN') }}</title>
 
-        @fonts
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @vite(['src/assets/styles/global.css', 'src/app.js'])
     </head>
     <body>
         <div id="app"></div>
