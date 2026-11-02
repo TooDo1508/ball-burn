@@ -1,4 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
 :root {
+    --font-body-size: 14px;
+    --font-caption-size: 12px;
+    --font-size-h1: clamp(2.5rem, 5vw, 4.5rem);
+    --font-size-h2: clamp(2rem, 3.8vw, 3.25rem);
+    --font-size-h3: clamp(1.25rem, 2vw, 1.5rem);
+    --font-size-display: clamp(3rem, 7vw, 6rem);
+    --line-height-body: 1.7;
     --color-brand: #f36b32;
     --color-brand-hover: #dc5520;
     --color-ink: #17211d;
@@ -11,4 +20,5 @@
     --color-border: #e4e1d8;
     --font-body: 'Be Vietnam Pro', sans-serif;
     --font-heading: 'Playfair Display', serif;
+    --font-display: var(--font-heading);
 }

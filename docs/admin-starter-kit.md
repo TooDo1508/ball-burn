@@ -8,9 +8,16 @@ https://github.com/laravel/vue-starter-kit/tree/fd5b58fb5672cae0152dd04c16ea37d9
 Public pages continue to use `src/` and Vue Router. Admin pages use
 `resources/js/` with a separate Blade root and CSS entry. The existing Vite
 build produces both bundles. Laravel is kept at the existing locked version.
-Composer targets PHP 8.3 via `config.platform.php`; Symfony dependencies have
-been resolved to compatible 7.4 versions because the previous lock used 8.x
-packages requiring PHP 8.4.
+Both frontend surfaces share the design tokens in `src/assets/styles/tokens.css`.
+Use Be Vietnam Pro for body text and Playfair Display for headings; ordinary
+body copy, labels, navigation, and buttons use at least 14px, while compact
+captions and eyebrow labels may use 12px. Responsive headings use the shared
+H1/H2/H3 scale documented in `AGENTS.md`.
+Backend feature code follows Controller -> Service -> Repository: controllers
+validate/authorize requests and format Inertia/API responses, services hold
+business workflows, and repositories own database queries and persistence.
+The Docker PHP-FPM image and Composer platform target PHP 8.3; Symfony
+dependencies are pinned to compatible 7.4 versions.
 
 ## Setup in WSL
 
@@ -51,6 +58,8 @@ Node 22 is installed in `/opt/node22`, linked from `/usr/local/bin` in WSL.
 
 - `/admin/login`: email/password sign-in with rate limiting.
 - `/admin`: starter dashboard; requires an `admin` or `staff` role.
+- `/admin/news`: article management with search, status/category/date filters, pagination, draft/published/scheduled/archived states, preview, image upload and bulk deletion.
+- `/admin/news/categories`: create, edit and delete blog categories.
 - `/admin/settings/profile`: update the current user's name and email.
 - `/admin/settings/security`: password confirmation, password changes and 2FA.
 - `/admin/settings/appearance`: theme settings.
@@ -62,9 +71,11 @@ automatically. `role` is not mass assignable. Future management routes must use
 the admin route group and their own action-specific policies; the access gate
 alone does not distinguish staff permissions from administrator permissions.
 
-The dashboard is a starting screen, not implemented court or booking management.
-Use HTTPS and secure session cookies in production. Configure mail before
-relying on password recovery.
+The dashboard is a starting screen; court and booking management are still
+unimplemented. News data uses the existing `blog_posts`, `blog_categories` and
+`blog_post_categories` tables. A versioned migration adds article SEO metadata
+and image alt text. Use HTTPS and secure session cookies in production.
+Configure mail before relying on password recovery.
 
 ## Checks
 

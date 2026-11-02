@@ -257,6 +257,8 @@ Use Laravel feature tests and database transactions/parallel tests where appropr
 
 ## 13. Security and engineering standards
 
+- Keep backend layers explicit: controllers handle HTTP input, authorization, and response types, then call application services; services implement business rules and coordinate repositories; repositories encapsulate database reads and writes. Controllers and services must not build Eloquent queries directly.
+- Use Form Requests for input validation and Laravel API Resources or explicit Inertia response data for output shaping. Keep storage/provider integration in services or dedicated adapters, not controllers.
 - Follow existing Laravel conventions and use Form Requests for complex validation.
 - Use policies/gates or equivalent authorization checks; hiding a button is not authorization.
 - Use parameterized Eloquent/query-builder operations; do not concatenate untrusted SQL.
@@ -351,3 +353,11 @@ Example CSS variables (keep the tokens centralized in the project's existing glo
 - The admin dashboard may prioritize information density and usability, but should reuse the same semantic tokens and brand accent so it feels like part of the same product.
 - Do not use the reference website's logo, photos, or other assets unless their reuse is authorized; use the reference for visual direction and color sampling.
 - Once exact colors are verified, update this section and the centralized CSS tokens together. Remove the “provisional” label only after verification.
+
+## 17. Frontend architecture and typography
+
+- Keep public pages in `src/` with Vue Router and the public entry `src/app.js`; keep authenticated admin pages in `resources/js/` with Laravel Inertia. Do not create a second frontend runtime or move pages between these surfaces without updating `docs/admin-starter-kit.md` and route wiring together.
+- Both surfaces must use the shared design tokens in `src/assets/styles/tokens.css` for fonts, type sizes, and brand colors. Do not redefine brand font families or semantic colors inside page stylesheets.
+- Use **14px (1rem at the type scale)** as the minimum size for ordinary body copy, form labels, navigation, and buttons. Use 12px only for short captions, eyebrow labels, metadata, and decorative indices that remain secondary and readable.
+- Use the shared responsive heading tokens: H1 `clamp(2.5rem, 5vw, 4.5rem)`, H2 `clamp(2rem, 3.8vw, 3.25rem)`, and H3 `clamp(1.25rem, 2vw, 1.5rem)`. Display hero headings may use the display token, but should remain responsive and must not shrink body text to compensate.
+- Set body line height around 1.65–1.75, keep Vietnamese diacritics supported, and preserve clear contrast. Page-specific CSS may adjust spacing, weight, and color but should consume the shared typography tokens.

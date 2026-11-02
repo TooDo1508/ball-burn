@@ -1,0 +1,89 @@
+.about-page { --about-green: var(--color-green); --about-green-dark: var(--color-green-deep); --about-cream: var(--color-surface); --about-orange: var(--color-brand); overflow: hidden; margin-inline: calc(-1 * clamp(20px, 5vw, 76px)); background: var(--about-cream); color: #12372d; font-family: var(--font-body); }
+.about-container { width: min(1440px, 100%); margin-inline: auto; padding-inline: clamp(22px, 5vw, 76px); }
+.about-header { position: relative; z-index: 5; background: var(--about-cream); }
+.about-header-inner { min-height: 74px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.about-logo { position: relative; color: var(--about-orange); font-size: 1.25rem; font-weight: 800; letter-spacing: -.1em; text-decoration: none; }
+.about-logo span { position: absolute; top: -1px; right: -10px; font-size: .45rem; letter-spacing: 0; }
+.about-header nav, .about-footer nav { display: flex; align-items: center; gap: clamp(16px, 2.7vw, 38px); }
+.about-header nav a, .about-footer nav a { color: #183a30; font-size: var(--font-body-size); font-weight: 600; text-decoration: none; }
+.about-header nav a:hover, .about-footer nav a:hover { color: var(--about-orange); }
+.about-book-button { min-height: 39px; display: inline-flex; align-items: center; justify-content: center; gap: 15px; padding: 0 17px; border-radius: 999px; background: var(--about-green); color: #fff; font-size: var(--font-body-size); font-weight: 700; text-decoration: none; transition: background .2s; }
+.about-book-button:hover { background: var(--about-orange); }
+.about-hero { position: relative; height: clamp(260px, 33vw, 450px); overflow: hidden; background: var(--about-green-dark); }
+.about-hero > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 44%; }
+.about-hero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgb(0 44 32 / 89%) 0%, rgb(0 44 32 / 60%) 45%, rgb(0 44 32 / 5%) 100%); }
+.about-hero-copy { position: absolute; top: 50%; left: max(calc((100% - 1288px) / 2), 5vw); color: white; transform: translateY(-50%); }
+.about-hero-copy .eyebrow, .about-manifesto-copy .eyebrow, .about-faq > .eyebrow { color: var(--about-orange); }
+.about-eyebrow { margin: 0 0 13px; color: var(--about-orange); font-size: var(--font-caption-size); font-weight: 800; letter-spacing: .15em; }
+.about-hero h1 { margin: 0; font-family: var(--font-heading); font-size: var(--font-size-display); font-weight: 500; letter-spacing: -.04em; line-height: 1; }
+.about-hero-copy > p:last-child { margin: 18px 0 0; color: rgb(255 255 255 / 90%); font-size: var(--font-body-size); line-height: 1.7; }
+.about-story { display: grid; grid-template-columns: .72fr 1.1fr .8fr; align-items: start; gap: clamp(26px, 4vw, 58px); padding-block: clamp(65px, 8vw, 112px); }
+.about-label { display: flex; align-items: center; gap: 12px; padding-top: 9px; color: var(--about-green); font-size: var(--font-caption-size); font-weight: 800; letter-spacing: .1em; }
+.about-label span:first-child { color: var(--about-orange); }
+.about-story-copy h2, .facility-content h2, .about-faq h2 { margin: 0 0 20px; color: var(--about-green); font-family: var(--font-heading); font-size: var(--font-size-h2); font-weight: 500; letter-spacing: -.04em; line-height: 1.08; }
+.about-story-copy h2 em, .facility-content h2 em, .about-manifesto-copy h2 em { color: var(--about-orange); font-weight: 500; }
+.about-story-copy p { color: #52655d; font-size: var(--font-body-size); line-height: 1.8; }
+.about-story-copy .about-lead { color: #1b4034; font-size: 16px; font-weight: 500; }
+.about-story-image { position: relative; margin: 6px 0 0; }
+.about-story-image img { width: 100%; aspect-ratio: .83; object-fit: cover; }
+.about-story-image figcaption { position: absolute; right: 0; bottom: 0; left: 0; padding: 15px; background: linear-gradient(transparent, rgb(0 0 0 / 58%)); color: white; font-size: var(--font-caption-size); font-weight: 700; letter-spacing: .15em; }
+.about-pillars { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid #deded4; border-radius: 8px; background: #fffefa; }
+.about-pillars article { min-height: 172px; padding: 22px 21px; border-right: 1px solid #e8e6dd; }
+.about-pillars article:last-child { border: 0; }
+.about-pillars article > span { color: var(--about-green); font-size: 1.45rem; }
+.about-pillars h3 { margin: 14px 0 6px; color: var(--about-green); font-family: var(--font-body); font-size: 16px; }
+.about-pillars p { margin: 0; color: #647168; font-size: var(--font-body-size); line-height: 1.65; }
+.about-manifesto { display: grid; grid-template-columns: 1.1fr .9fr; gap: 0; margin-block: 76px; overflow: hidden; border-radius: 9px; background: var(--about-green); }
+.about-manifesto-image { min-height: 350px; }
+.about-manifesto-image img { width: 100%; height: 100%; min-height: 350px; object-fit: cover; }
+.about-manifesto-copy { align-self: center; padding: clamp(30px, 5vw, 70px); color: #fff; }
+.about-manifesto-copy h2 { margin: 12px 0; font-family: var(--font-heading); font-size: var(--font-size-h2); font-weight: 500; letter-spacing: -.04em; line-height: 1.04; }
+.about-manifesto-copy > p:not(.about-eyebrow) { max-width: 350px; color: rgb(255 255 255 / 82%); font-size: var(--font-body-size); line-height: 1.8; }
+.about-manifesto-copy .about-book-button { margin-top: 11px; background: var(--about-orange); }
+.about-facilities { display: grid; grid-template-columns: .72fr 1.28fr; gap: 30px; padding-block: 55px 100px; }
+.facility-content { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+.facility-content h2 { font-size: var(--font-size-h2); }
+.facility-list article { display: grid; grid-template-columns: 35px 1fr; gap: 10px; padding: 15px 0; border-bottom: 1px solid #deded4; }
+.facility-list article:first-child { padding-top: 0; }
+.facility-list article > span { color: var(--about-orange); font-size: var(--font-caption-size); font-weight: 800; }
+.facility-list h3 { margin: 0 0 5px; color: var(--about-green); font-family: var(--font-body); font-size: 16px; }
+.facility-list p { margin: 0; color: #68756e; font-size: var(--font-body-size); line-height: 1.65; }
+.about-faq { max-width: 850px; margin: 0 auto; padding-block: 65px 100px; }
+.about-faq h2 { margin-bottom: 25px; }
+.about-faq details { border-top: 1px solid #deded4; }
+.about-faq details:last-child { border-bottom: 1px solid #deded4; }
+.about-faq summary { padding: 17px 4px; color: var(--about-green); cursor: pointer; font-size: 15px; font-weight: 700; }
+.about-faq details p { max-width: 700px; margin: 0; padding: 0 4px 20px; color: #596c62; font-size: var(--font-body-size); line-height: 1.8; }
+.about-footer { background: var(--about-green-dark); color: white; }
+.about-footer-inner { min-height: 150px; display: grid; grid-template-columns: 1fr auto; align-content: center; gap: 22px; }
+.about-logo--light { color: white; }
+.about-footer p { margin: 9px 0 0; color: rgb(255 255 255 / 64%); font-size: var(--font-body-size); }
+.about-footer nav { grid-column: 2; grid-row: 1; }
+.about-footer nav a { color: rgb(255 255 255 / 82%); }
+.about-footer small { grid-column: 1 / -1; color: rgb(255 255 255 / 50%); font-size: var(--font-caption-size); }
+@media (max-width: 800px) {
+    .about-header-inner { gap: 12px; }
+    .about-header nav { gap: 13px; }
+    .about-header nav a { font-size: var(--font-body-size); }
+    .about-story { grid-template-columns: .7fr 1.3fr; }
+    .about-story-image { grid-column: 2; width: 70%; }
+    .about-pillars { grid-template-columns: repeat(2, 1fr); }
+    .about-pillars article:nth-child(2) { border-right: 0; }
+    .about-pillars article:nth-child(-n+2) { border-bottom: 1px solid #e8e6dd; }
+    .about-facilities { grid-template-columns: 1fr; gap: 25px; }
+}
+@media (max-width: 560px) {
+    .about-header-inner { min-height: 66px; }
+    .about-header nav { display: none; }
+    .about-hero { height: 300px; }
+    .about-story { grid-template-columns: 1fr; gap: 24px; }
+    .about-story-image { grid-column: auto; width: 78%; margin-left: auto; }
+    .about-pillars { grid-template-columns: 1fr 1fr; }
+    .about-pillars article { min-height: 160px; padding: 17px 14px; }
+    .about-manifesto { grid-template-columns: 1fr; margin-block: 55px; }
+    .about-manifesto-image, .about-manifesto-image img { min-height: 230px; max-height: 270px; }
+    .facility-content { grid-template-columns: 1fr; gap: 24px; }
+    .about-footer-inner { grid-template-columns: 1fr; }
+    .about-footer nav { grid-column: 1; grid-row: auto; flex-wrap: wrap; }
+    .about-footer small { grid-column: 1; }
+}

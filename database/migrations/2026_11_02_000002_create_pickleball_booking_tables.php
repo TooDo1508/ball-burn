@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -21,8 +22,6 @@ return new class extends Migration
             $table->integer('sort_order')->default(0);
             $table->timestamps(3);
             $table->index(['is_active', 'sort_order']);
-            $table->check('price_per_hour >= 0');
-            $table->check('capacity IS NULL OR capacity > 0');
         });
 
         Schema::create('court_images', function (Blueprint $table) {
@@ -45,8 +44,6 @@ return new class extends Migration
             $table->boolean('is_closed')->default(false);
             $table->timestamps(3);
             $table->index(['court_id', 'day_of_week']);
-            $table->check('day_of_week BETWEEN 1 AND 7');
-            $table->check('is_closed = 1 OR opens_at < closes_at');
         });
 
         Schema::create('court_closures', function (Blueprint $table) {
@@ -58,7 +55,6 @@ return new class extends Migration
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps(3);
             $table->index(['court_id', 'starts_at', 'ends_at']);
-            $table->check('starts_at < ends_at');
         });
 
         Schema::create('bookings', function (Blueprint $table) {
@@ -86,9 +82,6 @@ return new class extends Migration
             $table->index(['status', 'payment_deadline_at']);
             $table->index('customer_email');
             $table->index('created_at');
-            $table->check('starts_at < ends_at');
-            $table->check('base_amount >= 0 AND discount_amount >= 0 AND total_amount >= 0 AND discount_amount <= base_amount AND total_amount = base_amount - discount_amount');
-            $table->check("status <> 'PENDING_PAYMENT' OR payment_deadline_at IS NOT NULL");
         });
 
         Schema::create('payments', function (Blueprint $table) {
@@ -110,7 +103,6 @@ return new class extends Migration
             $table->index(['booking_id', 'status']);
             $table->unique(['provider', 'provider_transaction_id'], 'uq_payment_provider_transaction');
             $table->unique(['provider', 'provider_order_id'], 'uq_payment_provider_order');
-            $table->check('amount >= 0');
         });
 
         Schema::create('payment_webhook_events', function (Blueprint $table) {
@@ -141,7 +133,6 @@ return new class extends Migration
             $table->json('provider_metadata')->nullable();
             $table->timestamps(3);
             $table->index(['payment_id', 'status']);
-            $table->check('amount > 0');
         });
 
         Schema::create('booking_status_history', function (Blueprint $table) {
@@ -260,6 +251,8 @@ return new class extends Migration
             $table->index(['entity_type', 'entity_id', 'created_at']);
             $table->index(['user_id', 'created_at']);
         });
+
+        $this->addMySqlCheckConstraints();
     }
 
     public function down(): void
@@ -281,5 +274,29 @@ return new class extends Migration
         Schema::dropIfExists('court_operating_hours');
         Schema::dropIfExists('court_images');
         Schema::dropIfExists('courts');
+    }
+
+    private function addMySqlCheckConstraints(): void
+    {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
+        $constraints = [
+            'ALTER TABLE courts ADD CONSTRAINT chk_courts_price_nonnegative CHECK (price_per_hour >= 0)',
+            'ALTER TABLE courts ADD CONSTRAINT chk_courts_capacity_positive CHECK (capacity IS NULL OR capacity > 0)',
+            'ALTER TABLE court_operating_hours ADD CONSTRAINT chk_court_hours_day_range CHECK (day_of_week BETWEEN 1 AND 7)',
+            'ALTER TABLE court_operating_hours ADD CONSTRAINT chk_court_hours_interval CHECK (is_closed = 1 OR opens_at < closes_at)',
+            'ALTER TABLE court_closures ADD CONSTRAINT chk_court_closures_interval CHECK (starts_at < ends_at)',
+            'ALTER TABLE bookings ADD CONSTRAINT chk_bookings_interval CHECK (starts_at < ends_at)',
+            'ALTER TABLE bookings ADD CONSTRAINT chk_bookings_amounts CHECK (base_amount >= 0 AND discount_amount >= 0 AND total_amount >= 0 AND discount_amount <= base_amount AND total_amount = base_amount - discount_amount)',
+            "ALTER TABLE bookings ADD CONSTRAINT chk_bookings_pending_deadline CHECK (status <> 'PENDING_PAYMENT' OR payment_deadline_at IS NOT NULL)",
+            'ALTER TABLE payments ADD CONSTRAINT chk_payments_amount_nonnegative CHECK (amount >= 0)',
+            'ALTER TABLE refunds ADD CONSTRAINT chk_refunds_amount_positive CHECK (amount > 0)',
+        ];
+
+        foreach ($constraints as $constraint) {
+            DB::statement($constraint);
+        }
     }
 };

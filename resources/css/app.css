@@ -1,7 +1,7 @@
+@import '../../src/assets/styles/tokens.css';
 @import 'tailwindcss';
 
 @import 'tw-animate-css';
-@import '../../src/assets/styles/tokens.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -10,9 +10,12 @@
 
 @theme inline {
     --font-sans:
-        Instrument Sans, ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+        var(--font-body), ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --text-xs: 12px;
+    --text-sm: 14px;
+    --text-base: 14px;
+    --text-lg: 18px;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -71,22 +74,18 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
+    body {
+        font-family: var(--font-body);
+        font-size: var(--font-body-size);
+        line-height: var(--line-height-body);
+    }
+
     *,
     ::after,
     ::before,
     ::backdrop,
     ::file-selector-button {
         border-color: var(--color-gray-200, currentColor);
-    }
-}
-
-@layer utilities {
-    body,
-    html {
-        --font-sans:
-            'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-            'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-            'Noto Color Emoji';
     }
 }
 

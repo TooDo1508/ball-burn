@@ -1,2 +1,5 @@
 *
+!blog/
+!blog/news/
+!blog/news/*.png
 !.gitignore

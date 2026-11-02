@@ -1,0 +1,97 @@
+.ballburn-home { overflow: hidden; background: var(--color-surface); color: var(--color-ink); font-family: var(--font-body); }
+.home-shell, .bistro-shell { width: min(1440px, 100%); margin-inline: auto; padding-inline: clamp(22px, 6.5vw, 104px); }
+.home-header { height: 88px; display: flex; align-items: center; justify-content: space-between; gap: 28px; border-bottom: 1px solid var(--color-border); }
+.home-brand { position: relative; color: var(--color-brand); font-size: 1.35rem; font-weight: 800; letter-spacing: -.09em; text-decoration: none; }
+.home-brand span { position: absolute; top: 0; right: -10px; font-size: .48rem; letter-spacing: 0; }
+.home-nav { display: flex; gap: clamp(20px, 3vw, 46px); }
+.home-nav a, .home-footer a { color: var(--color-ink-muted); font-size: 14px; font-weight: 600; text-decoration: none; transition: color .2s; }
+.home-nav a:hover, .home-footer a:hover { color: var(--color-brand); }
+.home-button { min-height: 52px; display: inline-flex; align-items: center; justify-content: center; gap: 18px; padding: 0 23px; border: 1px solid var(--color-brand); border-radius: 2px; background: var(--color-brand); color: #fff; font: 700 14px var(--font-body); text-decoration: none; transition: background .2s, transform .2s; }
+.home-button:hover { transform: translateY(-2px); background: var(--color-brand-hover); }
+.home-button span { font-size: 1rem; }
+.home-button--small { min-height: 43px; padding-inline: 18px; }
+.home-hero { position: relative; min-height: 620px; display: grid; grid-template-columns: .88fr 1.12fr; align-items: center; gap: clamp(30px, 6vw, 90px); padding-block: 64px 84px; }
+.hero-copy { position: relative; z-index: 1; max-width: 490px; }
+.home-eyebrow, .section-kicker { margin: 0; color: var(--color-brand); font-size: var(--font-caption-size); font-weight: 800; letter-spacing: .16em; }
+.home-hero h1, .intro-copy h2, .courts-heading h2, .bistro-content h2 { margin: 24px 0 20px; font-family: var(--font-display); font-size: clamp(3.6rem, 6.8vw, 6.6rem); font-weight: 500; letter-spacing: -.055em; line-height: .98; }
+.home-hero h1 em, .intro-copy h2 em, .courts-heading h2 em, .bistro-content h2 em { color: var(--color-brand); font-weight: 500; }
+.hero-description { max-width: 410px; color: var(--color-ink-muted); font-size: var(--font-body-size); line-height: 1.8; }
+.hero-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 24px; margin-top: 30px; }
+.home-text-link { display: inline-flex; align-items: center; gap: 10px; color: var(--color-ink); font-size: 14px; font-weight: 700; text-decoration: none; }
+.hero-note { display: flex; align-items: center; gap: 9px; margin-top: 38px; color: var(--color-ink-muted); font-size: var(--font-caption-size); }
+.hero-note span { width: 7px; height: 7px; border-radius: 50%; background: #45855d; }
+.hero-image { position: relative; min-height: 455px; overflow: hidden; background: #305543; }
+.hero-image > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 48%; }
+.hero-image-shade { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 52%, rgb(0 0 0 / 50%)); }
+.hero-image-caption { position: absolute; right: 24px; bottom: 23px; left: 24px; display: flex; justify-content: space-between; color: #fff; font-size: var(--font-caption-size); font-weight: 700; letter-spacing: .13em; }
+.hero-stamp { position: absolute; top: 28px; right: 27px; width: 94px; height: 94px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 50%; background: var(--color-brand); color: #fff; font-size: var(--font-caption-size); font-weight: 800; letter-spacing: .12em; transform: rotate(12deg); }
+.hero-stamp b { font-size: 1.05rem; line-height: 1; }
+.hero-bottomline { position: absolute; right: 0; bottom: 24px; left: 0; display: flex; justify-content: space-between; border-top: 1px solid var(--color-border); padding-top: 14px; color: var(--color-ink-muted); font-size: var(--font-caption-size); font-weight: 700; letter-spacing: .13em; }
+.intro-section { display: grid; grid-template-columns: .8fr 1.2fr; gap: 30px; padding-block: 115px; border-top: 1px solid var(--color-border); }
+.section-kicker { display: flex; gap: 13px; align-items: center; padding-top: 12px; }
+.section-kicker span:first-child { color: var(--color-ink-muted); font-size: var(--font-caption-size); }
+.intro-copy { max-width: 690px; }
+.intro-copy h2, .courts-heading h2 { margin-top: 0; font-size: clamp(3rem, 5.4vw, 5.3rem); }
+.intro-copy > p, .courts-heading > p { max-width: 500px; margin: 25px 0; color: var(--color-ink-muted); font-size: var(--font-body-size); line-height: 1.8; }
+.home-text-link--dark { color: var(--color-ink); }
+.courts-section { padding-block: 70px 120px; }
+.section-topline { display: flex; align-items: center; justify-content: space-between; margin-bottom: 55px; }
+.courts-heading { display: flex; align-items: end; justify-content: space-between; gap: 30px; margin-bottom: 40px; }
+.courts-heading > p { max-width: 330px; margin-bottom: 9px; }
+.court-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.court-card { min-width: 0; }
+.court-photo { position: relative; min-height: 290px; overflow: hidden; background-color: #35634d; }
+.court-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.court-number { position: absolute; top: 17px; left: 18px; color: #fff; font-size: var(--font-caption-size); font-weight: 700; letter-spacing: .14em; }
+.court-arrow { position: absolute; right: 16px; bottom: 16px; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: var(--color-brand); color: #fff; }
+.court-info { display: flex; align-items: center; justify-content: space-between; padding-block: 18px; }
+.court-info h3 { margin: 0 0 5px; font-family: var(--font-body); font-size: 18px; }
+.court-info p { margin: 0; color: var(--color-ink-muted); font-size: var(--font-body-size); }
+.court-plus { color: var(--color-brand); font-size: 1.3rem; }
+.bistro-section { overflow: hidden; background: #10251d; color: white; }
+.bistro-shell { position: relative; min-height: 570px; display: grid; grid-template-columns: .8fr 1.2fr; align-items: center; padding-block: 80px; background: radial-gradient(ellipse at 88% 45%, rgb(243 107 50 / 13%), transparent 38%); }
+.section-kicker--light { align-self: start; color: #fff; }
+.section-kicker--light span:first-child { color: rgb(255 255 255 / 50%); }
+.bistro-content { max-width: 590px; }
+.bistro-content h2 { margin-block: 22px; font-size: clamp(3.4rem, 6vw, 5.8rem); }
+.bistro-content > p:not(.home-eyebrow) { max-width: 440px; color: rgb(255 255 255 / 78%); font-size: var(--font-body-size); line-height: 1.8; }
+.home-button--light { margin-top: 20px; border-color: rgb(255 255 255 / 40%); background: transparent; }
+.home-button--light:hover { border-color: var(--color-brand); background: var(--color-brand); }
+.bistro-orbit { position: absolute; right: clamp(22px, 8vw, 130px); bottom: 47px; width: 150px; height: 150px; display: grid; place-content: center; border: 1px solid rgb(255 255 255 / 25%); border-radius: 50%; color: rgb(255 255 255 / 80%); font-family: var(--font-display); font-size: 1.45rem; line-height: 1; text-align: center; transform: rotate(-12deg); }
+.bistro-orbit span { color: var(--color-brand); }
+.booking-cta { display: flex; align-items: center; justify-content: space-between; gap: 25px; padding-block: 90px; }
+.booking-cta h2 { margin: 12px 0 0; font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.4rem); font-weight: 500; letter-spacing: -.04em; }
+.home-footer { min-height: 98px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-top: 1px solid var(--color-border); }
+.home-footer p, .home-footer > span { color: var(--color-ink-muted); font-size: var(--font-body-size); }
+.home-footer > div { display: flex; gap: 22px; }
+.home-footer a { font-size: 14px; }
+@media (max-width: 760px) {
+    .home-shell, .bistro-shell { padding-inline: 22px; }
+    .home-header { height: 72px; }
+    .home-nav { gap: 14px; }
+    .home-nav a { font-size: 14px; }
+    .home-nav a:last-child { display: none; }
+    .home-button--small { min-height: 39px; padding-inline: 12px; font-size: 14px; }
+    .home-hero { min-height: auto; grid-template-columns: 1fr; gap: 35px; padding-block: 65px 72px; }
+    .home-hero h1 { font-size: clamp(4rem, 15vw, 6rem); }
+    .hero-image { min-height: 350px; }
+    .intro-section { grid-template-columns: 1fr; gap: 30px; padding-block: 80px; }
+    .courts-section { padding-block: 55px 80px; }
+    .section-topline { margin-bottom: 40px; }
+    .courts-heading { align-items: start; flex-direction: column; gap: 0; }
+    .court-grid { grid-template-columns: 1fr; gap: 12px; }
+    .court-photo { min-height: 300px; }
+    .bistro-shell { min-height: 560px; grid-template-columns: 1fr; align-content: start; gap: 50px; padding-block: 65px; }
+    .bistro-content h2 { font-size: clamp(3.5rem, 13vw, 5rem); }
+    .bistro-orbit { right: 30px; bottom: 22px; width: 105px; height: 105px; font-size: 1rem; }
+    .home-footer { align-items: start; flex-wrap: wrap; padding-block: 25px; }
+    .home-footer p { order: 3; width: 100%; margin: 0; }
+}
+@media (max-width: 430px) {
+    .home-nav a:first-child { display: none; }
+    .home-hero h1 { font-size: 3.7rem; }
+    .hero-image { min-height: 285px; }
+    .hero-bottomline { font-size: 12px; }
+    .booking-cta { align-items: start; flex-direction: column; padding-block: 65px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
