@@ -23,6 +23,9 @@ Laravel is accessible, powerful, and provides tools required for large, robust a
 
 ## Docker on WSL 2
 
+For the Vue Starter Kit admin login, WSL setup and verification commands, see
+[Admin authentication](docs/admin-starter-kit.md).
+
 Docker Engine and Docker Compose run directly inside Ubuntu on WSL 2; Docker Desktop is not required. The `.docker/` directory contains the PHP-FPM image and PHP settings, Nginx website configuration, and MySQL settings. The root `compose.yaml` connects those services and persists the database in a named volume.
 
 Install Docker Engine and the Compose plugin in Ubuntu using Docker's official [Ubuntu installation guide](https://docs.docker.com/engine/install/ubuntu/). Enable systemd and start Docker:
