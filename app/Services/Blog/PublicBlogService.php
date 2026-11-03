@@ -31,6 +31,16 @@ class PublicBlogService
         }
 
         if (preg_match('~^https?://~i', $path)) {
+            if (str_contains($path, 'images.unsplash.com')) {
+                return match (true) {
+                    str_contains($path, 'photo-1554068865') => '/images/pickleball/player-action.jpg',
+                    str_contains($path, 'photo-1546483875') => '/images/pickleball/court-community.jpg',
+                    str_contains($path, 'photo-1622279457486') => '/images/pickleball/paddle-court.jpg',
+                    str_contains($path, 'photo-1595435934249') => '/images/pickleball/court-rally-wide.jpg',
+                    default => '/images/pickleball/court-rally-wide.jpg',
+                };
+            }
+
             return $path;
         }
 

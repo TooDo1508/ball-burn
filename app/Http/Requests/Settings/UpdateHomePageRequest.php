@@ -20,7 +20,7 @@ class UpdateHomePageRequest extends FormRequest
             'content.meta_description' => ['required', 'string', 'max:160'],
             'content.hero_title' => ['required', 'string', 'max:160'],
             'content.hero_description' => ['required', 'string', 'max:500'],
-            'content.hero_image' => ['required', 'url', 'max:1000'],
+            'content.hero_image' => ['required', 'string', 'max:1000', 'regex:/^(https?:\/\/|\/images\/)[^\s]+$/'],
             'content.about_title' => ['required', 'string', 'max:160'],
             'content.about_text' => ['required', 'string', 'max:1000'],
             'content.courts_title' => ['required', 'string', 'max:160'],
@@ -28,7 +28,7 @@ class UpdateHomePageRequest extends FormRequest
             'content.bistro_title' => ['required', 'string', 'max:160'],
             'content.bistro_text' => ['required', 'string', 'max:500'],
             'content.booking_title' => ['required', 'string', 'max:160'],
-            'content.og_image' => ['required', 'url', 'max:1000'],
+            'content.og_image' => ['required', 'string', 'max:1000', 'regex:/^(https?:\/\/|\/images\/)[^\s]+$/'],
         ];
     }
 }

@@ -10,7 +10,22 @@ class HomePageService
 
     public function content(): array
     {
-        return $this->settings->findByKey('home_page')?->setting_value ?? self::defaults();
+        $content = array_merge(
+            self::defaults(),
+            $this->settings->findByKey('home_page')?->setting_value ?? [],
+        );
+
+        foreach (['hero_image', 'og_image'] as $imageKey) {
+            if (is_string($content[$imageKey] ?? null) && str_contains($content[$imageKey], 'images.unsplash.com')) {
+                $content[$imageKey] = self::defaults()[$imageKey];
+            }
+        }
+
+        if (is_string($content['og_image'] ?? null) && str_starts_with($content['og_image'], '/')) {
+            $content['og_image'] = url($content['og_image']);
+        }
+
+        return $content;
     }
 
     public function update(array $content, int $updatedBy): void
@@ -27,18 +42,18 @@ class HomePageService
         return [
             'site_name' => 'BALLBURN PickleClub & Bistro',
             'meta_title' => 'BALLBURN PickleClub & Bistro | Sân chơi của bạn',
-            'meta_description' => 'Sân pickleball, cộng đồng năng động và không gian bistro cho những cuộc gặp gỡ đáng nhớ tại BALLBURN.',
-            'hero_title' => 'Chơi hết mình. Vui hết cỡ.',
-            'hero_description' => 'Một điểm hẹn mới cho những trận pickleball đầy năng lượng, những cuộc gặp gỡ thân tình và phút thư giãn ngon lành.',
-            'hero_image' => 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1500&q=85',
-            'about_title' => 'Không chỉ là một sân chơi. Là điểm hẹn.',
-            'about_text' => 'BALLBURN mang pickleball đến gần hơn với mọi người — từ người mới cầm vợt đến những tay chơi đầy đam mê. Đến để vận động, ở lại để kết nối.',
-            'courts_title' => 'Mỗi trận đấu, một câu chuyện.',
-            'courts_text' => 'Không gian chỉn chu, mặt sân chất lượng và bầu không khí khiến bạn muốn chơi thêm một set nữa.',
+            'meta_description' => 'Tám sân pickleball, VAR, bistro và cộng đồng chơi vui mỗi ngày tại BALLBURN Tây Hồ, Hà Nội.',
+            'hero_title' => 'Chơi hết mình.\nVui hết cỡ.',
+            'hero_description' => 'Tám sân pickleball có mái che, bistro ngay bên sân và những cuộc hẹn dễ kéo dài hơn dự tính. BALLBURN là điểm đến mới cho một ngày vận động trọn vẹn tại Hồ Tây.',
+            'hero_image' => '/images/pickleball/court-rally-wide.jpg',
+            'about_title' => 'Tám sân. 2.700 m². Một điểm hẹn.',
+            'about_text' => 'Từ cú chạm vợt đầu tiên đến bữa ăn sau trận, BALLBURN kết nối thể thao, ẩm thực và cộng đồng trong một không gian tại Tây Hồ. Người mới có thể thuê vợt, làm quen với pickleball; người chơi lâu năm có sân, lớp học và giải giao lưu để tiếp tục tiến bộ.',
+            'courts_title' => 'Tám sân, vô vàn pha bóng.',
+            'courts_text' => 'Sân có mái che và hệ thống làm mát hiện đại để bạn tận hưởng trận đấu quanh năm. Với hệ thống VAR, những pha bóng đáng nhớ có thể được xem lại ngay tại sân.',
             'bistro_title' => 'Chơi vui. Ăn ngon. Gắn kết.',
-            'bistro_text' => 'Trận đấu kết thúc, cuộc vui vẫn tiếp tục. Thư giãn cùng bạn bè với những món ngon và thức uống yêu thích.',
+            'bistro_text' => 'Sân chơi chỉ là màn mở đầu. Sau trận, mời cả nhóm ghé bistro và lounge để dùng bữa, gọi món yêu thích, thư giãn giữa những trận đấu và kể tiếp câu chuyện của mình.',
             'booking_title' => 'Hẹn bạn trên sân nhé.',
-            'og_image' => 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1200&q=85',
+            'og_image' => '/images/pickleball/court-rally-wide.jpg',
         ];
     }
 }

@@ -51,24 +51,39 @@
                 </main>
             @elseif (isset($initialBlogPosts))
                 <main class="app-container blog-page">
-                    <section class="blog-listing" aria-labelledby="server-blog-heading">
-                        <header class="blog-section-heading"><div><p class="blog-eyebrow">BALLBURN · PICKLECLUB & BISTRO</p><h1 id="server-blog-heading">Cẩm nang pickleball</h1></div><p>Luật chơi, chiến thuật, sức khỏe và cảm hứng cho cộng đồng pickleball tại TP. Hồ Chí Minh.</p></header>
-                        <div class="blog-card-grid">
-                            @foreach ($initialBlogPosts as $index => $post)
-                                <article class="blog-card {{ $index === 0 ? 'blog-card-featured' : '' }}">
-                                    <a class="blog-card-image" href="/blog/{{ $post['slug'] }}" aria-label="Đọc bài: {{ $post['title'] }}">
-                                        @if ($post['cover_image_url'])<img src="{{ $post['cover_image_url'] }}" alt="{{ $post['cover_image_alt'] ?: $post['title'] }}" loading="lazy">@else<span class="blog-card-image-fallback">BALLBURN</span>@endif
-                                    </a>
-                                    <div class="blog-card-copy">
-                                        <div class="blog-card-meta">@foreach ($post['categories'] as $category)<span>{{ $category }}</span>@endforeach</div>
-                                        <h2><a href="/blog/{{ $post['slug'] }}">{{ $post['title'] }}</a></h2>
-                                        <p>{{ $post['excerpt'] }}</p>
-                                        <a class="blog-read-link" href="/blog/{{ $post['slug'] }}">ĐỌC BÀI VIẾT <span aria-hidden="true">→</span></a>
-                                    </div>
-                                </article>
-                            @endforeach
+                    <section class="blog-hero" aria-labelledby="server-blog-heading">
+                        <div class="blog-hero-image" aria-hidden="true" style="background-image:url('/images/pickleball/court-rally-wide.jpg')"></div>
+                        <div class="blog-hero-copy"><p class="blog-eyebrow">BALLBURN · PICKLECLUB & BISTRO</p><h1 id="server-blog-heading">Tin tức<br><em>pickleball</em></h1><p>Kinh nghiệm trên sân, câu chuyện cộng đồng và cảm hứng để mỗi trận đấu thêm trọn vẹn.</p></div>
+                        <span class="blog-hero-index" aria-hidden="true">PLAY · LEARN · CONNECT</span>
+                    </section>
+                    <section class="blog-listing" aria-labelledby="server-blog-list-heading">
+                        <header class="blog-section-heading"><div><p class="blog-eyebrow">GÓC KIẾN THỨC</p><h2 id="server-blog-list-heading">Mới trên sân</h2></div><p>Cập nhật từ BALLBURN dành cho người mới chơi lẫn những tay vợt đã quen sân.</p></header>
+                        <div class="blog-layout">
+                            <div class="blog-feed">
+                                <div class="blog-post-list">
+                                    @foreach ($initialBlogPosts as $post)
+                                        <article class="blog-post-row">
+                                            <a class="blog-post-thumb" href="/blog/{{ $post['slug'] }}" aria-label="Đọc bài: {{ $post['title'] }}">
+                                                <img src="{{ $post['cover_image_url'] ?: '/images/pickleball/court-rally-wide.jpg' }}" alt="{{ $post['cover_image_alt'] ?: $post['title'] }}" loading="lazy">
+                                            </a>
+                                            <div class="blog-post-copy">
+                                                <div class="blog-card-meta">@foreach ($post['categories'] as $category)<span>{{ $category }}</span>@endforeach @if ($post['published_at'])<time datetime="{{ $post['published_at'] }}">{{ \Illuminate\Support\Carbon::parse($post['published_at'])->locale('vi')->translatedFormat('j F Y') }}</time>@endif</div>
+                                                <h3><a href="/blog/{{ $post['slug'] }}">{{ $post['title'] }}</a></h3>
+                                                <p>{{ $post['excerpt'] }}</p>
+                                                <a class="blog-read-link" href="/blog/{{ $post['slug'] }}">ĐỌC BÀI VIẾT <span aria-hidden="true">→</span></a>
+                                            </div>
+                                        </article>
+                                    @endforeach
+                                </div>
+                                @if ($initialBlogPostsNextPageUrl)<p class="blog-more"><a class="button button-outline" href="{{ $initialBlogPostsNextPageUrl }}">Xem thêm bài viết</a></p>@endif
+                            </div>
+                            <aside class="blog-sidebar" aria-label="Khám phá thêm">
+                                <section class="blog-sidebar-card blog-newsletter-card"><span class="blog-sidebar-mark" aria-hidden="true">✳</span><p class="blog-eyebrow">HẸN GẶP BẠN TRÊN SÂN</p><h2>Chơi một trận nhé?</h2><p>Chọn khung giờ phù hợp và khám phá không khí pickleball tại BALLBURN.</p><a class="button button-primary" href="/booking">Đặt sân ngay <span aria-hidden="true">↗</span></a></section>
+                                <a class="blog-sidebar-feature" href="/about"><img src="/images/pickleball/player-action.jpg" alt="Người chơi pickleball trên sân BALLBURN" loading="lazy"><span><strong>Chơi. Kết nối.<br>Lặp lại.</strong><small>Khám phá BALLBURN <span aria-hidden="true">↗</span></small></span></a>
+                            </aside>
                         </div>
                     </section>
+                    <section class="blog-cta"><p class="blog-eyebrow">SẴN SÀNG LÊN SÂN?</p><h2>Kiến thức tốt.<br><em>Trận đấu vui hơn.</em></h2><a class="button button-primary" href="/booking">Đặt sân tại BALLBURN <span aria-hidden="true">↗</span></a></section>
                 </main>
             @endif
         </div>

@@ -41,8 +41,8 @@ class NewsArticlesSeeder extends Seeder
             [
                 'title' => 'Luật pickleball cơ bản: 5 điều người mới cần nhớ trước trận đầu',
                 'slug' => 'luat-pickleball-co-ban-cho-nguoi-moi',
-                'excerpt' => 'Nắm cách giao bóng chéo sân, luật hai lần nảy, khu vực kitchen và cách tính điểm để tự tin bước vào trận pickleball đầu tiên tại TP.HCM.',
-                'cover_image_path' => 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1200&q=85',
+                'excerpt' => 'Nắm cách giao bóng chéo sân, luật hai lần nảy, khu vực kitchen và cách tính điểm để tự tin bước vào trận pickleball đầu tiên tại Hà Nội.',
+                'cover_image_path' => '/images/pickleball/court-rally-wide.jpg',
                 'cover_image_alt' => 'Người chơi pickleball mới tập luyện cùng huấn luyện viên trên sân trong nhà.',
                 'meta_title' => 'Luật pickleball cơ bản cho người mới | BALLBURN',
                 'meta_description' => 'Hướng dẫn luật pickleball dễ hiểu: giao bóng, luật hai lần nảy, kitchen, lỗi thường gặp và cách tính điểm cho người mới chơi.',
@@ -50,7 +50,7 @@ class NewsArticlesSeeder extends Seeder
                 'days_ago' => 12,
                 'body' => <<<'HTML'
 <p><strong>Tóm tắt nhanh:</strong> Người mới chơi pickleball chỉ cần nhớ năm điểm: giao bóng chéo sân; bóng giao và cú trả giao đều phải nảy một lần; không volley trong kitchen; bóng chạm vạch thường được tính là trong sân; và cách tính điểm có thể khác giữa trận giao lưu với giải đấu.</p>
-<p>Pickleball kết hợp những yếu tố quen thuộc của các môn vợt nhưng có luật riêng. Nếu bạn đang tìm hiểu pickleball tại TP.HCM, hãy đọc phần tóm tắt dưới đây trước khi đặt sân hoặc tham gia buổi chơi đầu tiên.</p>
+<p>Pickleball kết hợp những yếu tố quen thuộc của các môn vợt nhưng có luật riêng. Nếu bạn đang tìm hiểu pickleball tại Hà Nội, hãy đọc phần tóm tắt dưới đây trước khi đặt sân hoặc tham gia buổi chơi đầu tiên.</p>
 <h2>1. Giao bóng chéo sân như thế nào?</h2>
 <p>Ở nội dung đôi, người giao đứng sau đường cuối sân và đưa bóng chéo sang ô giao bóng đối diện. Theo luật thi đấu của USA Pickleball, cú giao phải hợp lệ theo một trong các kiểu giao được cho phép; người mới nên tập động tác kiểm soát, đưa bóng sâu và ổn định trước khi cố giao mạnh.</p>
 <h2>2. Luật hai lần nảy là gì?</h2>
@@ -64,7 +64,7 @@ class NewsArticlesSeeder extends Seeder
 <h2>Câu hỏi thường gặp</h2>
 <h3>Người mới có cần thuộc hết luật trước khi ra sân không?</h3><p>Không cần. Hãy nhớ luật hai lần nảy, kitchen và cách giao bóng cơ bản; người chơi cùng sân có thể nhắc thêm những tình huống phát sinh.</p>
 <h3>Luật thi đấu có thể thay đổi không?</h3><p>Có. Luật chính thức được cập nhật định kỳ. Khi tham gia giải, hãy kiểm tra rulebook và điều lệ của ban tổ chức thay vì chỉ dựa vào hướng dẫn nhập môn.</p>
-<p><strong>Gợi ý thực hành:</strong> Trước trận đầu tại một câu lạc bộ ở TP.HCM, hãy dành vài phút tập giao bóng và trả giao ở tốc độ vừa phải. Khi đã hiểu nhịp bóng, trận đấu sẽ dễ theo dõi hơn nhiều.</p>
+<p><strong>Gợi ý thực hành:</strong> Trước trận đầu tại một câu lạc bộ ở Hà Nội, hãy dành vài phút tập giao bóng và trả giao ở tốc độ vừa phải. Khi đã hiểu nhịp bóng, trận đấu sẽ dễ theo dõi hơn nhiều.</p>
 <p><small>Nguồn tham khảo: <a href="https://usapickleball.org/rules/summary/" target="_blank" rel="noopener noreferrer">USA Pickleball — Rules Summary</a> và <a href="https://usapickleball.org/rules/" target="_blank" rel="noopener noreferrer">Official Rulebook</a>. Bài viết là hướng dẫn nhập môn, không thay thế luật của giải đấu cụ thể.</small></p>
 HTML,
             ],
@@ -72,7 +72,7 @@ HTML,
                 'title' => 'Chiến thuật kitchen trong pickleball: đứng đâu và di chuyển thế nào?',
                 'slug' => 'chien-thuat-kitchen-trong-pickleball',
                 'excerpt' => 'Hiểu vùng kitchen, phối hợp cùng đồng đội và tiến lên vạch không volley đúng thời điểm để kiểm soát rally pickleball tốt hơn.',
-                'cover_image_path' => 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1200&q=85',
+                'cover_image_path' => '/images/pickleball/player-action.jpg',
                 'cover_image_alt' => 'Bốn người chơi pickleball đánh đôi và kiểm soát bóng gần khu vực kitchen.',
                 'meta_title' => 'Chiến thuật kitchen pickleball dễ áp dụng | BALLBURN',
                 'meta_description' => 'Tìm hiểu kitchen pickleball, cách đứng sát vạch non-volley zone, di chuyển đồng bộ và tránh mắc lỗi khi volley trong trận đôi.',
@@ -91,7 +91,7 @@ HTML,
 <h2>Câu hỏi thường gặp</h2>
 <h3>Có được đứng trong kitchen không?</h3><p>Được. Bạn chỉ phạm lỗi khi volley trong lúc chạm kitchen hoặc vi phạm liên quan đến đà sau cú volley.</p>
 <h3>Người mới nên đứng sát lưới ngay từ đầu không?</h3><p>Hãy bắt đầu ở vị trí phù hợp với luật và cú đánh tiếp theo. Tiến lên có kiểm soát sau khi xử lý cú trả giao thường giúp người mới giữ thăng bằng tốt hơn.</p>
-<p>Ở các buổi chơi đôi tại TP.HCM, hãy tập một bài đơn giản: hai người đứng song song, đánh bóng nhẹ qua lại và cùng bước ngang theo hướng bóng. Bài tập này giúp phối hợp vị trí trước khi tăng tốc độ rally.</p>
+<p>Ở các buổi chơi đôi tại Hà Nội, hãy tập một bài đơn giản: hai người đứng song song, đánh bóng nhẹ qua lại và cùng bước ngang theo hướng bóng. Bài tập này giúp phối hợp vị trí trước khi tăng tốc độ rally.</p>
 <p><small>Nguồn tham khảo: <a href="https://usapickleball.org/rules/summary/" target="_blank" rel="noopener noreferrer">USA Pickleball — Rules Summary</a> và <a href="https://usapickleball.org/pickleball-skills/level-two/pickleball-basics-positioning-tips/" target="_blank" rel="noopener noreferrer">Positioning, Patience, and Kitchen Line Strategy</a>.</small></p>
 HTML,
             ],
@@ -99,7 +99,7 @@ HTML,
                 'title' => 'Văn hóa chơi pickleball giao lưu: 7 phép lịch sự trên sân đôi',
                 'slug' => 'van-hoa-choi-pickleball-giao-luu',
                 'excerpt' => 'Từ cách xoay vòng sân đến gọi bóng và giao tiếp với đồng đội: những nguyên tắc nhỏ giúp buổi pickleball giao lưu vui vẻ, công bằng hơn.',
-                'cover_image_path' => 'https://images.unsplash.com/photo-1546483875-ad9014c88eba?auto=format&fit=crop&w=1200&q=85',
+                'cover_image_path' => '/images/pickleball/court-community.jpg',
                 'cover_image_alt' => 'Nhóm người chơi nhiều độ tuổi vui vẻ trò chuyện sau một trận pickleball giao lưu.',
                 'meta_title' => '7 phép lịch sự khi chơi pickleball giao lưu | BALLBURN',
                 'meta_description' => 'Cẩm nang văn hóa pickleball giao lưu: xoay vòng sân công bằng, gọi bóng rõ ràng, tôn trọng trình độ và giao tiếp tích cực.',
@@ -113,7 +113,7 @@ HTML,
 <h2>4. Giao tiếp với đồng đội</h2><p>Những câu đơn giản như “của tôi”, “của bạn” hoặc “đổi bên” giúp tránh va chạm và bỏ bóng. Trong đánh đôi, hãy cùng nhau khích lệ thay vì đổ lỗi sau một pha hỏng.</p>
 <h2>5. Điều chỉnh lực đánh phù hợp</h2><p>Ghép trận theo trình độ nếu nhóm có quy ước, nhưng đừng xem người mới là mục tiêu để ghi điểm bằng mọi giá. Trận giao lưu có thể là dịp thử cú đánh mới, kéo dài rally và giúp nhau tiến bộ.</p>
 <h2>6. Giữ khu vực thi đấu an toàn</h2><p>Đợi rally kết thúc rồi băng qua sân; nhặt bóng rơi khi mọi người đã dừng chơi; không vung vợt gần người khác. Nếu sân đông, đặt túi và chai nước ngoài lối di chuyển.</p>
-<h2>7. Chào hỏi và cảm ơn sau trận</h2><p>Một lời chào trước trận, một cái chạm paddle sau trận và lời cảm ơn người chia sân giúp người mới dễ hòa nhập. Ở cộng đồng chơi tại TP.HCM, sự thân thiện thường quan trọng không kém tỷ số.</p>
+<h2>7. Chào hỏi và cảm ơn sau trận</h2><p>Một lời chào trước trận, một cái chạm paddle sau trận và lời cảm ơn người chia sân giúp người mới dễ hòa nhập. Ở cộng đồng chơi tại Hà Nội, sự thân thiện thường quan trọng không kém tỷ số.</p>
 <h2>Câu hỏi thường gặp</h2>
 <h3>Tôi chưa có đồng đội thì có thể tham gia không?</h3><p>Hãy hỏi câu lạc bộ về buổi open play, ghép cặp hoặc giờ phù hợp cho người mới. Nhiều nhóm có cách sắp xếp người chơi đến lẻ.</p>
 <h3>Nếu hai bên không thống nhất bóng trong hay ngoài thì sao?</h3><p>Giữ bình tĩnh, ưu tiên tinh thần giao lưu và làm theo quy ước của ban tổ chức. Trận giải có thể áp dụng quy trình gọi bóng chính thức khác với buổi chơi thường.</p>
@@ -124,14 +124,14 @@ HTML,
                 'title' => 'Mới chơi pickleball cần mua gì? Cách chọn vợt, giày và bóng cơ bản',
                 'slug' => 'nguoi-moi-choi-pickleball-can-mua-gi',
                 'excerpt' => 'Bắt đầu với vợt vừa tay, giày có độ bám và bóng phù hợp mặt sân. Hướng dẫn ưu tiên món cần thiết trước khi đầu tư thêm phụ kiện.',
-                'cover_image_path' => 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=1200&q=85',
+                'cover_image_path' => '/images/pickleball/paddle-court.jpg',
                 'cover_image_alt' => 'Vợt, bóng nhựa đục lỗ, giày thể thao và bình nước chuẩn bị bên cạnh sân pickleball.',
                 'meta_title' => 'Người mới chơi pickleball cần mua gì? | BALLBURN',
                 'meta_description' => 'Hướng dẫn chọn đồ pickleball cho người mới: vợt vừa tay, giày sân phù hợp, bóng trong nhà hoặc ngoài trời và phụ kiện cần thiết.',
                 'category' => 'Dụng cụ & sức khỏe',
                 'days_ago' => 6,
                 'body' => <<<'HTML'
-<p><strong>Tóm tắt nhanh:</strong> Người mới chỉ cần một cây vợt vừa tay, giày thể thao có độ bám phù hợp với mặt sân và bóng đúng loại sân. Hãy ưu tiên cảm giác thoải mái, an toàn và ngân sách trước các thông số nâng cao; nhiều câu lạc bộ tại TP.HCM có thể cho thuê hoặc mượn dụng cụ để thử trước.</p>
+<p><strong>Tóm tắt nhanh:</strong> Người mới chỉ cần một cây vợt vừa tay, giày thể thao có độ bám phù hợp với mặt sân và bóng đúng loại sân. Hãy ưu tiên cảm giác thoải mái, an toàn và ngân sách trước các thông số nâng cao; nhiều câu lạc bộ tại Hà Nội có thể cho thuê hoặc mượn dụng cụ để thử trước.</p>
 <h2>Chọn vợt pickleball như thế nào?</h2>
 <p>Thử cầm vợt để xem cán có vừa tay, trọng lượng có khiến cổ tay nhanh mỏi hay không, và mặt vợt có phù hợp với cách bạn muốn điều khiển bóng. Người mới chưa cần chạy theo công nghệ hay thông số quảng cáo. Nếu có thể, hãy mượn thử vài mẫu trong một buổi chơi rồi mới quyết định mua.</p>
 <h2>Giày nào phù hợp để chơi pickleball?</h2>
@@ -150,7 +150,7 @@ HTML,
                 'title' => 'Khởi động trước khi chơi pickleball: quy trình 8 phút dễ áp dụng',
                 'slug' => 'khoi-dong-truoc-khi-choi-pickleball',
                 'excerpt' => 'Một quy trình khởi động ngắn gồm đi bộ nhanh, vận động khớp và đánh bóng nhẹ giúp cơ thể làm quen với các bước đổi hướng trước trận.',
-                'cover_image_path' => 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=1200&q=85',
+                'cover_image_path' => '/images/pickleball/court-rally-wide.jpg',
                 'cover_image_alt' => 'Hai người chơi pickleball khởi động bằng động tác vận động vai và bước ngang cạnh sân.',
                 'meta_title' => 'Khởi động pickleball trong 8 phút an toàn | BALLBURN',
                 'meta_description' => 'Tham khảo quy trình khởi động pickleball 8 phút gồm đi bộ, vận động linh hoạt và đánh nhẹ; tăng cường độ từ từ, uống đủ nước.',
@@ -162,12 +162,12 @@ HTML,
 <ol><li><strong>Phút 0–2:</strong> đi bộ nhanh quanh sân, bước tại chỗ hoặc di chuyển nhẹ để cơ thể ấm lên.</li><li><strong>Phút 2–4:</strong> xoay vai, cổ tay và hông nhẹ nhàng trong biên độ thoải mái; không giật mạnh.</li><li><strong>Phút 4–6:</strong> bước ngang ngắn, gập gối nông và chuyển trọng lượng từ chân này sang chân kia có kiểm soát.</li><li><strong>Phút 6–8:</strong> đánh bóng nhẹ ở cự ly gần, tập vài cú forehand/backhand và tăng tốc dần nếu cảm thấy ổn.</li></ol>
 <h2>Vì sao không nên vào trận với cường độ tối đa ngay?</h2>
 <p>Pickleball có những pha tăng tốc, dừng và đổi hướng. Bắt đầu bằng rally nhẹ giúp bạn cảm nhận mặt sân, độ nảy và nhịp di chuyển trước khi chơi nhanh. AAOS cũng khuyến nghị làm nóng cơ thể, bắt đầu với bài đánh nhẹ, mang giày phù hợp, uống đủ nước và điều chỉnh thời lượng theo khả năng.</p>
-<h2>Điều chỉnh theo thời tiết TP.HCM</h2>
+<h2>Điều chỉnh theo thời tiết Hà Nội</h2>
 <p>Nếu chơi ngoài trời vào ngày nóng, hãy đến sớm để cơ thể thích nghi, chuẩn bị nước và nghỉ khi thấy mệt. Với sân trong nhà, vẫn nên khởi động vì chuyển hướng nhanh có thể xuất hiện ngay từ những pha đầu tiên. Không cố tiếp tục nếu thấy đau bất thường, chóng mặt hoặc khó thở.</p>
 <h2>Câu hỏi thường gặp</h2>
 <h3>Khởi động 8 phút có đủ cho tất cả mọi người không?</h3><p>Đây chỉ là lịch tham khảo ngắn. Thời gian phù hợp phụ thuộc thể lực, tuổi, kinh nghiệm, thời tiết và tình trạng sức khỏe; hãy kéo dài phần chuẩn bị nếu bạn cần.</p>
 <h3>Có nên chơi tiếp khi thấy đau?</h3><p>Hãy dừng lại nếu xuất hiện đau bất thường hoặc triệu chứng khiến bạn lo lắng. Người có bệnh nền, chấn thương cũ hoặc cần hướng dẫn cá nhân nên hỏi chuyên gia y tế trước khi thay đổi chương trình vận động.</p>
-<p>Trước buổi chơi tại câu lạc bộ pickleball ở TP.HCM, hãy dành thời gian làm quen sân và hỏi người hướng dẫn về bài khởi động phù hợp. Thói quen đều đặn và tăng cường độ từ từ quan trọng hơn việc cố làm thật nhanh.</p>
+<p>Trước buổi chơi tại câu lạc bộ pickleball ở Hà Nội, hãy dành thời gian làm quen sân và hỏi người hướng dẫn về bài khởi động phù hợp. Thói quen đều đặn và tăng cường độ từ từ quan trọng hơn việc cố làm thật nhanh.</p>
 <p><small>Nguồn tham khảo: <a href="https://orthoinfo.aaos.org/globalassets/pdfs/pickleball-injury-prevention-tips.pdf" target="_blank" rel="noopener noreferrer">AAOS OrthoInfo — 5 Pickleball Injury Prevention Tips</a>. Nội dung chỉ nhằm cung cấp thông tin chung, không phải chẩn đoán hoặc tư vấn y tế cá nhân.</small></p>
 HTML,
             ],

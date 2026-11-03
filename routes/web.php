@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\News\BlogCategoryController;
 use App\Http\Controllers\Admin\News\NewsController;
 use App\Http\Controllers\Blog\PublicBlogController;
+use App\Http\Controllers\Contact\ContactMessageController;
 use App\Services\Settings\HomePageService;
 
 Route::get('/', function (HomePageService $homePage) {
@@ -12,8 +13,8 @@ Route::get('/', function (HomePageService $homePage) {
 
 Route::get('/about', function () {
     $title = 'Về BALLBURN | PickleClub & Bistro';
-    $description = 'Khám phá BALLBURN PickleClub & Bistro tại TP. Hồ Chí Minh — điểm hẹn sân pickleball, ẩm thực và cộng đồng dành cho mọi người yêu vận động.';
-    $image = 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=2000&q=85';
+    $description = 'Khám phá BALLBURN PickleClub & Bistro tại Hà Nội — điểm hẹn sân pickleball, ẩm thực và cộng đồng dành cho mọi người yêu vận động.';
+    $image = url('/images/pickleball/court-rally-wide.jpg');
 
     return view('welcome', [
         'seo' => [
@@ -36,6 +37,7 @@ Route::get('/blog', [PublicBlogController::class, 'indexPage'])->name('blog.inde
 Route::get('/blog/{slug}', [PublicBlogController::class, 'showPage'])->name('blog.show');
 Route::view('/booking', 'welcome');
 Route::view('/contact', 'welcome');
+Route::post('/contact', [ContactMessageController::class, 'store'])->middleware('throttle:5,1')->name('contact.store');
 
 Route::middleware(['auth', 'can:access-admin'])->prefix('admin')->group(function () {
     Route::inertia('/', 'Dashboard')->name('dashboard');

@@ -15,14 +15,14 @@ class PublicBlogController extends Controller
     public function indexPage(): View
     {
         $title = 'Tin tức pickleball, luật chơi và mẹo tập luyện | BALLBURN';
-        $description = 'Cẩm nang pickleball bằng tiếng Việt: luật chơi, chiến thuật, dụng cụ và văn hóa giao lưu từ BALLBURN PickleClub & Bistro tại TP. Hồ Chí Minh.';
+        $description = 'Cẩm nang pickleball bằng tiếng Việt: luật chơi, chiến thuật, dụng cụ và văn hóa giao lưu từ BALLBURN PickleClub & Bistro tại Hà Nội.';
         $canonical = url('/blog');
         $listing = $this->blog->listing();
 
         return view('welcome', ['seo' => [
             'title' => $title,
             'description' => $description,
-            'image' => 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1600&q=85',
+            'image' => url('/images/pickleball/court-rally-wide.jpg'),
             'canonical' => $canonical,
             'structured_data' => [
                 '@context' => 'https://schema.org',

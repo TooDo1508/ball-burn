@@ -5,11 +5,12 @@ import BaseButton from '../ui/BaseButton.vue';
 
 <template>
     <header class="site-header">
-        <RouterLink class="brand" to="/" aria-label="Ballburn home">BALLBURN<span>®</span></RouterLink>
+        <a class="brand" href="/" aria-label="Ballburn home">BALLBURN<span>®</span></a>
 
         <nav class="main-nav" aria-label="Điều hướng chính">
-            <RouterLink to="/booking">Đặt sân</RouterLink>
+            <RouterLink to="/">Trang chủ</RouterLink>
             <RouterLink to="/about">Về chúng tôi</RouterLink>
+            <RouterLink to="/booking">Sân chơi</RouterLink>
             <RouterLink to="/blog">Tin tức</RouterLink>
             <RouterLink to="/contact">Liên hệ</RouterLink>
         </nav>
