@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\DeleteBlogPostsRequest;
 use App\Http\Requests\Admin\IndexBlogPostsRequest;
 use App\Http\Requests\Admin\StoreBlogPostRequest;
+use App\Http\Requests\Admin\UploadBlogImageRequest;
 use App\Models\BlogPost;
 use App\Services\Admin\News\BlogPostService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -74,6 +76,14 @@ class NewsController extends Controller
         return to_route('admin.news.edit', $post)->with('success', 'Bài viết đã được tạo.');
     }
 
+    public function uploadImage(UploadBlogImageRequest $request): JsonResponse
+    {
+        $this->authorize('create', BlogPost::class);
+        $url = $this->posts->storeContentImage($request->file('image'));
+
+        return response()->json(['url' => $url]);
+    }
+
     public function edit(int $postId): Response
     {
         $post = $this->posts->find($postId);
@@ -109,7 +119,7 @@ class NewsController extends Controller
             'title' => $post->title,
             'slug' => $post->slug,
             'excerpt' => $post->excerpt,
-            'body' => $post->body,
+            'body' => $this->posts->safeBody($post->body),
             'status' => $post->status === 'PUBLISHED' && $post->published_at?->isFuture() ? 'SCHEDULED' : $post->status,
             'published_at' => $post->published_at?->format('Y-m-d H:i'),
             'cover_image_url' => $this->posts->coverImageUrl($post->cover_image_path),

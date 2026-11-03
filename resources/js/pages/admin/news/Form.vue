@@ -3,6 +3,7 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Save, Tags, Upload, X } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import InputError from '@/components/InputError.vue';
+import BlogRichTextEditor from '@/components/BlogRichTextEditor.vue';
 import { dashboard } from '@/routes';
 
 type Category = { id: number; name: string };
@@ -80,7 +81,7 @@ function save() {
                         <div class="grid gap-2"><label for="title" class="text-sm font-semibold">Tiêu đề <span class="text-orange-400">*</span></label><input id="title" v-model="form.title" required maxlength="220" class="h-11 rounded-lg border border-zinc-700 bg-[#0b0c0b] px-3 text-sm focus:border-orange-500 focus:outline-none" placeholder="Nhập tiêu đề bài viết" /><InputError :message="form.errors.title" /></div>
                         <div class="grid gap-2"><label for="slug" class="text-sm font-semibold">Đường dẫn (slug)</label><div class="flex h-11 items-center rounded-lg border border-zinc-700 bg-[#0b0c0b] px-3"><span class="shrink-0 text-sm text-zinc-500">/blog/</span><input id="slug" v-model="form.slug" maxlength="240" class="min-w-0 flex-1 bg-transparent text-sm focus:outline-none" placeholder="tu-dong-tao-tu-tieu-de" /></div><p class="text-xs text-zinc-500">Để trống để tạo slug tự động từ tiêu đề.</p><InputError :message="form.errors.slug" /></div>
                         <div class="grid gap-2"><label for="excerpt" class="text-sm font-semibold">Mô tả ngắn</label><textarea id="excerpt" v-model="form.excerpt" rows="3" maxlength="1000" class="rounded-lg border border-zinc-700 bg-[#0b0c0b] px-3 py-2.5 text-sm leading-6 focus:border-orange-500 focus:outline-none" placeholder="Tóm tắt nội dung để hiển thị trong danh sách bài viết." /><div class="flex justify-between gap-3"><InputError :message="form.errors.excerpt" /><span class="text-xs text-zinc-500">{{ form.excerpt.length }}/1000</span></div></div>
-                        <div class="grid gap-2"><label for="body" class="text-sm font-semibold">Nội dung bài viết <span class="text-orange-400">*</span></label><textarea id="body" v-model="form.body" required rows="18" class="rounded-lg border border-zinc-700 bg-[#0b0c0b] px-3 py-3 text-sm leading-7 focus:border-orange-500 focus:outline-none" placeholder="Nhập nội dung bài viết. Xuống dòng để tách đoạn." /><p class="text-xs text-zinc-500">Nội dung dạng văn bản thuần để hiển thị an toàn; trình soạn thảo định dạng sẽ được bổ sung riêng.</p><InputError :message="form.errors.body" /></div>
+                        <div class="grid gap-2"><label class="text-sm font-semibold">Nội dung bài viết <span class="text-orange-400">*</span></label><BlogRichTextEditor v-model="form.body" /><p class="text-xs text-zinc-500">Có thể định dạng tiêu đề, danh sách, trích dẫn, liên kết và tải ảnh trực tiếp lên nội dung. Tối đa 20 KB HTML.</p><InputError :message="form.errors.body" /></div>
                     </section>
 
                     <section class="space-y-5 rounded-xl border border-zinc-800 bg-[#121412] p-4 sm:p-6">

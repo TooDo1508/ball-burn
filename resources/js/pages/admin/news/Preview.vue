@@ -33,9 +33,21 @@ defineProps<{ post: {
             <div class="space-y-6 p-5 sm:p-10">
                 <div class="flex flex-wrap gap-2"><span v-for="category in post.categories" :key="category" class="rounded-full border border-orange-500/25 bg-orange-500/10 px-3 py-1 text-xs font-semibold text-orange-200">{{ category }}</span></div>
                 <div><h1 class="text-3xl font-bold leading-tight tracking-tight sm:text-5xl">{{ post.title }}</h1><p v-if="post.excerpt" class="mt-5 text-base leading-7 text-zinc-300">{{ post.excerpt }}</p><p class="mt-4 text-sm text-zinc-500">{{ post.author || 'BALLBURN' }}<span v-if="post.published_at"> · {{ post.published_at }}</span></p></div>
-                <div class="whitespace-pre-line text-sm leading-7 text-zinc-200">{{ post.body }}</div>
+                <div class="blog-preview-content text-sm leading-7 text-zinc-200" v-html="post.body" />
                 <section class="rounded-lg border border-zinc-800 bg-[#0b0c0b] p-4"><p class="text-xs font-bold uppercase tracking-wide text-zinc-500">SEO</p><p class="mt-2 text-sm font-semibold">{{ post.meta_title || post.title }}</p><p class="mt-1 text-sm text-zinc-400">{{ post.meta_description || post.excerpt || 'Chưa thiết lập mô tả SEO.' }}</p></section>
             </div>
         </article>
     </main>
 </template>
+
+<style scoped>
+.blog-preview-content :deep(p) { margin: 0 0 1rem; }
+.blog-preview-content :deep(h2) { margin: 1.75rem 0 .75rem; font-size: 1.5rem; font-weight: 700; }
+.blog-preview-content :deep(h3), .blog-preview-content :deep(h4) { margin: 1.5rem 0 .5rem; font-size: 1.2rem; font-weight: 700; }
+.blog-preview-content :deep(ul) { list-style: disc; }
+.blog-preview-content :deep(ol) { list-style: decimal; }
+.blog-preview-content :deep(ul), .blog-preview-content :deep(ol) { margin: .75rem 0 1rem; padding-left: 1.5rem; }
+.blog-preview-content :deep(a) { color: #fdba74; text-decoration: underline; }
+.blog-preview-content :deep(img) { max-width: 100%; height: auto; margin: 1.5rem auto; border-radius: .75rem; }
+.blog-preview-content :deep(blockquote) { margin: 1rem 0; border-left: 3px solid #f97316; padding-left: 1rem; color: #a1a1aa; }
+</style>

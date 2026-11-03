@@ -21,15 +21,19 @@ function setMeta(selector, attribute, value) {
 onMounted(() => {
     document.title = title;
     setMeta('meta[name="description"]', 'content', description);
+    setMeta('meta[property="og:type"]', 'content', 'website');
     setMeta('meta[property="og:title"]', 'content', title);
     setMeta('meta[property="og:description"]', 'content', description);
     setMeta('meta[property="og:image"]', 'content', heroImage);
+    setMeta('meta[name="twitter:card"]', 'content', 'summary_large_image');
     setMeta('link[rel="canonical"]', 'href', `${window.location.origin}/about`);
+    document.head.querySelector('meta[property="article:published_time"]')?.remove();
+    document.head.querySelector('meta[property="article:modified_time"]')?.remove();
 
-    let structuredData = document.querySelector('#about-structured-data');
+    let structuredData = document.querySelector('#structured-data');
     if (!structuredData) {
         structuredData = document.createElement('script');
-        structuredData.id = 'about-structured-data';
+        structuredData.id = 'structured-data';
         structuredData.type = 'application/ld+json';
         document.head.append(structuredData);
     }

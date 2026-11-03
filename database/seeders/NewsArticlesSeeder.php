@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\BlogCategory;
 use App\Models\BlogPost;
+use App\Services\Content\BlogContentSanitizer;
 use Illuminate\Database\Seeder;
 
 class NewsArticlesSeeder extends Seeder
@@ -41,7 +42,7 @@ class NewsArticlesSeeder extends Seeder
                 'title' => 'Luật pickleball cơ bản: 5 điều người mới cần nhớ trước trận đầu',
                 'slug' => 'luat-pickleball-co-ban-cho-nguoi-moi',
                 'excerpt' => 'Nắm cách giao bóng chéo sân, luật hai lần nảy, khu vực kitchen và cách tính điểm để tự tin bước vào trận pickleball đầu tiên tại TP.HCM.',
-                'cover_image_path' => 'blog/news/pickleball-luat-cho-nguoi-moi.png',
+                'cover_image_path' => 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1200&q=85',
                 'cover_image_alt' => 'Người chơi pickleball mới tập luyện cùng huấn luyện viên trên sân trong nhà.',
                 'meta_title' => 'Luật pickleball cơ bản cho người mới | BALLBURN',
                 'meta_description' => 'Hướng dẫn luật pickleball dễ hiểu: giao bóng, luật hai lần nảy, kitchen, lỗi thường gặp và cách tính điểm cho người mới chơi.',
@@ -71,7 +72,7 @@ HTML,
                 'title' => 'Chiến thuật kitchen trong pickleball: đứng đâu và di chuyển thế nào?',
                 'slug' => 'chien-thuat-kitchen-trong-pickleball',
                 'excerpt' => 'Hiểu vùng kitchen, phối hợp cùng đồng đội và tiến lên vạch không volley đúng thời điểm để kiểm soát rally pickleball tốt hơn.',
-                'cover_image_path' => 'blog/news/pickleball-chien-thuat-kitchen.png',
+                'cover_image_path' => 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1200&q=85',
                 'cover_image_alt' => 'Bốn người chơi pickleball đánh đôi và kiểm soát bóng gần khu vực kitchen.',
                 'meta_title' => 'Chiến thuật kitchen pickleball dễ áp dụng | BALLBURN',
                 'meta_description' => 'Tìm hiểu kitchen pickleball, cách đứng sát vạch non-volley zone, di chuyển đồng bộ và tránh mắc lỗi khi volley trong trận đôi.',
@@ -98,7 +99,7 @@ HTML,
                 'title' => 'Văn hóa chơi pickleball giao lưu: 7 phép lịch sự trên sân đôi',
                 'slug' => 'van-hoa-choi-pickleball-giao-luu',
                 'excerpt' => 'Từ cách xoay vòng sân đến gọi bóng và giao tiếp với đồng đội: những nguyên tắc nhỏ giúp buổi pickleball giao lưu vui vẻ, công bằng hơn.',
-                'cover_image_path' => 'blog/news/pickleball-cong-dong-giao-luu.png',
+                'cover_image_path' => 'https://images.unsplash.com/photo-1546483875-ad9014c88eba?auto=format&fit=crop&w=1200&q=85',
                 'cover_image_alt' => 'Nhóm người chơi nhiều độ tuổi vui vẻ trò chuyện sau một trận pickleball giao lưu.',
                 'meta_title' => '7 phép lịch sự khi chơi pickleball giao lưu | BALLBURN',
                 'meta_description' => 'Cẩm nang văn hóa pickleball giao lưu: xoay vòng sân công bằng, gọi bóng rõ ràng, tôn trọng trình độ và giao tiếp tích cực.',
@@ -123,7 +124,7 @@ HTML,
                 'title' => 'Mới chơi pickleball cần mua gì? Cách chọn vợt, giày và bóng cơ bản',
                 'slug' => 'nguoi-moi-choi-pickleball-can-mua-gi',
                 'excerpt' => 'Bắt đầu với vợt vừa tay, giày có độ bám và bóng phù hợp mặt sân. Hướng dẫn ưu tiên món cần thiết trước khi đầu tư thêm phụ kiện.',
-                'cover_image_path' => 'blog/news/pickleball-dung-cu-co-ban.png',
+                'cover_image_path' => 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=1200&q=85',
                 'cover_image_alt' => 'Vợt, bóng nhựa đục lỗ, giày thể thao và bình nước chuẩn bị bên cạnh sân pickleball.',
                 'meta_title' => 'Người mới chơi pickleball cần mua gì? | BALLBURN',
                 'meta_description' => 'Hướng dẫn chọn đồ pickleball cho người mới: vợt vừa tay, giày sân phù hợp, bóng trong nhà hoặc ngoài trời và phụ kiện cần thiết.',
@@ -149,7 +150,7 @@ HTML,
                 'title' => 'Khởi động trước khi chơi pickleball: quy trình 8 phút dễ áp dụng',
                 'slug' => 'khoi-dong-truoc-khi-choi-pickleball',
                 'excerpt' => 'Một quy trình khởi động ngắn gồm đi bộ nhanh, vận động khớp và đánh bóng nhẹ giúp cơ thể làm quen với các bước đổi hướng trước trận.',
-                'cover_image_path' => 'blog/news/pickleball-khoi-dong-an-toan.png',
+                'cover_image_path' => 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=1200&q=85',
                 'cover_image_alt' => 'Hai người chơi pickleball khởi động bằng động tác vận động vai và bước ngang cạnh sân.',
                 'meta_title' => 'Khởi động pickleball trong 8 phút an toàn | BALLBURN',
                 'meta_description' => 'Tham khảo quy trình khởi động pickleball 8 phút gồm đi bộ, vận động linh hoạt và đánh nhẹ; tăng cường độ từ từ, uống đủ nước.',
@@ -182,7 +183,7 @@ HTML,
                     'author_id' => null,
                     'title' => $article['title'],
                     'excerpt' => $article['excerpt'],
-                    'body' => $this->plainTextBody($article['body']),
+                    'body' => app(BlogContentSanitizer::class)->sanitize($article['body']),
                     'cover_image_path' => $article['cover_image_path'],
                     'cover_image_alt' => $article['cover_image_alt'],
                     'meta_title' => $article['meta_title'],
@@ -196,20 +197,4 @@ HTML,
         }
     }
 
-    private function plainTextBody(string $html): string
-    {
-        $text = preg_replace_callback(
-            '~<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>~is',
-            fn (array $match): string => strip_tags($match[2]).' ('.$match[1].')',
-            $html,
-        );
-        $text = preg_replace('~</?(?:h[1-6]|p|div|section|ol|ul)[^>]*>~i', "\n\n", $text ?? $html);
-        $text = preg_replace('~<li\b[^>]*>~i', "\n• ", $text ?? '');
-        $text = preg_replace('~<br\s*/?>~i', "\n", $text ?? '');
-        $text = html_entity_decode(strip_tags($text ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $text = preg_replace('/[ \t]+/u', ' ', $text);
-        $text = preg_replace('/\n[ \t]*\n(?:[ \t]*\n)+/u', "\n\n", $text ?? '');
-
-        return trim($text ?? '');
-    }
 }

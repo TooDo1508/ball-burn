@@ -19,7 +19,12 @@ const courts = [
         <meta head-key="og:type" property="og:type" content="website" />
         <meta head-key="twitter:card" name="twitter:card" content="summary_large_image" />
         <link head-key="canonical" rel="canonical" href="/" />
-        <script type="application/ld+json">{{ JSON.stringify({ '@context': 'https://schema.org', '@type': 'SportsActivityLocation', name: props.content.site_name, description: props.content.meta_description, image: props.content.og_image, url: '/' }) }}</script>
+        <component
+            :is="'script'"
+            head-key="structured-data"
+            type="application/ld+json"
+            v-text="JSON.stringify({ '@context': 'https://schema.org', '@type': 'SportsActivityLocation', name: props.content.site_name, description: props.content.meta_description, image: props.content.og_image, url: '/' })"
+        />
     </Head>
     <main class="ballburn-home">
         <div class="home-shell">

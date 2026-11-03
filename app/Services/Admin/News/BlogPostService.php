@@ -5,6 +5,7 @@ namespace App\Services\Admin\News;
 use App\Models\BlogPost;
 use App\Repositories\Contracts\BlogCategoryRepository;
 use App\Repositories\Contracts\BlogPostRepository;
+use App\Services\Content\BlogContentSanitizer;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
@@ -18,6 +19,7 @@ class BlogPostService
     public function __construct(
         private readonly BlogPostRepository $posts,
         private readonly BlogCategoryRepository $categories,
+        private readonly BlogContentSanitizer $contentSanitizer,
     ) {}
 
     public function listing(array $filters): LengthAwarePaginator
@@ -39,7 +41,27 @@ class BlogPostService
 
     public function coverImageUrl(?string $path): ?string
     {
-        return $path ? Storage::disk('public')->url($path) : null;
+        if (! $path) {
+            return null;
+        }
+
+        if (preg_match('~^https?://~i', $path) || str_starts_with($path, '/')) {
+            return $path;
+        }
+
+        return '/storage/'.$path;
+    }
+
+    public function storeContentImage(UploadedFile $image): string
+    {
+        $path = $image->store('blog/content', 'public');
+
+        return '/storage/'.$path;
+    }
+
+    public function safeBody(string $body): string
+    {
+        return $this->contentSanitizer->sanitize($body);
     }
 
     public function find(int $id): BlogPost
@@ -89,7 +111,7 @@ class BlogPostService
             throw $exception;
         }
 
-        if ($oldCover && ($newCover || ($validated['remove_cover_image'] ?? false))) {
+        if ($this->isStoredPath($oldCover) && ($newCover || ($validated['remove_cover_image'] ?? false))) {
             Storage::disk('public')->delete($oldCover);
         }
 
@@ -100,7 +122,7 @@ class BlogPostService
     {
         $cover = $post->cover_image_path;
         $this->posts->delete($post);
-        if ($cover) {
+        if ($this->isStoredPath($cover)) {
             Storage::disk('public')->delete($cover);
         }
     }
@@ -113,7 +135,7 @@ class BlogPostService
             throw ValidationException::withMessages(['ids' => 'Một hoặc nhiều bài viết không còn tồn tại.']);
         }
 
-        $covers = $posts->pluck('cover_image_path')->filter()->all();
+        $covers = $posts->pluck('cover_image_path')->filter(fn (?string $path): bool => $this->isStoredPath($path))->all();
         $this->posts->deleteMany($ids);
         Storage::disk('public')->delete($covers);
 
@@ -133,7 +155,7 @@ class BlogPostService
             'title' => $validated['title'],
             'slug' => $slug,
             'excerpt' => $validated['excerpt'] ?? null,
-            'body' => $validated['body'],
+            'body' => $this->contentSanitizer->sanitize($validated['body']),
             'cover_image_alt' => $validated['cover_image_alt'] ?? null,
             'meta_title' => $validated['meta_title'] ?? null,
             'meta_description' => $validated['meta_description'] ?? null,
@@ -169,5 +191,10 @@ class BlogPostService
         }
 
         return $ids;
+    }
+
+    private function isStoredPath(?string $path): bool
+    {
+        return filled($path) && ! preg_match('~^https?://~i', $path) && ! str_starts_with($path, '/');
     }
 }

@@ -7,6 +7,8 @@ services:
         WWWUSER: "${WWWUSER:-1000}"
         WWWGROUP: "${WWWGROUP:-1000}"
     working_dir: /var/www/html
+    environment:
+      INERTIA_SSR_ENABLED: "${INERTIA_SSR_ENABLED:-false}"
     volumes:
       - ./:/var/www/html
     depends_on:
@@ -56,10 +58,14 @@ services:
     image: node:22-alpine
     environment:
       WAYFINDER_SKIP_GENERATION: "true"
+      INERTIA_SSR_ENABLED: "${INERTIA_SSR_ENABLED:-false}"
+      VITE_PORT: "${VITE_PORT:-5173}"
+      VITE_USE_POLLING: "${VITE_USE_POLLING:-true}"
+      VITE_POLL_INTERVAL: "${VITE_POLL_INTERVAL:-3000}"
     working_dir: /var/www/html
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
     ports:
-      - "${VITE_PORT:-5173}:5173"
+      - "${VITE_PORT:-5173}:${VITE_PORT:-5173}"
     volumes:
       - ./:/var/www/html
       - node_modules:/var/www/html/node_modules

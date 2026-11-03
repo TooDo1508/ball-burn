@@ -18,7 +18,7 @@ class StoreBlogPostRequest extends FormRequest
             'title' => ['required', 'string', 'max:220'],
             'slug' => ['nullable', 'string', 'max:240', 'alpha_dash'],
             'excerpt' => ['nullable', 'string', 'max:1000'],
-            'body' => ['required', 'string'],
+            'body' => ['required', 'string', 'max:20000'],
             'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'cover_image_alt' => ['nullable', 'string', 'max:255'],
             'remove_cover_image' => ['sometimes', 'boolean'],

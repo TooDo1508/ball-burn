@@ -10,6 +10,10 @@ interface BlogPostRepository
 {
     public function paginateForAdmin(array $filters, int $perPage = 5): LengthAwarePaginator;
 
+    public function paginatePublished(int $perPage = 12): LengthAwarePaginator;
+
+    public function findPublishedBySlug(string $slug): BlogPost;
+
     public function stats(): array;
 
     public function findForAdmin(int $id): BlogPost;

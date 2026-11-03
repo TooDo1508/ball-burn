@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\News\BlogCategoryController;
 use App\Http\Controllers\Admin\News\NewsController;
+use App\Http\Controllers\Blog\PublicBlogController;
 use App\Services\Settings\HomePageService;
 
 Route::get('/', function (HomePageService $homePage) {
@@ -31,7 +32,8 @@ Route::get('/about', function () {
         ],
     ]);
 })->name('about');
-Route::view('/blog', 'welcome');
+Route::get('/blog', [PublicBlogController::class, 'indexPage'])->name('blog.index');
+Route::get('/blog/{slug}', [PublicBlogController::class, 'showPage'])->name('blog.show');
 Route::view('/booking', 'welcome');
 Route::view('/contact', 'welcome');
 
@@ -40,6 +42,7 @@ Route::middleware(['auth', 'can:access-admin'])->prefix('admin')->group(function
     Route::get('news', [NewsController::class, 'index'])->name('admin.news.index');
     Route::get('news/create', [NewsController::class, 'create'])->name('admin.news.create');
     Route::post('news', [NewsController::class, 'store'])->name('admin.news.store');
+    Route::post('news/images', [NewsController::class, 'uploadImage'])->middleware('throttle:20,1')->name('admin.news.images');
     Route::delete('news/bulk', [NewsController::class, 'destroyMany'])->name('admin.news.bulk-destroy');
     Route::get('news/categories', [BlogCategoryController::class, 'index'])->name('admin.news.categories.index');
     Route::post('news/categories', [BlogCategoryController::class, 'store'])->name('admin.news.categories.store');

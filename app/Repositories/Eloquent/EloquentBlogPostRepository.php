@@ -41,6 +41,28 @@ class EloquentBlogPostRepository implements BlogPostRepository
             ->withQueryString();
     }
 
+    public function paginatePublished(int $perPage = 12): LengthAwarePaginator
+    {
+        return BlogPost::query()
+            ->with(['author:id,name', 'categories:id,name,slug'])
+            ->where('status', 'PUBLISHED')
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now())
+            ->orderByDesc('published_at')
+            ->paginate($perPage);
+    }
+
+    public function findPublishedBySlug(string $slug): BlogPost
+    {
+        return BlogPost::query()
+            ->with(['author:id,name', 'categories:id,name,slug'])
+            ->where('status', 'PUBLISHED')
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now())
+            ->where('slug', $slug)
+            ->firstOrFail();
+    }
+
     public function stats(): array
     {
         $now = now();
