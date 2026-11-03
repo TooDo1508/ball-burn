@@ -361,3 +361,12 @@ Example CSS variables (keep the tokens centralized in the project's existing glo
 - Use **14px (1rem at the type scale)** as the minimum size for ordinary body copy, form labels, navigation, and buttons. Use 12px only for short captions, eyebrow labels, metadata, and decorative indices that remain secondary and readable.
 - Use the shared responsive heading tokens: H1 `clamp(2.5rem, 5vw, 4.5rem)`, H2 `clamp(2rem, 3.8vw, 3.25rem)`, and H3 `clamp(1.25rem, 2vw, 1.5rem)`. Display hero headings may use the display token, but should remain responsive and must not shrink body text to compensate.
 - Set body line height around 1.65–1.75, keep Vietnamese diacritics supported, and preserve clear contrast. Page-specific CSS may adjust spacing, weight, and color but should consume the shared typography tokens.
+
+## 18. Current implementation status and handoff
+
+- Public pages are implemented in `src/`; authenticated admin pages use Laravel Inertia under `resources/js/`.
+- The public contact form posts inquiries to the separate `contact_messages` workflow. Admins can review/search/filter/paginate inquiries at `/admin/contact-messages`, open a full detail page, and update status plus internal notes. The inbox also provides a quick-edit dialog from each row; successful updates return to the inbox and preserve its current filters/page.
+- Contact details used by the public contact page and shared site areas are managed at `/admin/settings/contact` and stored through the existing `site_settings` workflow. SMTP transport credentials remain environment configuration; the contact email setting is the public venue email address.
+- Appearance preference is `light`, `dark`, or `system`, persisted in local storage and the `appearance` cookie. Admin pages should use semantic surface/text/border utilities (`bg-background`, `bg-card`, `bg-muted`, `text-foreground`, `text-muted-foreground`, `border-border`) so every workflow responds to theme changes; avoid fixed dark-page background and text classes.
+- Theme initialization belongs to `resources/js/composables/useAppearance.ts` and the root `.dark` class/CSS variables in `resources/css/app.css`. Keep the server-rendered appearance cookie and client preference in sync when changing this behavior.
+- Admin contact email alerts, staff assignment, status history, and inquiry retention/cleanup are not implemented yet; contact inquiries remain separate from bookings.

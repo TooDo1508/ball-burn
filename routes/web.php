@@ -5,10 +5,16 @@ use App\Http\Controllers\Admin\News\BlogCategoryController;
 use App\Http\Controllers\Admin\News\NewsController;
 use App\Http\Controllers\Blog\PublicBlogController;
 use App\Http\Controllers\Contact\ContactMessageController;
+use App\Http\Controllers\Contact\ContactPageController;
+use App\Http\Controllers\Admin\Contact\ContactMessageController as AdminContactMessageController;
 use App\Services\Settings\HomePageService;
+use App\Services\Settings\ContactSettingsService;
 
-Route::get('/', function (HomePageService $homePage) {
-    return \Inertia\Inertia::render('Home', ['content' => $homePage->content()]);
+Route::get('/', function (HomePageService $homePage, ContactSettingsService $contactSettings) {
+    return \Inertia\Inertia::render('Home', [
+        'content' => $homePage->content(),
+        'contactInfo' => $contactSettings->publicSettings(),
+    ]);
 })->name('home');
 
 Route::get('/about', function () {
@@ -36,11 +42,14 @@ Route::get('/about', function () {
 Route::get('/blog', [PublicBlogController::class, 'indexPage'])->name('blog.index');
 Route::get('/blog/{slug}', [PublicBlogController::class, 'showPage'])->name('blog.show');
 Route::view('/booking', 'welcome');
-Route::view('/contact', 'welcome');
+Route::get('/contact', [ContactPageController::class, 'indexPage'])->name('contact.index');
 Route::post('/contact', [ContactMessageController::class, 'store'])->middleware('throttle:5,1')->name('contact.store');
 
 Route::middleware(['auth', 'can:access-admin'])->prefix('admin')->group(function () {
     Route::inertia('/', 'Dashboard')->name('dashboard');
+    Route::get('contact-messages', [AdminContactMessageController::class, 'index'])->name('admin.contact-messages.index');
+    Route::get('contact-messages/{messageId}', [AdminContactMessageController::class, 'show'])->whereNumber('messageId')->name('admin.contact-messages.show');
+    Route::put('contact-messages/{messageId}', [AdminContactMessageController::class, 'update'])->whereNumber('messageId')->name('admin.contact-messages.update');
     Route::get('news', [NewsController::class, 'index'])->name('admin.news.index');
     Route::get('news/create', [NewsController::class, 'create'])->name('admin.news.create');
     Route::post('news', [NewsController::class, 'store'])->name('admin.news.store');

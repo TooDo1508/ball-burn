@@ -31,6 +31,9 @@
         @elseif (isset($initialBlogPosts))
             <script id="initial-blog-data" type="application/json">{!! json_encode(['type' => 'list', 'posts' => $initialBlogPosts, 'next_page_url' => $initialBlogPostsNextPageUrl ?? null], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
         @endif
+        @isset($initialContactSettings)
+            <script id="initial-contact-settings" type="application/json">{!! json_encode($initialContactSettings, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
+        @endisset
         <div id="app">
             @if (isset($initialBlogPost))
                 <main class="app-container blog-article-page">

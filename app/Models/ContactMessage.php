@@ -13,5 +13,12 @@ class ContactMessage extends Model
         'subject',
         'message',
         'status',
+        'admin_notes',
+        'resolved_at',
     ];
+
+    protected function casts(): array
+    {
+        return ['resolved_at' => 'datetime'];
+    }
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { Home, LayoutGrid, Newspaper, PanelsTopLeft } from '@lucide/vue';
+import { Home, LayoutGrid, Mail, Newspaper, PanelsTopLeft, Settings2 } from '@lucide/vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -27,6 +27,16 @@ const mainNavItems: NavItem[] = [
         title: 'Tin tức (Blog)',
         href: '/admin/news',
         icon: Newspaper,
+    },
+    {
+        title: 'Liên hệ',
+        href: '/admin/contact-messages',
+        icon: Mail,
+    },
+    {
+        title: 'Cài đặt liên hệ',
+        href: '/admin/settings/contact',
+        icon: Settings2,
     },
     {
         title: 'Quản lý trang chủ',
