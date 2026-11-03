@@ -8,6 +8,15 @@ const courts = [
     { number: '02', name: 'Sân đôi ngoài trời', detail: 'Tận hưởng từng đường bóng', image: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=900&q=80' },
     { number: '03', name: 'Sân có mái che', detail: 'Sẵn sàng cho mọi cuộc vui', image: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=900&q=80' },
 ];
+
+const structuredData = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'SportsActivityLocation',
+    name: props.content.site_name,
+    description: props.content.meta_description,
+    image: props.content.og_image,
+    url: '/',
+});
 </script>
 
 <template>
