@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { CalendarRange, Home, LayoutGrid, Mail, Newspaper, PanelsTopLeft, Settings2 } from '@lucide/vue';
+import { CalendarDays, CalendarRange, Home, LayoutGrid, Mail, Newspaper, PanelsTopLeft, Settings2 } from '@lucide/vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -32,6 +32,11 @@ const mainNavItems: NavItem[] = [
         title: 'Quản lý sân',
         href: '/admin/courts',
         icon: CalendarRange,
+    },
+    {
+        title: 'Quản lý đặt sân',
+        href: '/admin/bookings',
+        icon: CalendarDays,
     },
     {
         title: 'Liên hệ',

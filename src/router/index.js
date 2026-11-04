@@ -18,6 +18,7 @@ const router = createRouter({
                 { path: 'about', name: 'about', component: AboutPage },
                 { path: 'blog', name: 'blog', component: BlogPage },
                 { path: 'blog/:slug', name: 'blog-article', component: BlogArticlePage },
+                { path: 'booking/status/:token', name: 'booking-status', component: BookingPage },
                 { path: 'booking', name: 'booking', component: BookingPage },
                 { path: 'contact', name: 'contact', component: ContactPage },
             ],

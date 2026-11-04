@@ -1,11 +1,13 @@
 <?php
 
 use App\Http\Controllers\Admin\Booking\AdminBookingController;
+use App\Http\Controllers\Admin\Booking\AdminBookingManagementController;
 use App\Http\Controllers\Admin\Contact\ContactMessageController as AdminContactMessageController;
 use App\Http\Controllers\Admin\Court\CourtAdminController;
 use App\Http\Controllers\Admin\Court\CourtClosureController;
 use App\Http\Controllers\Admin\News\BlogCategoryController;
 use App\Http\Controllers\Admin\News\NewsController;
+use App\Http\Controllers\Booking\GuestBookingController;
 use App\Http\Controllers\Blog\PublicBlogController;
 use App\Http\Controllers\Contact\ContactMessageController;
 use App\Http\Controllers\Contact\ContactPageController;
@@ -45,13 +47,21 @@ Route::get('/about', function () {
 })->name('about');
 Route::get('/blog', [PublicBlogController::class, 'indexPage'])->name('blog.index');
 Route::get('/blog/{slug}', [PublicBlogController::class, 'showPage'])->name('blog.show');
-Route::view('/booking', 'welcome');
+Route::get('/booking', [GuestBookingController::class, 'indexPage'])->name('booking.index');
+Route::get('/booking/data', [GuestBookingController::class, 'availability'])->name('booking.availability');
+Route::post('/booking', [GuestBookingController::class, 'store'])->middleware('throttle:5,1')->name('booking.store');
+Route::get('/booking/status/{token}/data', [GuestBookingController::class, 'status'])->whereAlphaNumeric('token')->name('booking.status');
+Route::get('/booking/status/{token}', [GuestBookingController::class, 'statusPage'])->whereAlphaNumeric('token')->name('booking.status.page');
 Route::get('/contact', [ContactPageController::class, 'indexPage'])->name('contact.index');
 Route::post('/contact', [ContactMessageController::class, 'store'])->middleware('throttle:5,1')->name('contact.store');
 
 Route::middleware(['auth', 'can:access-admin'])->prefix('admin')->group(function () {
     Route::inertia('/', 'Dashboard')->name('dashboard');
     Route::post('bookings', [AdminBookingController::class, 'store'])->name('admin.bookings.store');
+    Route::get('bookings', [AdminBookingManagementController::class, 'index'])->name('admin.bookings.index');
+    Route::get('bookings/{bookingId}', [AdminBookingManagementController::class, 'show'])->whereNumber('bookingId')->name('admin.bookings.show');
+    Route::post('bank-transfers', [AdminBookingManagementController::class, 'storeTransfer'])->name('admin.bank-transfers.store');
+    Route::post('bank-transfers/{transactionId}/match', [AdminBookingManagementController::class, 'matchTransfer'])->whereNumber('transactionId')->name('admin.bank-transfers.match');
     Route::get('courts', [CourtAdminController::class, 'index'])->name('admin.courts.index');
     Route::post('courts', [CourtAdminController::class, 'store'])->name('admin.courts.store');
     Route::put('courts/{courtId}', [CourtAdminController::class, 'update'])->whereNumber('courtId')->name('admin.courts.update');

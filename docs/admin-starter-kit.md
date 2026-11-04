@@ -56,6 +56,7 @@ Node 22 is installed in `/opt/node22`, linked from `/usr/local/bin` in WSL.
 
 - `/admin/login`: email/password sign-in with rate limiting.
 - `/admin`: starter dashboard; requires an `admin` or `staff` role.
+- `/admin/bookings`: searchable and filterable booking list, booking detail, payment status, and manual bank-transfer reconciliation queue.
 - `/admin/news`: article management with search, status/category/date filters, pagination, draft/published/scheduled/archived states, preview, image upload and bulk deletion.
 - `/admin/news/categories`: create, edit and delete blog categories.
 - `/admin/settings/profile`: update the current user's name and email.
@@ -69,8 +70,11 @@ automatically. `role` is not mass assignable. Future management routes must use
 the admin route group and their own action-specific policies; the access gate
 alone does not distinguish staff permissions from administrator permissions.
 
-The dashboard is a starting screen; court and booking management are still
-unimplemented. News data uses the existing `blog_posts`, `blog_categories` and
+The dashboard is a starting screen. Court management is implemented at
+`/admin/courts`; booking list/detail and manual bank-transfer reconciliation
+are implemented at `/admin/bookings`. A payment provider adapter, QR creation,
+verified payment webhooks, refunds and late-payment resolution are not yet
+implemented. News data uses the existing `blog_posts`, `blog_categories` and
 `blog_post_categories` tables. A versioned migration adds article SEO metadata
 and image alt text. Use HTTPS and secure session cookies in production.
 Configure mail before relying on password recovery.

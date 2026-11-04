@@ -14,6 +14,10 @@ interface CourtRepository
 
     public function findActiveBySlug(string $slug): ?Court;
 
+    public function findActiveById(int $id): ?Court;
+
+    public function allActiveForBooking(): Collection;
+
     public function allForAdmin(): Collection;
 
     public function findForAdmin(int $id): Court;

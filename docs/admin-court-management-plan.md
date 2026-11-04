@@ -45,3 +45,12 @@ Xây dựng màn hình vận hành sân trong admin dựa trên `Dark-Themed Cou
 2. Thêm lịch sử thay đổi giá, khóa lịch và audit log đầy đủ cho thao tác nhạy cảm.
 3. Bổ sung quy trình xử lý booking khi admin cần khóa một khoảng đã có khách đặt.
 4. Xác nhận chính sách thanh toán/thu tiền cho booking do admin tạo hộ.
+
+## Ghi chú tránh màn hình booking trắng
+
+- Trang `/booking` được render ở client: `welcome.blade.php` để `#app` trống và `src/app.js` mount Vue Router. Vì vậy build thành công hoặc API trả `200` riêng lẻ chưa chứng minh giao diện đã mount.
+- Lỗi trắng vừa tái hiện được trên trình duyệt: route booking tải bất đồng bộ nhưng `RouterView` không có nội dung dự phòng, nên `#app` trống trong lúc chờ component. Blade nay hiển thị trạng thái tải ban đầu; `src/App.vue` cũng hiển thị trạng thái tải trong khi route component chưa sẵn sàng. Không trì hoãn `mount()` bằng `router.isReady()`; việc đó khiến trang tiếp tục mắc ở trạng thái chờ trong kiểm tra runtime.
+- Một lỗi khởi tạo trước đây do gọi `venueDate()` khi `venueTimezone` chưa được khởi tạo (Temporal Dead Zone). Khi thêm biến khởi tạo ở đầu `<script setup>`, phải khai báo giá trị phụ thuộc trước giá trị gọi hàm; `vue-tsc` và Vite build không phát hiện được lỗi thứ tự runtime này.
+- `src/app.js` bắt lỗi khởi chạy/render của Vue và lỗi tải route. Khi lỗi xảy ra ở `/booking`, trang hiện thông báo có nút tải lại thay vì giữ màn hình trắng; nguyên nhân chi tiết được ghi trong console.
+- Khi thay đổi luồng booking, kiểm tra trực tiếp `/booking` trong trình duyệt: xác nhận tiêu đề và nội dung đã render, không chỉ `#app`; xác nhận `/booking/data?date=YYYY-MM-DD` trả JSON thành công; kiểm tra console không có `ReferenceError`, lỗi render hoặc lỗi tải chunk. Chuyển sang chế độ nhiều sân, cuộn ma trận, chọn ô và gửi booking để kiểm tra lại cả luồng tương tác.
+- Nếu trang chỉ hiện trạng thái tải, kiểm tra request dữ liệu và trạng thái `loading`; nếu thông báo lỗi khởi chạy xuất hiện, dùng lỗi console để sửa nguyên nhân rồi lặp lại kiểm tra trên trình duyệt trước khi bàn giao. Build/type-check là bước bổ sung, không thay cho kiểm tra runtime.

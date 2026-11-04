@@ -39,4 +39,9 @@ class Booking extends Model
     {
         return $this->hasMany(BookingStatusHistory::class)->orderBy('created_at');
     }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class)->orderByDesc('created_at');
+    }
 }

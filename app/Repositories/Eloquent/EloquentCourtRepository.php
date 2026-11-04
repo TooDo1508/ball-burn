@@ -26,6 +26,19 @@ class EloquentCourtRepository implements CourtRepository
             ->with('images', 'operatingHours', 'priceRules')->first();
     }
 
+    public function findActiveById(int $id): ?Court
+    {
+        return Court::query()->where('is_active', true)->whereKey($id)
+            ->with('images', 'operatingHours', 'priceRules')->first();
+    }
+
+    public function allActiveForBooking(): Collection
+    {
+        return Court::query()->where('is_active', true)
+            ->with(['images', 'operatingHours', 'priceRules'])
+            ->orderBy('sort_order')->orderBy('id')->get();
+    }
+
     public function allForAdmin(): Collection
     {
         return Court::query()

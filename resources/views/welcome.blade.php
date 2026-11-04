@@ -4,6 +4,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="referrer" content="no-referrer">
+        <meta name="venue-timezone" content="{{ config('venue.timezone', 'Asia/Ho_Chi_Minh') }}">
 
         <title>{{ $seo['title'] ?? config('app.name', 'BALLBURN PickleClub & Bistro') }}</title>
         @if (isset($seo))
@@ -35,7 +37,12 @@
             <script id="initial-contact-settings" type="application/json">{!! json_encode($initialContactSettings, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
         @endisset
         <div id="app">
-            @if (isset($initialBlogPost))
+            @if (request()->is('booking', 'booking/status/*'))
+                <main role="status" aria-live="polite" style="min-height:45vh;display:grid;place-content:center;gap:8px;padding:40px 20px;text-align:center;color:#171717">
+                    <strong>Đang mở lịch đặt sân…</strong>
+                    <span style="font-size:14px;color:#666">Đang tải danh sách sân và khung giờ.</span>
+                </main>
+            @elseif (isset($initialBlogPost))
                 <main class="app-container blog-article-page">
                     <article class="blog-article">
                         <nav class="blog-breadcrumb" aria-label="Điều hướng"><a href="/">Trang chủ</a><span aria-hidden="true">/</span><a href="/blog">Tin tức</a><span aria-hidden="true">/</span><span>{{ $initialBlogPost['title'] }}</span></nav>
