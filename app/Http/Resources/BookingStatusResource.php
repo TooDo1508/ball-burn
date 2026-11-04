@@ -16,7 +16,7 @@ class BookingStatusResource extends ApiResponse
             'schedule' => [
                 'starts_at' => $this->starts_at,
                 'ends_at' => $this->ends_at,
-                'timezone' => config('app.timezone'),
+                'timezone' => config('venue.timezone'),
             ],
             'amount' => [
                 'total' => $this->total_amount,

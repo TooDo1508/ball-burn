@@ -16,14 +16,14 @@ H1/H2/H3 scale documented in `AGENTS.md`.
 Backend feature code follows Controller -> Service -> Repository: controllers
 validate/authorize requests and format Inertia/API responses, services hold
 business workflows, and repositories own database queries and persistence.
-The Docker PHP-FPM image and Composer platform target PHP 8.3; Symfony
+The Docker PHP-FPM image and Composer platform target PHP 8.4; Symfony
 dependencies are pinned to compatible 7.4 versions.
 
 ## Setup in WSL
 
 ```bash
 cd /mnt/d/ball-burn
-php -v # PHP 8.3
+php -v # PHP 8.4
 node -v # Node 22.12 or newer
 composer install
 npm ci
@@ -46,11 +46,9 @@ Open http://localhost:8000/admin/login. `admin:create` prompts for the name,
 unique email and a confirmed password without echoing the password or placing
 it in shell history. No default administrator or real password is seeded.
 
-The current WSL PHP 8.3 installation is compiled from the official PHP source
-into `/opt/php83`, with config at `/opt/php83/etc/php.ini`. `/usr/bin/php` uses
-that binary through `update-alternatives`. PHP 8.1 remains installed. This
-source installation needs manual PHP security updates; it is not managed by
-APT. Windows XAMPP PHP is independent of WSL PHP.
+If running PHP directly in WSL or Windows, install and select PHP 8.4 for the
+CLI before using Composer or Artisan. Docker Compose builds the project's
+authoritative PHP 8.4 runtime and avoids depending on a host PHP installation.
 
 Node 22 is installed in `/opt/node22`, linked from `/usr/local/bin` in WSL.
 

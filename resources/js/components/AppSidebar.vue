@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { Home, LayoutGrid, Mail, Newspaper, PanelsTopLeft, Settings2 } from '@lucide/vue';
+import { CalendarRange, Home, LayoutGrid, Mail, Newspaper, PanelsTopLeft, Settings2 } from '@lucide/vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -27,6 +27,11 @@ const mainNavItems: NavItem[] = [
         title: 'Tin tức (Blog)',
         href: '/admin/news',
         icon: Newspaper,
+    },
+    {
+        title: 'Quản lý sân',
+        href: '/admin/courts',
+        icon: CalendarRange,
     },
     {
         title: 'Liên hệ',

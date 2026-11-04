@@ -1,17 +1,21 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\Booking\AdminBookingController;
+use App\Http\Controllers\Admin\Contact\ContactMessageController as AdminContactMessageController;
+use App\Http\Controllers\Admin\Court\CourtAdminController;
+use App\Http\Controllers\Admin\Court\CourtClosureController;
 use App\Http\Controllers\Admin\News\BlogCategoryController;
 use App\Http\Controllers\Admin\News\NewsController;
 use App\Http\Controllers\Blog\PublicBlogController;
 use App\Http\Controllers\Contact\ContactMessageController;
 use App\Http\Controllers\Contact\ContactPageController;
-use App\Http\Controllers\Admin\Contact\ContactMessageController as AdminContactMessageController;
-use App\Services\Settings\HomePageService;
 use App\Services\Settings\ContactSettingsService;
+use App\Services\Settings\HomePageService;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', function (HomePageService $homePage, ContactSettingsService $contactSettings) {
-    return \Inertia\Inertia::render('Home', [
+    return Inertia::render('Home', [
         'content' => $homePage->content(),
         'contactInfo' => $contactSettings->publicSettings(),
     ]);
@@ -47,6 +51,12 @@ Route::post('/contact', [ContactMessageController::class, 'store'])->middleware(
 
 Route::middleware(['auth', 'can:access-admin'])->prefix('admin')->group(function () {
     Route::inertia('/', 'Dashboard')->name('dashboard');
+    Route::post('bookings', [AdminBookingController::class, 'store'])->name('admin.bookings.store');
+    Route::get('courts', [CourtAdminController::class, 'index'])->name('admin.courts.index');
+    Route::post('courts', [CourtAdminController::class, 'store'])->name('admin.courts.store');
+    Route::put('courts/{courtId}', [CourtAdminController::class, 'update'])->whereNumber('courtId')->name('admin.courts.update');
+    Route::post('court-closures', [CourtClosureController::class, 'store'])->name('admin.court-closures.store');
+    Route::delete('court-closures/{closureId}', [CourtClosureController::class, 'destroy'])->whereNumber('closureId')->name('admin.court-closures.destroy');
     Route::get('contact-messages', [AdminContactMessageController::class, 'index'])->name('admin.contact-messages.index');
     Route::get('contact-messages/{messageId}', [AdminContactMessageController::class, 'show'])->whereNumber('messageId')->name('admin.contact-messages.show');
     Route::put('contact-messages/{messageId}', [AdminContactMessageController::class, 'update'])->whereNumber('messageId')->name('admin.contact-messages.update');

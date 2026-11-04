@@ -2,12 +2,12 @@
 Địa chỉ: 614 Đ. Lạc Long Quân, Tây Hồ, Hà Nội 100000
 Số điện thoại: 0886 688 614
 Giờ hoạt động: 
-5:00 - 24:00
+5:00 - 23:00
 Tỉnh: Hà Nội
 ig: https://www.instagram.com/ballburnpickleclubbistro
 fb: https://www.facebook.com/ballburnvietnam
 
-8 sân 
+8 sân: 3 sân trung tâm và 5 sân thường.
 
 BẢNG GIÁ CHÀO HÈ 2026 CHÍNH THỨC LÊN SÓNG ‼️
 💥 Ưu đãi giờ vàng 340k chỉ còn #299k 
@@ -39,9 +39,9 @@ Thông tin Sân Ballburn Pickleball:
 
 - Link Google Maps: https://maps.app.goo.gl/cLh8vZ8LKLJBdDAo9
 
-- Quy mô: 8 sân 
+- Quy mô: 8 sân (3 sân trung tâm, 5 sân thường)
 
-- Thời gian hoạt động: 5h - 24h
+- Thời gian hoạt động: 5h - 23h
 
 Sân Ballburn Pickleball tại quận Tây Hồ
 
@@ -49,6 +49,21 @@ Xem thêm: Review sân Pickleball Cầu Giấy chất lượng đáng để tr�
 
 2. Chi phí thuê sân Ballburn Pickleball
 Mức giá thuê sân tại BALLBURN Pickle Club & Bistro dao động khoảng 140.000đ - 400.000đ/giờ, tùy vào khung giờ trong ngày cũng như thời điểm trong tuần. Ngoài ra, sân còn triển khai nhiều chương trình ưu đãi giảm giá theo từng thời điểm hoặc dành cho nhóm khách đặt sân số lượng lớn, giúp người chơi tối ưu chi phí đáng kể. Để cập nhật mức giá chính xác và mới nhất, bạn nên liên hệ trực tiếp với sân thông qua hotline hoặc fanpage chính thức để được tư vấn chi tiết và hỗ trợ đặt lịch nhanh chóng.
+
+Bảng giá áp dụng từ 01/04/2026:
+
+| Ngày | Khung giờ | Sân thường | Sân trung tâm |
+|---|---:|---:|---:|
+| Thứ 2–Thứ 6 | 05:00–08:00 | 140.000đ/giờ | 250.000đ/giờ |
+| Thứ 2–Thứ 6 | 08:00–12:00 | 190.000đ/giờ | 250.000đ/giờ |
+| Thứ 2–Thứ 6 | 12:00–14:00 | 140.000đ/giờ | 250.000đ/giờ |
+| Thứ 2–Thứ 6 | 14:00–16:00 | 220.000đ/giờ | 300.000đ/giờ |
+| Thứ 2–Thứ 6 | 16:00–23:00 | 299.000đ/giờ | 400.000đ/giờ |
+| Thứ 7–Chủ nhật | 05:00–08:00 | 220.000đ/giờ | 300.000đ/giờ |
+| Thứ 7–Chủ nhật | 08:00–12:00 | 250.000đ/giờ | 350.000đ/giờ |
+| Thứ 7–Chủ nhật | 12:00–14:00 | 250.000đ/giờ | 300.000đ/giờ |
+| Thứ 7–Chủ nhật | 14:00–16:00 | 270.000đ/giờ | 350.000đ/giờ |
+| Thứ 7–Chủ nhật | 16:00–23:00 | 299.000đ/giờ | 400.000đ/giờ |
 
 Bảng giá thuê sân Ballburn Pickleball cập nhật mới nhất
 

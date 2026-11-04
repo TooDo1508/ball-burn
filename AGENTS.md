@@ -281,7 +281,6 @@ Do not invent answers for these:
 - Is MySQL the confirmed production database?
 - Can a customer book multiple consecutive 30-minute slots in one booking?
 - What are the cancellation and refund policies?
-- Which timezone and operating hours should the venue use?
 - Is phone number optional on the contact form?
 - Should the admin receive email alerts for contact submissions?
 - Which frontend stack and admin UI, if any, are already chosen?
@@ -370,3 +369,8 @@ Example CSS variables (keep the tokens centralized in the project's existing glo
 - Appearance preference is `light`, `dark`, or `system`, persisted in local storage and the `appearance` cookie. Admin pages should use semantic surface/text/border utilities (`bg-background`, `bg-card`, `bg-muted`, `text-foreground`, `text-muted-foreground`, `border-border`) so every workflow responds to theme changes; avoid fixed dark-page background and text classes.
 - Theme initialization belongs to `resources/js/composables/useAppearance.ts` and the root `.dark` class/CSS variables in `resources/css/app.css`. Keep the server-rendered appearance cookie and client preference in sync when changing this behavior.
 - Admin contact email alerts, staff assignment, status history, and inquiry retention/cleanup are not implemented yet; contact inquiries remain separate from bookings.
+- Admin court operations are available at `/admin/courts`. The page follows `docs/Dark-Themed Court Booking Dashboard.png` with a 30-minute day grid, court CRUD, tiered price management, weekly operating hours, primary image upload, active/inactive state, quick schedule locks, and admin-assisted booking from an available slot. Implementation details and remaining phases are tracked in `docs/admin-court-management-plan.md`.
+- Court schedule queries include `CONFIRMED`, `COMPLETED`, and non-expired `PENDING_PAYMENT` bookings. Expired pending bookings do not occupy the admin grid. Creating a closure locks the court row, then rejects overlap with an effective booking or another closure before insert.
+- Venue operations are confirmed as 05:00–23:00 in `Asia/Ho_Chi_Minh`. Keep `APP_TIMEZONE=UTC`, interpret/display booking input with `VENUE_TIMEZONE`, and persist booking/closure datetimes in UTC.
+- The current venue catalog contains 8 courts: courts 1–3 are `CENTER`, courts 4–8 are `REGULAR`. `CourtCatalogSeeder` idempotently maintains their descriptions, daily hours, primary images, and weekday/weekend price tiers from the BALLBURN price sheet effective 2026-04-01.
+- Admin-assisted bookings are created as `CONFIRMED`, calculate their total from server-side price rules, record an `ADMIN` status-history entry, and use the same court-row lock plus overlap recheck required for public booking creation.

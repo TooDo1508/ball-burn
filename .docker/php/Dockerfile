@@ -1,4 +1,4 @@
-FROM php:8.3-fpm-bookworm
+FROM php:8.4-fpm-bookworm
 
 ARG WWWUSER=1000
 ARG WWWGROUP=1000
@@ -16,7 +16,6 @@ RUN apt-get update \
         exif \
         gd \
         intl \
-        opcache \
         pcntl \
         pdo_mysql \
         zip \
