@@ -8,6 +8,10 @@ defineProps({
     items: { type: Array, default: () => [] },
     submitting: { type: Boolean, default: false },
     complete: { type: Boolean, default: false },
+    buttonLabel: { type: String, default: 'Tiếp tục' },
+    buttonDisabled: { type: Boolean, default: false },
+    note: { type: String, default: 'Chọn sân, ngày và khung giờ bạn muốn đặt.' },
+    completeLabel: { type: String, default: 'Đã gửi yêu cầu booking' },
 });
 const emit = defineEmits(['submit']);
 
@@ -41,10 +45,10 @@ function formatDate(value) {
             <div><dt>Thời gian</dt><dd>{{ items.length ? `${items.reduce((count, item) => count + item.slot_count, 0)} khung giờ · ${items.length} lượt` : startsAt && endsAt ? `${startsAt} – ${endsAt}` : 'Chưa chọn giờ' }}</dd></div>
         </dl>
         <div class="booking-summary-total"><span>Tổng tiền</span><strong>{{ court ? formatMoney(total, court.currency) : items.length ? formatMoney(total, items[0].currency) : '—' }}</strong></div>
-        <p class="booking-summary-note">Xác nhận ngay, chưa cần thanh toán trực tuyến. Thông tin thanh toán sẽ được bổ sung sau.</p>
-        <button v-if="!complete" type="button" class="button button--primary booking-submit" :disabled="submitting" @click="emit('submit')">
-            {{ submitting ? 'Đang xác nhận…' : 'Xác nhận đặt sân' }} <span aria-hidden="true">→</span>
+        <p class="booking-summary-note">{{ note }}</p>
+        <button v-if="!complete" type="button" class="button button--primary booking-submit" :disabled="submitting || buttonDisabled" @click="emit('submit')">
+            {{ submitting ? 'Đang xử lý…' : buttonLabel }} <span aria-hidden="true">→</span>
         </button>
-        <div v-else class="booking-confirmed-note"><span aria-hidden="true">✓</span><strong>Đặt sân đã được xác nhận</strong></div>
+        <div v-else class="booking-confirmed-note"><span aria-hidden="true">✓</span><strong>{{ completeLabel }}</strong></div>
     </aside>
 </template>

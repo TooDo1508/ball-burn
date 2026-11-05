@@ -16,13 +16,14 @@ class StoreGuestBookingRequest extends FormRequest
     {
         return [
             'date' => ['required', 'date_format:Y-m-d'],
+            'hold_token' => ['required', 'regex:/^[A-Za-z0-9]{64}$/'],
             'slots' => ['required', 'array', 'min:1', 'max:64'],
             'slots.*.court_id' => ['required', 'integer', 'exists:courts,id'],
             'slots.*.starts_at' => ['required', 'date_format:H:i'],
             'slots.*.ends_at' => ['required', 'date_format:H:i'],
             'customer_name' => ['required', 'string', 'max:150'],
-            'customer_email' => ['required', 'email:rfc', 'max:255'],
-            'customer_phone' => ['nullable', 'string', 'max:30'],
+            'customer_email' => ['nullable', 'email:rfc', 'max:255'],
+            'customer_phone' => ['required', 'string', 'max:30'],
             'customer_note' => ['nullable', 'string', 'max:1000'],
         ];
     }

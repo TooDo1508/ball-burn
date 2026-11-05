@@ -3,6 +3,7 @@
 namespace App\Repositories\Eloquent;
 
 use App\Models\Booking;
+use App\Models\BookingHold;
 use App\Models\Court;
 use App\Models\CourtClosure;
 use App\Repositories\Contracts\CourtRepository;
@@ -91,15 +92,16 @@ class EloquentCourtRepository implements CourtRepository
         return Booking::query()
             ->where('starts_at', '<', $endsAt)
             ->where('ends_at', '>', $startsAt)
-            ->where(function ($query): void {
-                $query->whereIn('status', ['CONFIRMED', 'COMPLETED'])
-                    ->orWhere(function ($query): void {
-                        $query->where('status', 'PENDING_PAYMENT')
-                            ->where('payment_deadline_at', '>', now());
-                    });
-            })
+            ->whereHas('order', fn ($orders) => $orders->where('status', 'PAID')
+                ->orWhere(fn ($pending) => $pending->where('status', 'PENDING_PAYMENT')->where('payment_deadline_at', '>', now())))
             ->orderBy('starts_at')
             ->get();
+    }
+
+    public function holdsBetween(CarbonImmutable $startsAt, CarbonImmutable $endsAt, ?string $exceptTokenHash = null): Collection
+    {
+        return BookingHold::query()->where('starts_at', '<', $endsAt)->where('ends_at', '>', $startsAt)
+            ->where('expires_at', '>', now())->when($exceptTokenHash, fn ($q) => $q->where('token_hash', '<>', $exceptTokenHash))->get();
     }
 
     public function closuresBetween(CarbonImmutable $startsAt, CarbonImmutable $endsAt): Collection
@@ -126,13 +128,7 @@ class EloquentCourtRepository implements CourtRepository
                 ->where('court_id', $courtId)
                 ->where('starts_at', '<', $endsAt)
                 ->where('ends_at', '>', $startsAt)
-                ->where(function ($query): void {
-                    $query->whereIn('status', ['CONFIRMED', 'COMPLETED'])
-                        ->orWhere(function ($query): void {
-                            $query->where('status', 'PENDING_PAYMENT')
-                                ->where('payment_deadline_at', '>', now());
-                        });
-                })
+                ->whereHas('order', fn ($orders) => $orders->where('status', 'PAID')->orWhere(fn ($pending) => $pending->where('status', 'PENDING_PAYMENT')->where('payment_deadline_at', '>', now())))
                 ->exists();
 
             if ($closureExists || $bookingExists) {

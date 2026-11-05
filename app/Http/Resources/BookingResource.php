@@ -11,7 +11,7 @@ class BookingResource extends ApiResponse
     {
         return [
             'code' => $this->booking_code,
-            'status' => $this->status,
+            'status' => $this->order?->status,
             'court' => $this->whenLoaded('court', fn () => [
                 'name' => $this->court->name,
                 'slug' => $this->court->slug,
@@ -27,9 +27,7 @@ class BookingResource extends ApiResponse
                 'total' => $this->total_amount,
                 'currency' => $this->currency,
             ],
-            'payment_deadline_at' => $this->payment_deadline_at,
-            'confirmed_at' => $this->confirmed_at,
-            'cancelled_at' => $this->cancelled_at,
+            'payment_deadline_at' => $this->order?->payment_deadline_at,
         ];
     }
 }

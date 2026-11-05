@@ -28,6 +28,8 @@ interface CourtRepository
 
     public function bookingsBetween(CarbonImmutable $startsAt, CarbonImmutable $endsAt): Collection;
 
+    public function holdsBetween(CarbonImmutable $startsAt, CarbonImmutable $endsAt, ?string $exceptTokenHash = null): Collection;
+
     public function closuresBetween(CarbonImmutable $startsAt, CarbonImmutable $endsAt): Collection;
 
     public function createClosure(int $courtId, CarbonImmutable $startsAt, CarbonImmutable $endsAt, ?string $reason, int $userId): CourtClosure;

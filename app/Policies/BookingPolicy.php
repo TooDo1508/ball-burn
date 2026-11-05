@@ -17,13 +17,19 @@ class BookingPolicy
         return $user->canAccessAdmin();
     }
 
+    public function updateStatus(User $user, Booking $booking): bool
+    {
+        return $user->canAccessAdmin();
+    }
+
+    public function delete(User $user, Booking $booking): bool
+    {
+        return $user->canAccessAdmin();
+    }
+
     public function create(User $user): bool
     {
         return $user->canAccessAdmin();
     }
 
-    public function reconcilePayment(User $user): bool
-    {
-        return $user->canAccessAdmin();
-    }
 }

@@ -53,7 +53,6 @@ class AdminBookingService
                 'total_amount' => $amount,
                 'currency' => $court->currency,
                 'customer_note' => $validated['customer_note'] ?? null,
-                'payment_deadline_at' => null,
             ],
             $userId,
         );

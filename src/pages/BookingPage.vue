@@ -1,13 +1,13 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { computed, onUnmounted, reactive, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import QRCode from 'qrcode';
 import BookingCalendar from '../components/booking/BookingCalendar.vue';
 import BookingStepper from '../components/booking/BookingStepper.vue';
 import BookingSummary from '../components/booking/BookingSummary.vue';
 import TimeSlotGrid from '../components/booking/TimeSlotGrid.vue';
 
 const route = useRoute();
-const router = useRouter();
 const venueTimezone = document.querySelector('meta[name="venue-timezone"]')?.getAttribute('content') ?? 'Asia/Ho_Chi_Minh';
 const data = ref(null);
 const selectedCourtId = ref(null);
@@ -19,9 +19,21 @@ const loading = ref(false);
 const submitting = ref(false);
 const pageError = ref('');
 const bookingStatus = ref(null);
+const currentStep = ref(1);
+const paymentSession = ref(null);
+const statusToken = ref('');
+const qrCodeDataUrl = ref('');
+const paymentSecondsLeft = ref(300);
+const holdToken = ref('');
+const holdExpiresAt = ref(null);
+const receiptFile = ref(null);
+const receiptPreviewUrl = ref('');
 const fieldErrors = ref({});
 const form = reactive({ customer_name: '', customer_email: '', customer_phone: '', customer_note: '' });
 let availabilityRequest = 0;
+let paymentCountdownTimer = null;
+let holdSyncQueue = Promise.resolve();
+let holdSelectionVersion = 0;
 
 const selectedCourt = computed(() => data.value?.courts?.find((court) => court.id === selectedCourtId.value) ?? null);
 const slots = computed(() => data.value?.slots ?? []);
@@ -62,13 +74,98 @@ const summaryItems = computed(() => selectedBookingSegments.value.map((segment) 
     currency: segment.court.currency,
     slot_count: segment.slot_count,
 })));
-const activeStep = computed(() => bookingStatus.value ? 4 : selectedCourt.value ? (selectedBookingSegments.value.length ? (form.customer_name && form.customer_email ? 3 : 2) : 2) : 1);
+const activeStep = computed(() => bookingStatus.value ? 4 : currentStep.value);
+const paymentExpired = computed(() => Boolean(paymentSession.value) && paymentSecondsLeft.value <= 0);
+const paymentCountdownLabel = computed(() => `${String(Math.floor(paymentSecondsLeft.value / 60)).padStart(2, '0')}:${String(paymentSecondsLeft.value % 60).padStart(2, '0')}`);
+const summaryActionLabel = computed(() => ({ 1: 'Tiếp tục: thông tin', 2: 'Tiếp tục: thanh toán', 3: 'Gửi ảnh chuyển khoản' })[currentStep.value] ?? 'Hoàn tất');
+const summaryActionDisabled = computed(() => currentStep.value === 1
+    ? selectedBookingSegments.value.length === 0
+    : currentStep.value === 2
+        ? !form.customer_name.trim() || !form.customer_phone.trim() || (Boolean(form.customer_email.trim()) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.customer_email.trim()))
+        : currentStep.value === 3
+            ? !receiptFile.value || paymentExpired.value
+            : true);
+const summaryNote = computed(() => currentStep.value === 1
+    ? 'Chọn sân, ngày và các khung giờ bạn muốn đặt.'
+    : currentStep.value === 2
+        ? 'Nhập thông tin liên hệ để xem mã thanh toán. Đơn chưa được tạo ở bước này.'
+        : 'Gửi ảnh chuyển khoản trước khi mã thanh toán hết hạn. Booking chỉ được xác nhận sau khi nhân viên đối soát.');
+
+watch(() => [paymentSession.value?.payment_reference, paymentSession.value?.total_amount, paymentSession.value?.currency], async ([reference, total, currency]) => {
+    qrCodeDataUrl.value = '';
+    if (!reference) return;
+    const payload = `BALLBURN|${reference}|${total}|${currency}`;
+    try {
+        qrCodeDataUrl.value = await QRCode.toDataURL(payload, {
+            width: 260,
+            margin: 2,
+            color: { dark: '#123b2d', light: '#ffffff' },
+        });
+    } catch {
+        pageError.value = 'Không thể tạo mã QR. Vui lòng tải lại trang và thử lại.';
+    }
+});
 
 function venueDate() {
     const parts = new Intl.DateTimeFormat('en', { timeZone: venueTimezone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
     const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
     return `${values.year}-${values.month}-${values.day}`;
 }
+
+function startPaymentCountdown(deadline) {
+    if (paymentCountdownTimer) window.clearInterval(paymentCountdownTimer);
+    const updateRemaining = () => {
+        paymentSecondsLeft.value = Math.max(0, Math.ceil((Date.parse(deadline) - Date.now()) / 1000));
+        if (paymentSecondsLeft.value === 0 && paymentCountdownTimer) {
+            window.clearInterval(paymentCountdownTimer);
+            paymentCountdownTimer = null;
+        }
+    };
+    updateRemaining();
+    paymentCountdownTimer = window.setInterval(updateRemaining, 1000);
+}
+
+function chooseReceipt(event) {
+    const file = event.target.files?.[0] ?? null;
+    receiptFile.value = file;
+    fieldErrors.value.proof_image = undefined;
+    if (receiptPreviewUrl.value) URL.revokeObjectURL(receiptPreviewUrl.value);
+    receiptPreviewUrl.value = file ? URL.createObjectURL(file) : '';
+}
+
+function createStatusToken() {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let token = '';
+    while (token.length < 64) {
+        const bytes = crypto.getRandomValues(new Uint8Array(80));
+        for (const byte of bytes) {
+            if (byte >= 248) continue;
+            token += alphabet[byte % alphabet.length];
+            if (token.length === 64) break;
+        }
+    }
+    return token;
+}
+
+function clearPaymentSelection() {
+    paymentSession.value = null;
+    statusToken.value = '';
+    qrCodeDataUrl.value = '';
+    paymentSecondsLeft.value = 300;
+    if (paymentCountdownTimer) window.clearInterval(paymentCountdownTimer);
+    paymentCountdownTimer = null;
+    receiptFile.value = null;
+    if (receiptPreviewUrl.value) URL.revokeObjectURL(receiptPreviewUrl.value);
+    receiptPreviewUrl.value = '';
+}
+
+onUnmounted(() => {
+    if (paymentCountdownTimer) window.clearInterval(paymentCountdownTimer);
+    if (receiptPreviewUrl.value) URL.revokeObjectURL(receiptPreviewUrl.value);
+    if (holdToken.value && !bookingStatus.value) {
+        fetch('/booking/holds', { method: 'DELETE', credentials: 'same-origin', headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '' }, body: JSON.stringify({ hold_token: holdToken.value }) });
+    }
+});
 
 function formatMoney(amount, currency = 'VND') {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency, maximumFractionDigits: currency === 'VND' ? 0 : 2 }).format(Number(amount));
@@ -88,6 +185,7 @@ async function loadAvailability() {
     try {
         const query = new URLSearchParams({ date: selectedDate.value });
         if (selectedCourtId.value) query.set('court_id', String(selectedCourtId.value));
+        if (holdToken.value) query.set('hold_token', holdToken.value);
         const response = await fetch(`/booking/data?${query}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
         const result = await response.json();
         if (requestId !== availabilityRequest) return;
@@ -110,6 +208,10 @@ async function loadAvailability() {
 
 function chooseCourt(courtId) {
     if (courtId === selectedCourtId.value) return;
+    holdSelectionVersion++;
+    if (holdToken.value) fetch('/booking/holds', { method: 'DELETE', credentials: 'same-origin', headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '' }, body: JSON.stringify({ hold_token: holdToken.value }) });
+    holdToken.value = ''; holdExpiresAt.value = null;
+    clearPaymentSelection();
     selectedCourtId.value = courtId;
     selectedMultiKeys.value = selectedMultiKeys.value.filter((key) => Number(key.split('|')[0]) === courtId);
     loadAvailability();
@@ -118,14 +220,27 @@ function chooseCourt(courtId) {
 function chooseDate(date) {
     showCalendar.value = false;
     if (date === selectedDate.value) return;
+    holdSelectionVersion++;
+    if (holdToken.value) fetch('/booking/holds', { method: 'DELETE', credentials: 'same-origin', headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '' }, body: JSON.stringify({ hold_token: holdToken.value }) });
+    holdToken.value = ''; holdExpiresAt.value = null;
+    clearPaymentSelection();
     selectedDate.value = date;
     selectedMultiKeys.value = [];
     loadAvailability();
 }
 
 function setBookingMode(mode) {
+    if (mode === bookingMode.value) return;
+    clearPaymentSelection();
     bookingMode.value = mode;
     pageError.value = '';
+    if (mode === 'single') {
+        const filteredKeys = selectedMultiKeys.value.filter((key) => Number(key.split('|')[0]) === selectedCourtId.value);
+        if (filteredKeys.length !== selectedMultiKeys.value.length) {
+            selectedMultiKeys.value = filteredKeys;
+            queueHoldSync();
+        }
+    }
 }
 
 function matrixSlot(courtId, startsAt) {
@@ -136,7 +251,7 @@ function isMultiSlotSelected(courtId, startsAt) {
     return selectedMultiKeys.value.includes(`${courtId}|${startsAt}`);
 }
 
-function toggleMultiSlot(courtId, startsAt) {
+async function toggleMultiSlot(courtId, startsAt) {
     const slot = matrixSlot(courtId, startsAt);
     if (!slot || slot.status !== 'available') return;
     const key = `${courtId}|${startsAt}`;
@@ -145,41 +260,140 @@ function toggleMultiSlot(courtId, startsAt) {
         return;
     }
     pageError.value = '';
+    clearPaymentSelection();
     selectedMultiKeys.value = isMultiSlotSelected(courtId, startsAt)
         ? selectedMultiKeys.value.filter((item) => item !== key)
         : [...selectedMultiKeys.value, key];
+    await queueHoldSync();
 }
 
-async function submitBooking() {
+function queueHoldSync() {
+    const keys = [...selectedMultiKeys.value];
+    const date = selectedDate.value;
+    const version = holdSelectionVersion;
+    const slots = keys.map((key) => {
+        const [courtId, startsAt] = key.split('|');
+        const slot = matrixSlot(Number(courtId), startsAt);
+        return slot ? { court_id: Number(courtId), starts_at: slot.starts_at, ends_at: slot.ends_at } : null;
+    }).filter(Boolean);
+    holdSyncQueue = holdSyncQueue.then(async () => {
+        if (version !== holdSelectionVersion) return;
+        if (!slots.length) {
+            const token = holdToken.value;
+            if (token) {
+                await fetch('/booking/holds', { method: 'DELETE', credentials: 'same-origin', headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '' }, body: JSON.stringify({ hold_token: token }) });
+            }
+            if (version === holdSelectionVersion) {
+                holdToken.value = '';
+                holdExpiresAt.value = null;
+            }
+            return;
+        }
+        const token = holdToken.value || null;
+        const response = await fetch('/booking/holds', {
+            method: 'POST', credentials: 'same-origin',
+            headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '' },
+            body: JSON.stringify({ date, hold_token: token, slots }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'Kh?ng th? gi? khung gi? ?? ch?n.');
+        if (version !== holdSelectionVersion) {
+            fetch('/booking/holds', { method: 'DELETE', credentials: 'same-origin', headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '' }, body: JSON.stringify({ hold_token: result.data.token }) });
+            return;
+        }
+        holdToken.value = result.data.token;
+        holdExpiresAt.value = result.data.expires_at;
+        await loadAvailability();
+    }).catch((error) => {
+        if (version !== holdSelectionVersion) return;
+        pageError.value = error instanceof Error ? error.message : 'Kh?ng th? gi? khung gi? ?? ch?n.';
+        selectedMultiKeys.value = [];
+        holdToken.value = '';
+        holdExpiresAt.value = null;
+        loadAvailability();
+    });
+    return holdSyncQueue;
+}
+
+function goToInformation() {
+    pageError.value = '';
+    fieldErrors.value = {};
+    if (!selectedBookingSegments.value.length) {
+        pageError.value = bookingMode.value === 'multiple'
+            ? 'Chọn ít nhất một ô sân và khung giờ trên bảng lịch.'
+            : 'Chọn sân và ít nhất một khung giờ trước khi tiếp tục.';
+        document.getElementById(bookingMode.value === 'multiple' ? 'multi-court-matrix' : 'single-court-slots')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+    currentStep.value = 2;
+    document.getElementById('details-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function goToCourtSelection() {
+    currentStep.value = 1;
+    pageError.value = '';
+}
+
+function returnToContactInformation() {
+    currentStep.value = 2;
+    pageError.value = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goToStep(step) {
+    if (bookingStatus.value || step < 1 || step >= currentStep.value) return;
+    currentStep.value = step;
+    pageError.value = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function validateContactInformation() {
+    fieldErrors.value = {};
+    if (!form.customer_name.trim()) fieldErrors.value.customer_name = ['Vui lòng nhập họ và tên.'];
+    if (form.customer_email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.customer_email.trim())) fieldErrors.value.customer_email = ['Vui lòng nhập email hợp lệ.'];
+    if (!form.customer_phone.trim()) fieldErrors.value.customer_phone = ['Vui lòng nhập số điện thoại.'];
+    if (Object.keys(fieldErrors.value).length) {
+        pageError.value = 'Vui lòng kiểm tra thông tin liên hệ.';
+        const firstInvalidField = !form.customer_name.trim()
+            ? 'customer-name'
+            : !form.customer_phone.trim()
+                ? 'customer-phone'
+                : 'customer-email';
+        document.getElementById(firstInvalidField)?.focus();
+        return false;
+    }
+    return true;
+}
+
+async function createPaymentSession() {
     if (submitting.value) return;
     submitting.value = true;
     pageError.value = '';
     fieldErrors.value = {};
-    const hasSelection = selectedBookingSegments.value.length > 0;
-    if (!hasSelection) {
-        pageError.value = bookingMode.value === 'multiple'
-            ? 'Chọn ít nhất một ô sân và khung giờ trên bảng lịch.'
-            : 'Chọn sân và ít nhất một khung giờ trước khi xác nhận booking.';
+    if (!selectedBookingSegments.value.length) {
+        pageError.value = 'Không tìm thấy khung giờ đã chọn. Quay lại bước 1 để chọn sân và giờ.';
         submitting.value = false;
-        document.getElementById(bookingMode.value === 'multiple' ? 'multi-court-matrix' : 'single-court-slots')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
-    if (!form.customer_name.trim()) fieldErrors.value.customer_name = ['Vui lòng nhập họ và tên.'];
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.customer_email)) fieldErrors.value.customer_email = ['Vui lòng nhập email hợp lệ.'];
-    if (Object.keys(fieldErrors.value).length) {
-        pageError.value = 'Vui lòng kiểm tra thông tin liên hệ.';
+    if (!validateContactInformation()) {
         submitting.value = false;
-        document.getElementById(!form.customer_name.trim() ? 'customer-name' : 'customer-email')?.focus();
+        return;
+    }
+    await holdSyncQueue;
+    if (!holdToken.value) {
+        pageError.value = 'Thời gian giữ chỗ chưa sẵn sàng. Vui lòng chọn lại khung giờ.';
+        submitting.value = false;
         return;
     }
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
     try {
-        const response = await fetch('/booking', {
+        const response = await fetch('/booking/payment-instructions', {
             method: 'POST',
             credentials: 'same-origin',
             headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'X-Requested-With': 'XMLHttpRequest' },
             body: JSON.stringify({
                 date: selectedDate.value,
+                hold_token: holdToken.value,
                 slots: selectedBookingSegments.value.map((segment) => ({ court_id: segment.court_id, starts_at: segment.starts_at, ends_at: segment.ends_at })),
                 ...form,
             }),
@@ -187,19 +401,105 @@ async function submitBooking() {
         const result = await response.json();
         if (!response.ok) {
             if (result.errors) fieldErrors.value = result.errors;
-            throw new Error(result.message || 'Không thể xác nhận booking. Vui lòng kiểm tra lại lịch sân.');
+            throw new Error(result.message || 'Không thể tải thông tin thanh toán. Vui lòng kiểm tra lại lịch sân.');
         }
-        if (result.data.bookings.length === 1) {
-            await router.replace(new URL(result.data.bookings[0].status_url, window.location.origin).pathname);
-        } else {
-            bookingStatus.value = { bookings: result.data.bookings };
-        }
+        paymentSession.value = result.data;
+        currentStep.value = 3;
+        startPaymentCountdown(result.data.payment_deadline_at);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
-        pageError.value = error instanceof Error ? error.message : 'Không thể xác nhận booking.';
+        pageError.value = error instanceof Error ? error.message : 'Không thể tải thông tin thanh toán.';
         if (Object.keys(fieldErrors.value).length) loadAvailability();
     } finally {
         submitting.value = false;
     }
+}
+
+async function submitPaymentProof() {
+    if (submitting.value) return;
+    pageError.value = '';
+    fieldErrors.value = {};
+    if (!paymentSession.value || paymentExpired.value) {
+        pageError.value = 'Mã thanh toán đã hết hạn. Vui lòng đặt lại khung giờ.';
+        return;
+    }
+    if (!receiptFile.value) {
+        fieldErrors.value.proof_image = ['Vui lòng tải ảnh chuyển khoản thành công.'];
+        return;
+    }
+
+    submitting.value = true;
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+    const payload = new FormData();
+    payload.append('date', selectedDate.value);
+    payload.append('hold_token', holdToken.value);
+    selectedBookingSegments.value.forEach((segment, index) => {
+        payload.append(`slots[${index}][court_id]`, String(segment.court_id));
+        payload.append(`slots[${index}][starts_at]`, segment.starts_at);
+        payload.append(`slots[${index}][ends_at]`, segment.ends_at);
+    });
+    payload.append('customer_name', form.customer_name);
+    payload.append('customer_email', form.customer_email);
+    payload.append('customer_phone', form.customer_phone);
+    payload.append('customer_note', form.customer_note);
+    payload.append('payment_reference', paymentSession.value.payment_reference);
+    payload.append('proof_image', receiptFile.value);
+    statusToken.value ||= createStatusToken();
+    payload.append('status_token', statusToken.value);
+
+    try {
+        const response = await fetch('/booking/payment-proof', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrfToken, 'X-Requested-With': 'XMLHttpRequest' },
+            body: payload,
+        });
+        const result = await response.json();
+        if (!response.ok) {
+            if (result.errors) fieldErrors.value = result.errors;
+            throw new Error(result.message || 'Không thể gửi ảnh chuyển khoản. Vui lòng thử lại.');
+        }
+        bookingStatus.value = { ...result.data, payment_submitted: true };
+        currentStep.value = 4;
+        if (paymentCountdownTimer) window.clearInterval(paymentCountdownTimer);
+        paymentCountdownTimer = null;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+        try {
+            const recovered = await fetch(`/booking/status/${encodeURIComponent(statusToken.value)}/data`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+            const recoveredResult = await recovered.json();
+            if (recovered.ok) {
+                bookingStatus.value = recoveredResult.data;
+                currentStep.value = 4;
+                if (paymentCountdownTimer) window.clearInterval(paymentCountdownTimer);
+                paymentCountdownTimer = null;
+                return;
+            }
+        } catch {
+            // Keep the editable form available when no order was created.
+        }
+        pageError.value = error instanceof Error ? error.message : 'Không thể gửi ảnh chuyển khoản.';
+    } finally {
+        submitting.value = false;
+    }
+}
+
+function continueBookingFlow() {
+    if (currentStep.value === 1) goToInformation();
+    else if (currentStep.value === 2) createPaymentSession();
+    else if (currentStep.value === 3) submitPaymentProof();
+}
+
+function restartBookingSelection() {
+    holdSelectionVersion++;
+    if (holdToken.value) fetch('/booking/holds', { method: 'DELETE', credentials: 'same-origin', headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '' }, body: JSON.stringify({ hold_token: holdToken.value }) });
+    holdToken.value = ''; holdExpiresAt.value = null;
+    clearPaymentSelection();
+    selectedMultiKeys.value = [];
+    fieldErrors.value = {};
+    pageError.value = '';
+    currentStep.value = 1;
+    loadAvailability();
 }
 
 async function loadBookingStatus(token) {
@@ -239,39 +539,41 @@ watch(() => route.params.token, (token) => {
             </div>
         </section>
 
-        <div class="booking-content">
-            <aside class="booking-steps-column"><BookingStepper :current="activeStep" :complete="Boolean(bookingStatus)" /></aside>
+        <div class="booking-content" :class="{ 'is-multi-court': bookingMode === 'multiple' && currentStep === 1 && !bookingStatus }">
+            <aside class="booking-steps-column"><BookingStepper :current="activeStep" :complete="Boolean(bookingStatus)" @navigate="goToStep" /></aside>
 
             <section v-if="bookingStatus" class="booking-result" aria-live="polite">
                 <div class="booking-result-icon" aria-hidden="true">✓</div>
-                <p class="booking-eyebrow">XÁC NHẬN THÀNH CÔNG</p>
+                <p class="booking-eyebrow">{{ bookingStatus.payment_submitted ? 'ĐÃ GỬI MINH CHỨNG' : 'TRẠNG THÁI BOOKING' }}</p>
                 <template v-if="bookingStatus.bookings?.length">
-                    <h2>Đã xác nhận {{ bookingStatus.bookings.length }} booking.</h2>
-                    <p>Các sân và khung giờ đã được giữ. Thanh toán trực tuyến sẽ được bổ sung sau.</p>
+                    <h2>{{ bookingStatus.payment_submitted ? 'Đã nhận ảnh chuyển khoản' : 'Thông tin đơn đặt sân' }}</h2>
+                    <p class="booking-order-code">Mã đơn: <strong>{{ bookingStatus.booking_code }}</strong></p>
+                    <p class="booking-order-total">Tổng tiền đơn: <strong>{{ formatMoney(bookingStatus.total_amount, bookingStatus.currency) }}</strong></p>
+                    <p>{{ bookingStatus.payment_submitted ? 'Booking đang chờ nhân viên đối soát. Ảnh chuyển khoản chưa đồng nghĩa với xác nhận thanh toán.' : 'Theo dõi trạng thái booking của bạn bên dưới.' }}</p>
                     <div class="booking-result-list">
-                        <article v-for="booking in bookingStatus.bookings" :key="booking.booking_code" class="booking-result-item">
+                        <article v-for="(booking, index) in bookingStatus.bookings" :key="`${booking.court}-${booking.date}-${booking.starts_at}-${index}`" class="booking-result-item">
                             <dl class="booking-result-details">
-                                <div><dt>Mã booking</dt><dd>{{ booking.booking_code }}</dd></div>
                                 <div><dt>Sân</dt><dd>{{ booking.court }}</dd></div>
                                 <div><dt>Ngày</dt><dd>{{ formatDate(booking.date) }}</dd></div>
                                 <div><dt>Giờ chơi</dt><dd>{{ booking.starts_at }} – {{ booking.ends_at }}</dd></div>
                                 <div><dt>Tổng tiền</dt><dd>{{ formatMoney(booking.total_amount, booking.currency) }}</dd></div>
-                                <div><dt>Trạng thái</dt><dd class="booking-status-confirmed">Đã xác nhận</dd></div>
+                                <div><dt>Trạng thái</dt><dd :class="booking.status === 'PAID' ? 'booking-status-confirmed' : 'booking-status-pending'">{{ booking.status === 'PAID' ? 'Đã thanh toán' : 'Chờ thanh toán' }}</dd></div>
                             </dl>
-                            <a :href="booking.status_url" class="booking-status-link">Xem trạng thái booking ↗</a>
                         </article>
                     </div>
+                    <a v-if="bookingStatus.status_url" :href="bookingStatus.status_url" class="booking-status-link">Liên kết xem trạng thái đơn ↗</a>
                 </template>
                 <template v-else>
-                    <h2>Sân đã được giữ cho bạn.</h2>
-                    <p>Booking đã được xác nhận. Thanh toán trực tuyến sẽ được bổ sung sau.</p>
+                    <h2>{{ bookingStatus.payment_submitted ? 'Đã nhận ảnh chuyển khoản' : 'Thông tin đơn đặt sân' }}</h2>
+                    <p class="booking-order-code">Mã đơn: <strong>{{ bookingStatus.booking_code }}</strong></p>
+                    <p>Trạng thái hiện tại: {{ bookingStatus.status === 'PAID' ? 'Đã thanh toán' : 'Chờ thanh toán' }}</p>
                     <dl class="booking-result-details">
                         <div><dt>Mã booking</dt><dd>{{ bookingStatus.booking_code }}</dd></div>
                         <div><dt>Sân</dt><dd>{{ bookingStatus.court }}</dd></div>
                         <div><dt>Ngày</dt><dd>{{ formatDate(bookingStatus.date) }}</dd></div>
                         <div><dt>Giờ chơi</dt><dd>{{ bookingStatus.starts_at }} – {{ bookingStatus.ends_at }}</dd></div>
                         <div><dt>Tổng tiền</dt><dd>{{ formatMoney(bookingStatus.total_amount, bookingStatus.currency) }}</dd></div>
-                        <div><dt>Trạng thái</dt><dd class="booking-status-confirmed">Đã xác nhận</dd></div>
+                        <div><dt>Trạng thái</dt><dd :class="bookingStatus.status === 'PAID' ? 'booking-status-confirmed' : 'booking-status-pending'">{{ bookingStatus.status === 'PAID' ? 'Đã thanh toán' : 'Chờ thanh toán' }}</dd></div>
                     </dl>
                 </template>
                 <a class="button button--outline" href="/">Về trang chủ</a>
@@ -281,6 +583,7 @@ watch(() => route.params.token, (token) => {
                 <div v-if="pageError" class="booking-alert" role="alert">{{ pageError }}</div>
                 <div v-if="loading && !data" class="booking-loading">Đang tải danh sách sân…</div>
                 <template v-else>
+                    <template v-if="currentStep === 1">
                     <div class="booking-mode-switch" role="group" aria-label="Chọn cách đặt sân">
                         <button type="button" :class="{ 'is-selected': bookingMode === 'single' }" :aria-pressed="bookingMode === 'single'" @click="setBookingMode('single')">Đặt một sân</button>
                         <button type="button" :class="{ 'is-selected': bookingMode === 'multiple' }" :aria-pressed="bookingMode === 'multiple'" @click="setBookingMode('multiple')">Chọn nhiều sân</button>
@@ -300,7 +603,7 @@ watch(() => route.params.token, (token) => {
                     </section>
 
                     <section class="booking-panel" aria-labelledby="date-time-title">
-                        <header class="booking-section-heading"><div><p class="booking-section-index">02 / NGÀY & GIỜ</p><h2 id="date-time-title">Chọn ngày và khung giờ</h2></div><span v-if="data">Múi giờ {{ data.timezone }}</span></header>
+                        <header class="booking-section-heading"><div><p class="booking-section-index">01 / NGÀY & GIỜ</p><h2 id="date-time-title">Chọn ngày và khung giờ</h2></div><span v-if="data">Múi giờ {{ data.timezone }}</span></header>
                         <div class="booking-date-time-layout">
                             <div class="booking-times-panel">
                                 <div class="booking-times-heading">
@@ -354,13 +657,39 @@ watch(() => route.params.token, (token) => {
                         </div>
                     </section>
 
-                    <section class="booking-panel" aria-labelledby="details-title">
-                        <header class="booking-section-heading"><div><p class="booking-section-index">03 / THÔNG TIN</p><h2 id="details-title">Thông tin liên hệ</h2></div><span>Không cần tạo tài khoản</span></header>
+                    </template>
+
+                    <section v-else-if="currentStep === 2" class="booking-panel" aria-labelledby="details-title">
+                        <header class="booking-section-heading"><div><p class="booking-section-index">02 / THÔNG TIN</p><h2 id="details-title">Thông tin liên hệ</h2></div><span>Không cần tạo tài khoản</span></header>
+                        <button type="button" class="booking-back-button" @click="goToCourtSelection">← Quay lại chọn sân và giờ</button>
                         <div class="booking-form-grid">
                             <label class="booking-field">Họ và tên *<input id="customer-name" v-model="form.customer_name" autocomplete="name" maxlength="150" placeholder="Tên của bạn" /><small v-if="fieldErrors.customer_name">{{ fieldErrors.customer_name[0] }}</small></label>
-                            <label class="booking-field">Email *<input id="customer-email" v-model="form.customer_email" type="email" autocomplete="email" maxlength="255" placeholder="ban@example.com" /><small v-if="fieldErrors.customer_email">{{ fieldErrors.customer_email[0] }}</small></label>
-                            <label class="booking-field">Số điện thoại<input v-model="form.customer_phone" type="tel" autocomplete="tel" maxlength="30" placeholder="Số điện thoại (không bắt buộc)" /><small v-if="fieldErrors.customer_phone">{{ fieldErrors.customer_phone[0] }}</small></label>
+                            <label class="booking-field">Email (không bắt buộc)<input id="customer-email" v-model="form.customer_email" type="email" autocomplete="email" maxlength="255" placeholder="ban@example.com" /><small v-if="fieldErrors.customer_email">{{ fieldErrors.customer_email[0] }}</small></label>
+                            <label class="booking-field">Số điện thoại *<input id="customer-phone" v-model="form.customer_phone" type="tel" autocomplete="tel" maxlength="30" required placeholder="Số điện thoại của bạn" /><small v-if="fieldErrors.customer_phone">{{ fieldErrors.customer_phone[0] }}</small></label>
                             <label class="booking-field booking-field-wide">Ghi chú<textarea v-model="form.customer_note" rows="3" maxlength="1000" placeholder="Điều BALLBURN cần biết trước giờ chơi (không bắt buộc)" /><small v-if="fieldErrors.customer_note">{{ fieldErrors.customer_note[0] }}</small></label>
+                        </div>
+                    </section>
+
+                    <section v-else-if="currentStep === 3 && paymentSession" class="booking-panel booking-payment-panel" aria-labelledby="payment-title">
+                        <header class="booking-section-heading"><div><p class="booking-section-index">03 / THANH TOÁN</p><h2 id="payment-title">Quét mã và gửi ảnh chuyển khoản</h2></div><span>Giữ chỗ trong 5 phút</span></header>
+                        <button type="button" class="booking-back-button" @click="returnToContactInformation">← Quay lại thông tin</button>
+                        <div class="booking-payment-layout">
+                            <div class="booking-qr-card">
+                                <img v-if="qrCodeDataUrl" :src="qrCodeDataUrl" alt="Mã QR tham chiếu thanh toán" />
+                                <div v-else class="booking-qr-loading">Đang tạo mã QR…</div>
+                                <span>Mã tham chiếu</span><strong>{{ paymentSession.payment_reference }}</strong>
+                                <p>Tổng tiền: <b>{{ formatMoney(paymentSession.total_amount, paymentSession.currency) }}</b></p>
+                            </div>
+                            <div class="booking-proof-form">
+                                <p class="booking-payment-countdown" :class="{ 'is-expired': paymentExpired }">{{ paymentExpired ? 'Mã thanh toán đã hết hạn' : `Thời gian còn lại ${paymentCountdownLabel}` }}</p>
+                                <p class="booking-payment-note">Chưa có đơn đặt sân nào được tạo. Sau khi tải ảnh chuyển khoản lên và gửi, hệ thống sẽ tạo đơn ở trạng thái chờ thanh toán và báo cho admin. Nhân viên sẽ kiểm tra ảnh trước khi xác nhận đã thanh toán.</p>
+                                <label class="booking-field booking-upload-field">Ảnh chuyển khoản thành công *
+                                    <input type="file" accept="image/jpeg,image/png,image/webp" :disabled="paymentExpired" @change="chooseReceipt" />
+                                    <small v-if="fieldErrors.proof_image">{{ fieldErrors.proof_image[0] }}</small>
+                                </label>
+                                <img v-if="receiptPreviewUrl" class="booking-receipt-preview" :src="receiptPreviewUrl" alt="Xem trước ảnh chuyển khoản" />
+                                <button v-if="paymentExpired" type="button" class="booking-back-button" @click="restartBookingSelection">Chọn lại sân và khung giờ</button>
+                            </div>
                         </div>
                     </section>
                 </template>
@@ -377,7 +706,12 @@ watch(() => route.params.token, (token) => {
                 :total="selectedBookingTotal"
                 :items="summaryItems"
                 :submitting="submitting"
-                @submit="submitBooking"
+                :button-label="summaryActionLabel"
+                :button-disabled="summaryActionDisabled"
+                :note="summaryNote"
+                :complete="Boolean(bookingStatus)"
+                :complete-label="bookingStatus?.payment_submitted ? 'Đã gửi ảnh chuyển khoản' : 'Đã xác nhận'"
+                @submit="continueBookingFlow"
             />
         </div>
     </main>
@@ -440,7 +774,30 @@ watch(() => route.params.token, (token) => {
 .booking-calendar-popup .booking-calendar{width:100%;max-width:none;margin:0;border:0;padding:10px}
 .booking-selection-hint{margin:0;color:var(--color-ink-muted);font-size:13px}
 .booking-slot-grid{grid-template-columns:repeat(3,minmax(0,1fr));max-height:430px}
+.booking-payment-layout{display:grid;grid-template-columns:minmax(220px,.8fr) minmax(0,1.2fr);gap:24px;align-items:start}
+.booking-qr-card{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px;border:1px solid var(--color-border);border-radius:16px;background:var(--color-surface-muted);text-align:center}
+.booking-qr-card img,.booking-qr-loading{width:260px;max-width:100%;aspect-ratio:1;object-fit:contain;border-radius:10px;background:#fff}
+.booking-qr-loading{display:grid;place-items:center;color:var(--color-ink-muted)}
+.booking-qr-card>span{color:var(--color-ink-muted);font-size:13px}
+.booking-qr-card>strong{font-size:18px;letter-spacing:.06em}
+.booking-qr-card>p{margin:0;color:var(--color-ink-muted)}
+.booking-proof-form{display:grid;gap:16px}
+.booking-payment-countdown{margin:0;color:var(--color-brand);font-size:22px;font-weight:800}
+.booking-payment-countdown.is-expired{color:var(--color-danger)}
+.booking-payment-note{margin:0;padding:14px;border-radius:10px;background:var(--color-surface-muted);color:var(--color-ink-muted);line-height:1.6}
+.booking-upload-field input{display:block;width:100%;margin-top:8px;padding:12px;border:1px dashed var(--color-border);border-radius:10px;background:var(--color-surface)}
+.booking-receipt-preview{width:min(100%,420px);max-height:280px;object-fit:contain;border:1px solid var(--color-border);border-radius:12px;background:var(--color-surface-muted)}
+.booking-back-button{margin:0 0 16px;padding:8px 0;border:0;background:transparent;color:var(--color-ink-muted);font:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.booking-status-pending{color:var(--color-warning);font-weight:700}
+@media(max-width:700px){.booking-payment-layout{grid-template-columns:1fr}}
 @media(max-width:1100px){.booking-content{grid-template-columns:minmax(0,1fr) 270px;gap:18px}.booking-court-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.booking-date-time-layout{display:block}.booking-calendar{max-width:none;margin:0}}
 @media(max-width:800px){.booking-content{grid-template-columns:1fr;padding-top:25px}.booking-stepper{gap:10px;padding:10px}.booking-stepper::before{display:block;right:28px;left:28px}.booking-stepper li{gap:6px;font-size:11px}.booking-step-number{flex-basis:30px;width:30px;height:30px}.booking-summary{position:static;grid-row:auto}.booking-main-column{grid-row:auto}.booking-result{grid-column:1;grid-row:auto}.booking-court-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.booking-slot-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.booking-times-heading{grid-template-columns:1fr}.booking-selection-hint{font-size:12px}}
 @media(max-width:520px){.booking-stepper{justify-content:flex-start;overflow-x:auto}.booking-stepper li{flex:0 0 auto}.booking-stepper::before{display:none}.booking-court-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.booking-content.is-multi-court{grid-template-columns:minmax(0,1.7fr) minmax(280px,.9fr);align-items:start}
+.booking-content.is-multi-court .booking-main-column,.booking-content.is-multi-court .booking-panel,.booking-content.is-multi-court .booking-matrix-scroll{min-width:0;width:100%}
+.booking-content.is-multi-court .booking-summary{position:static;grid-column:2;grid-row:2;align-self:start;min-width:0}
+.booking-content.is-multi-court .booking-matrix{width:max-content;grid-template-columns:90px repeat(var(--matrix-court-count),148px);min-width:calc(90px + var(--matrix-court-count)*148px)}
+.booking-content.is-multi-court .booking-matrix-court-head{z-index:3;white-space:nowrap}
+@media(max-width:800px){.booking-content.is-multi-court{grid-template-columns:minmax(0,1fr)}.booking-content.is-multi-court .booking-summary{grid-column:1;grid-row:auto}}
+.booking-step-jump{font:inherit;cursor:pointer}
 </style>

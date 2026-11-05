@@ -4,7 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class MatchBankTransferRequest extends FormRequest
+class BulkDeleteAdminBookingsRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -14,8 +14,8 @@ class MatchBankTransferRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'booking_id' => ['required', 'integer', 'exists:bookings,id'],
-            'review_note' => ['nullable', 'string', 'max:500'],
+            'booking_order_ids' => ['required', 'array', 'min:1', 'max:100'],
+            'booking_order_ids.*' => ['required', 'integer', 'distinct', 'exists:booking_orders,id'],
         ];
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Repositories\Contracts;
 
-use App\Models\BankTransferTransaction;
 use App\Models\Booking;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -15,13 +14,18 @@ interface AdminBookingRepository
 
     public function findForAdmin(int $bookingId): Booking;
 
-    public function unmatchedTransfers(): Collection;
+    public function updateStatus(int $bookingId, string $status, int $userId, ?string $note): Booking;
 
-    public function matchableBookings(): Collection;
+    /** @param array<int, int> $orderIds */
+    public function bulkUpdateStatus(array $orderIds, string $status, int $userId): int;
+
+    /** @param array<int, int> $orderIds */
+    public function bulkDelete(array $orderIds, int $userId): int;
+
+    /** @return array{unread_count: int, notifications: array<int, array<string, mixed>>} */
+    public function notificationsForAdmin(int $userId, string $timezone): array;
+
+    public function markNotificationRead(int $notificationId, int $userId): void;
 
     public function courtsForFilter(): Collection;
-
-    public function matchBankTransfer(int $transactionId, int $bookingId, int $userId, ?string $note): BankTransferTransaction;
-
-    public function recordBankTransfer(array $attributes, int $userId): BankTransferTransaction;
 }

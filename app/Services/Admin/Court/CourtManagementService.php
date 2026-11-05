@@ -50,7 +50,7 @@ class CourtManagementService
                 'court_id' => $booking->court_id,
                 'customer_name' => $booking->customer_name,
                 'booking_code' => $booking->booking_code,
-                'status' => $booking->status,
+                'status' => $booking->order->status,
                 'starts_at' => $booking->starts_at->timezone($timezone)->format('H:i'),
                 'ends_at' => $booking->ends_at->timezone($timezone)->format('H:i'),
                 'is_in_use' => $booking->starts_at->lte($now) && $booking->ends_at->gt($now),

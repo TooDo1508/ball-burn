@@ -2,23 +2,23 @@
 
 namespace App\Repositories\Eloquent;
 
-use App\Models\BankTransferTransaction;
 use App\Models\Booking;
+use App\Models\BookingOrder;
 use App\Models\Court;
-use App\Models\Payment;
 use App\Repositories\Contracts\AdminBookingRepository;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class EloquentAdminBookingRepository implements AdminBookingRepository
 {
     public function paginateForAdmin(array $filters, int $perPage = 10): LengthAwarePaginator
     {
-        return $this->filteredBookings($filters)
-            ->with(['court', 'payments'])
+        return $this->filteredOrders($filters)
+            ->with(['bookings.court', 'bookings.payments', 'bookings.statusHistory'])
             ->orderByDesc('created_at')
             ->paginate($perPage)
             ->withQueryString();
@@ -26,52 +26,74 @@ class EloquentAdminBookingRepository implements AdminBookingRepository
 
     public function stats(array $filters): array
     {
-        $bookings = $this->filteredBookings($filters);
-        $rows = (clone $bookings)
-            ->selectRaw('status, COUNT(*) as aggregate')
-            ->groupBy('status')
-            ->pluck('aggregate', 'status');
-        $paymentRows = (clone $bookings)
-            ->join('payments', 'payments.booking_id', '=', 'bookings.id')
-            ->where('payments.status', 'PAID')
-            ->selectRaw('COUNT(DISTINCT bookings.id) as paid_bookings, COALESCE(SUM(payments.amount), 0) as paid_amount')
-            ->first();
+        $orders = $this->filteredOrders($filters);
+        $timezone = (string) config('venue.timezone', 'Asia/Ho_Chi_Minh');
+        $today = CarbonImmutable::now($timezone)->startOfDay();
+        $startOfToday = $today->utc();
+        $startOfTomorrow = $today->addDay()->utc();
+        $revenueToday = BookingOrder::query()
+            ->where('status', 'PAID')
+            ->where('paid_at', '>=', $startOfToday)
+            ->where('paid_at', '<', $startOfTomorrow)
+            ->selectRaw('currency, SUM(total_amount) as amount')
+            ->groupBy('currency')
+            ->get()
+            ->map(fn ($row): array => ['currency' => $row->currency, 'amount' => (string) $row->amount])
+            ->values();
 
         return [
-            'total' => (int) $rows->sum(),
-            'confirmed' => (int) ($rows['CONFIRMED'] ?? 0),
-            'pending' => (int) ($rows['PENDING_PAYMENT'] ?? 0),
-            'cancelled' => (int) ($rows['CANCELLED'] ?? 0),
-            'expired' => (int) ($rows['EXPIRED'] ?? 0),
-            'paid_bookings' => (int) ($paymentRows->paid_bookings ?? 0),
-            'paid_amount' => (string) ($paymentRows->paid_amount ?? '0.00'),
+            'total' => (clone $orders)->count(),
+            'paid_bookings' => (clone $orders)->where('status', 'PAID')->count(),
+            'pending' => (clone $orders)->where('status', 'PENDING_PAYMENT')->count(),
+            'revenue_today' => $revenueToday,
         ];
     }
 
     public function findForAdmin(int $bookingId): Booking
     {
         return Booking::query()
-            ->with(['court', 'payments', 'statusHistory'])
+            ->with(['court', 'payments', 'statusHistory', 'order.bookings.court', 'order.bookings.payments', 'order.bookings.statusHistory'])
             ->findOrFail($bookingId);
     }
 
-    public function unmatchedTransfers(): Collection
+    public function updateStatus(int $bookingId, string $status, int $userId, ?string $note): Booking
     {
-        return BankTransferTransaction::query()
-            ->with('booking')
-            ->whereIn('status', ['UNMATCHED', 'NEEDS_REVIEW', 'LATE_PAYMENT'])
-            ->latest('transaction_at')
-            ->limit(100)
-            ->get();
-    }
+        return DB::transaction(function () use ($bookingId, $status, $userId, $note): Booking {
+            $snapshot = Booking::query()->with('order')->findOrFail($bookingId);
+            $bookingIds = $snapshot->booking_order_id
+                ? Booking::query()->where('booking_order_id', $snapshot->booking_order_id)->orderBy('id')->pluck('id')
+                : collect([$snapshot->id]);
+            $courtIds = Booking::query()->whereIn('id', $bookingIds)->distinct()->orderBy('court_id')->pluck('court_id');
+            foreach ($courtIds as $courtId) Court::query()->whereKey($courtId)->lockForUpdate()->firstOrFail();
 
-    public function matchableBookings(): Collection
-    {
-        return Booking::query()
-            ->whereIn('status', ['PENDING_PAYMENT', 'CONFIRMED', 'COMPLETED', 'EXPIRED', 'CANCELLED'])
-            ->latest('created_at')
-            ->limit(100)
-            ->get(['id', 'booking_code', 'customer_name', 'court_id', 'starts_at', 'status', 'total_amount', 'currency']);
+            $order = BookingOrder::query()->whereKey($snapshot->booking_order_id)->lockForUpdate()->firstOrFail();
+            $segments = Booking::query()->whereIn('id', $bookingIds)->orderBy('id')->lockForUpdate()->get();
+            $currentStatus = $order->status;
+            if (! in_array($status, ['PENDING_PAYMENT', 'PAID'], true)) {
+                throw ValidationException::withMessages(['status' => "Tr\u{1ea1}ng th\u{00e1}i \u{0111}\u{01a1}n kh\u{00f4}ng h\u{1ee3}p l\u{1ec7}."]);
+            }
+            if ($currentStatus !== $status) {
+                $order->forceFill([
+                    'status' => $status,
+                    'paid_at' => $status === 'PAID' ? now() : null,
+                ])->save();
+                if ($status === 'PAID') {
+                    DB::table('notifications')->whereIn('booking_id', $bookingIds)
+                        ->where('channel', 'IN_APP')->where('type', 'BOOKING_PENDING_PAYMENT')->delete();
+                }
+                foreach ($segments as $segment) {
+                    $segment->statusHistory()->create([
+                        'old_status' => $currentStatus,
+                        'new_status' => $status,
+                        'changed_by' => $userId,
+                        'change_source' => 'ADMIN',
+                        'note' => $note ?: "Qu\u{1ea3}n tr\u{1ecb} vi\u{00ea}n c\u{1ead}p nh\u{1ead}t tr\u{1ea1}ng th\u{00e1}i \u{0111}\u{01a1}n.",
+                    ]);
+                }
+            }
+
+            return $segments->first()->refresh()->load(['court', 'payments', 'statusHistory', 'order.bookings.court', 'order.bookings.statusHistory']);
+        });
     }
 
     public function courtsForFilter(): Collection
@@ -79,136 +101,171 @@ class EloquentAdminBookingRepository implements AdminBookingRepository
         return Court::query()->orderBy('sort_order')->orderBy('name')->get(['id', 'name']);
     }
 
-    public function recordBankTransfer(array $attributes, int $userId): BankTransferTransaction
+    public function bulkUpdateStatus(array $orderIds, string $status, int $userId): int
     {
-        return DB::transaction(function () use ($attributes, $userId): BankTransferTransaction {
-            $transaction = BankTransferTransaction::query()->create([
-                ...$attributes,
-                'bank_transaction_id' => trim($attributes['bank_transaction_id']),
-                'currency' => strtoupper($attributes['currency']),
-                'transaction_at' => CarbonImmutable::parse($attributes['transaction_at'], (string) config('venue.timezone'))->utc(),
-                'status' => 'UNMATCHED',
-                'recorded_by' => $userId,
-            ]);
+        return DB::transaction(function () use ($orderIds, $status, $userId): int {
+            $orderIds = collect($orderIds)->map(fn ($id): int => (int) $id)->unique()->sort()->values();
+            $courtIds = Booking::query()->whereIn('booking_order_id', $orderIds)
+                ->distinct()->orderBy('court_id')->pluck('court_id');
+            foreach ($courtIds as $courtId) {
+                Court::query()->whereKey($courtId)->lockForUpdate()->firstOrFail();
+            }
 
-            $this->audit($userId, 'bank_transfer.recorded', $transaction, null, [
-                'bank_transaction_id' => $transaction->bank_transaction_id,
-                'amount' => $transaction->amount,
-                'currency' => $transaction->currency,
-                'transaction_at' => $transaction->transaction_at?->toISOString(),
-            ]);
+            $orders = BookingOrder::query()->whereIn('id', $orderIds)->orderBy('id')->lockForUpdate()->get();
+            if ($orders->count() !== $orderIds->count()) {
+                throw ValidationException::withMessages(['booking_order_ids' => 'Một hoặc nhiều đơn không còn tồn tại.']);
+            }
+            $segments = Booking::query()->whereIn('booking_order_id', $orderIds)->orderBy('id')->lockForUpdate()->get();
+            foreach ($orders as $order) {
+                if ($order->status === $status) continue;
 
-            return $transaction;
+                $order->forceFill(['status' => $status, 'paid_at' => $status === 'PAID' ? now() : null])->save();
+                if ($status === 'PAID') {
+                    DB::table('notifications')->whereIn('booking_id', $segments->where('booking_order_id', $order->id)->modelKeys())
+                        ->where('channel', 'IN_APP')->where('type', 'BOOKING_PENDING_PAYMENT')->delete();
+                }
+                foreach ($segments->where('booking_order_id', $order->id) as $segment) {
+                    $segment->statusHistory()->create([
+                        'old_status' => $status === 'PAID' ? 'PENDING_PAYMENT' : 'PAID',
+                        'new_status' => $status,
+                        'changed_by' => $userId,
+                        'change_source' => 'ADMIN',
+                        'note' => 'Quản trị viên cập nhật trạng thái hàng loạt.',
+                    ]);
+                }
+            }
+
+            return $orders->count();
         });
     }
 
-    public function matchBankTransfer(int $transactionId, int $bookingId, int $userId, ?string $note): BankTransferTransaction
+    public function bulkDelete(array $orderIds, int $userId): int
     {
-        return DB::transaction(function () use ($transactionId, $bookingId, $userId, $note): BankTransferTransaction {
-            $bookingSnapshot = Booking::query()->findOrFail($bookingId);
-            Court::query()->whereKey($bookingSnapshot->court_id)->lockForUpdate()->firstOrFail();
-            $booking = Booking::query()->whereKey($bookingId)->lockForUpdate()->firstOrFail();
-            $transaction = BankTransferTransaction::query()->whereKey($transactionId)->lockForUpdate()->firstOrFail();
-
-            if (! in_array($transaction->status, ['UNMATCHED', 'NEEDS_REVIEW'], true) || $transaction->payment_id !== null) {
-                throw ValidationException::withMessages(['booking_id' => 'Giao dịch này đã được xử lý hoặc gắn với một khoản thanh toán.']);
+        $proofPaths = [];
+        $deletedCount = DB::transaction(function () use ($orderIds, $userId, &$proofPaths): int {
+            $orderIds = collect($orderIds)->map(fn ($id): int => (int) $id)->unique()->sort()->values();
+            $courtIds = Booking::query()->whereIn('booking_order_id', $orderIds)
+                ->distinct()->orderBy('court_id')->pluck('court_id');
+            foreach ($courtIds as $courtId) {
+                Court::query()->whereKey($courtId)->lockForUpdate()->firstOrFail();
             }
 
-            if ($transaction->currency !== $booking->currency || $this->money($transaction->amount) !== $this->money($booking->total_amount)) {
-                $transaction->forceFill([
-                    'booking_id' => null,
-                    'status' => 'NEEDS_REVIEW',
-                    'reviewed_by' => $userId,
-                    'reviewed_at' => now(),
-                    'review_note' => 'Ứng viên '.$booking->booking_code.': '.($note ?: 'Số tiền hoặc tiền tệ không khớp với tổng tiền booking.'),
-                ])->save();
-                $this->audit($userId, 'bank_transfer.needs_review', $transaction, null, [
-                    'candidate_booking_id' => $booking->id,
-                    'reason' => 'amount_or_currency_mismatch',
-                ]);
-
-                return $transaction->refresh()->load('booking');
+            $orders = BookingOrder::query()->whereIn('id', $orderIds)->orderBy('id')->lockForUpdate()->get();
+            if ($orders->count() !== $orderIds->count()) {
+                throw ValidationException::withMessages(['booking_order_ids' => 'Một hoặc nhiều đơn không còn tồn tại.']);
+            }
+            if ($orders->contains(fn (BookingOrder $order): bool => $order->status !== 'PENDING_PAYMENT')) {
+                throw ValidationException::withMessages(['booking_order_ids' => 'Chỉ có thể xóa các đơn đang chờ thanh toán.']);
             }
 
-            if ($booking->payments()->where('status', 'PAID')->exists()) {
-                throw ValidationException::withMessages(['booking_id' => 'Booking này đã có khoản thanh toán được ghi nhận.']);
+            $segments = Booking::query()->whereIn('booking_order_id', $orderIds)->orderBy('id')->lockForUpdate()->get();
+            $segmentIds = $segments->modelKeys();
+            $proofPaths = DB::table('payments')->whereIn('booking_id', $segmentIds)->whereNotNull('proof_image_path')->pluck('proof_image_path')->all();
+            $paymentIds = DB::table('payments')->whereIn('booking_id', $segmentIds)->pluck('id');
+            if (DB::table('bank_transfer_transactions')->whereIn('booking_id', $segmentIds)->orWhereIn('payment_id', $paymentIds)->exists()) {
+                throw ValidationException::withMessages(['booking_order_ids' => 'Không thể xóa đơn đã được liên kết với giao dịch ngân hàng.']);
             }
 
-            $deadlinePassed = $booking->status === 'PENDING_PAYMENT'
-                && (! $booking->payment_deadline_at || $booking->payment_deadline_at->lte(now()));
-            $overlap = Booking::query()
-                ->where('court_id', $booking->court_id)
-                ->where('id', '<>', $booking->id)
-                ->where('starts_at', '<', $booking->ends_at)
-                ->where('ends_at', '>', $booking->starts_at)
-                ->where(function ($query): void {
-                    $query->whereIn('status', ['CONFIRMED', 'COMPLETED'])
-                        ->orWhere(function ($query): void {
-                            $query->where('status', 'PENDING_PAYMENT')->where('payment_deadline_at', '>', now());
-                        });
-                })
-                ->exists();
-
-            $late = $deadlinePassed || $overlap || in_array($booking->status, ['EXPIRED', 'CANCELLED'], true);
-            $payment = Payment::query()->create([
-                'booking_id' => $booking->id,
-                'provider' => 'BANK_TRANSFER',
-                'provider_transaction_id' => $transaction->bank_transaction_id,
-                'amount' => $transaction->amount,
-                'currency' => $transaction->currency,
-                'status' => 'PAID',
-                'payment_method' => 'BANK_TRANSFER',
-                'provider_metadata' => [
-                    'transfer_description' => $transaction->transfer_description,
-                    'recorded_by' => $userId,
-                    'review_note' => $note,
-                ],
-                'paid_at' => $transaction->transaction_at,
-            ]);
-
-            if ($deadlinePassed && $booking->status === 'PENDING_PAYMENT') {
-                $booking->forceFill(['status' => 'EXPIRED'])->save();
-                $booking->statusHistory()->create([
-                    'old_status' => 'PENDING_PAYMENT',
-                    'new_status' => 'EXPIRED',
-                    'changed_by' => $userId,
-                    'change_source' => 'ADMIN',
-                    'note' => 'Payment deadline passed before manual bank reconciliation.',
-                ]);
-            } elseif (! $late && $booking->status === 'PENDING_PAYMENT') {
-                $booking->forceFill(['status' => 'CONFIRMED', 'confirmed_at' => now()])->save();
-                $booking->statusHistory()->create([
-                    'old_status' => 'PENDING_PAYMENT',
-                    'new_status' => 'CONFIRMED',
-                    'changed_by' => $userId,
-                    'change_source' => 'ADMIN',
-                    'note' => 'Bank transfer manually verified against the bank transaction.',
+            foreach ($orders as $order) {
+                DB::table('audit_logs')->insert([
+                    'user_id' => $userId,
+                    'action' => 'booking.order_deleted',
+                    'entity_type' => BookingOrder::class,
+                    'entity_id' => (string) $order->id,
+                    'before_data' => json_encode(['booking_code' => $order->booking_code, 'status' => $order->status, 'total_amount' => $order->total_amount], JSON_THROW_ON_ERROR),
+                    'after_data' => null,
+                    'created_at' => now(),
                 ]);
             }
 
-            $transaction->forceFill([
-                'booking_id' => $booking->id,
-                'payment_id' => $payment->id,
-                'status' => $late ? 'LATE_PAYMENT' : 'MATCHED',
-                'reviewed_by' => $userId,
-                'reviewed_at' => now(),
-                'review_note' => $note,
-            ])->save();
-            $this->audit($userId, $late ? 'bank_transfer.late_payment' : 'bank_transfer.matched', $transaction, null, [
-                'booking_id' => $booking->id,
-                'payment_id' => $payment->id,
-                'status' => $transaction->status,
-            ]);
+            DB::table('booking_status_history')->whereIn('booking_id', $segmentIds)->delete();
+            DB::table('notifications')->whereIn('booking_id', $segmentIds)
+                ->where('channel', 'IN_APP')->where('type', 'BOOKING_PENDING_PAYMENT')->delete();
+            DB::table('payments')->whereIn('booking_id', $segmentIds)->delete();
+            DB::table('bookings')->whereIn('id', $segmentIds)->delete();
+            DB::table('booking_orders')->whereIn('id', $orderIds)->delete();
 
-            return $transaction->refresh()->load('booking');
+            return $orders->count();
         });
+
+        foreach ($proofPaths as $path) {
+            Storage::disk('local')->delete($path);
+        }
+
+        return $deletedCount;
     }
 
-    private function filteredBookings(array $filters)
+    public function notificationsForAdmin(int $userId, string $timezone): array
+    {
+        $notifications = DB::table('notifications as notices')
+            ->join('bookings', 'bookings.id', '=', 'notices.booking_id')
+            ->join('booking_orders as orders', 'orders.id', '=', 'bookings.booking_order_id')
+            ->where('notices.user_id', $userId)
+            ->where('notices.channel', 'IN_APP')
+            ->where('notices.type', 'BOOKING_PENDING_PAYMENT')
+            ->where('orders.status', 'PENDING_PAYMENT');
+
+        $unreadCount = (clone $notifications)->whereNull('notices.read_at')->count('notices.id');
+        $rows = (clone $notifications)
+            ->select([
+                'notices.id as notification_id',
+                'notices.read_at',
+                'notices.created_at as notified_at',
+                'bookings.id as booking_id',
+                'bookings.starts_at',
+                'orders.id as booking_order_id',
+                'orders.booking_code',
+                'orders.customer_name',
+                'orders.total_amount',
+                'orders.currency',
+            ])
+            ->orderByDesc('notices.id')
+            ->limit(25)
+            ->get();
+
+        $courtNames = DB::table('bookings as segments')
+            ->join('courts', 'courts.id', '=', 'segments.court_id')
+            ->whereIn('segments.booking_order_id', $rows->pluck('booking_order_id')->unique())
+            ->orderBy('segments.starts_at')
+            ->get(['segments.booking_order_id', 'courts.name as court_name'])
+            ->groupBy('booking_order_id')
+            ->map(fn ($segments): string => $segments->pluck('court_name')->unique()->implode(', '));
+
+        return [
+            'unread_count' => $unreadCount,
+            'notifications' => $rows->map(fn ($row): array => [
+                'id' => (int) $row->notification_id,
+                'booking_id' => (int) $row->booking_id,
+                'booking_order_id' => (int) $row->booking_order_id,
+                'booking_code' => $row->booking_code,
+                'customer_name' => $row->customer_name,
+                'courts' => $courtNames->get($row->booking_order_id, ''),
+                'starts_at' => CarbonImmutable::parse($row->starts_at, 'UTC')->timezone($timezone)->format('d/m/Y H:i'),
+                'total_amount' => (string) $row->total_amount,
+                'currency' => $row->currency,
+                'created_at' => CarbonImmutable::parse($row->notified_at, 'UTC')->timezone($timezone)->format('d/m/Y H:i'),
+                'read_at' => $row->read_at,
+            ])->values()->all(),
+        ];
+    }
+
+    public function markNotificationRead(int $notificationId, int $userId): void
+    {
+        DB::table('notifications')
+            ->where('id', $notificationId)
+            ->where('user_id', $userId)
+            ->where('channel', 'IN_APP')
+            ->where('type', 'BOOKING_PENDING_PAYMENT')
+            ->whereNull('read_at')
+            ->update(['read_at' => now('UTC'), 'updated_at' => now('UTC')]);
+    }
+
+    private function filteredOrders(array $filters)
     {
         $timezone = (string) config('venue.timezone', 'Asia/Ho_Chi_Minh');
 
-        return Booking::query()
+        return BookingOrder::query()
+            ->whereHas('bookings')
             ->when($filters['search'] ?? null, function ($query, string $search): void {
                 $query->where(function ($query) use ($search): void {
                     $query->where('booking_code', 'like', "%{$search}%")
@@ -217,50 +274,22 @@ class EloquentAdminBookingRepository implements AdminBookingRepository
                         ->orWhere('customer_phone', 'like', "%{$search}%");
                 });
             })
-            ->when($filters['court_id'] ?? null, fn ($query, int $courtId) => $query->where('court_id', $courtId))
+            ->when($filters['court_id'] ?? null, function ($query, int $courtId): void {
+                $query->whereHas('bookings', fn ($segments) => $segments->where('court_id', $courtId));
+            })
             ->when($filters['status'] ?? null, fn ($query, string $status) => $query->where('status', $status))
-            ->when($filters['payment_status'] ?? null, function ($query, string $status): void {
-                if ($status === 'UNPAID') {
-                    $query->whereDoesntHave('payments', fn ($payments) => $payments->where('status', 'PAID'));
-                } else {
-                    $query->whereHas('payments', fn ($payments) => $payments->where('status', $status));
-                }
-            })
-            ->when($filters['from'] ?? null, function ($query, string $from) use ($timezone): void {
-                $start = CarbonImmutable::createFromFormat('!Y-m-d', $from, $timezone)->utc();
-                $query->where('starts_at', '>=', $start);
-            })
-            ->when($filters['to'] ?? null, function ($query, string $to) use ($timezone): void {
-                $end = CarbonImmutable::createFromFormat('!Y-m-d', $to, $timezone)->addDay()->utc();
-                $query->where('starts_at', '<', $end);
+            ->when(($filters['from'] ?? null) || ($filters['to'] ?? null), function ($query) use ($filters, $timezone): void {
+                $start = ($filters['from'] ?? null)
+                    ? CarbonImmutable::createFromFormat('!Y-m-d', $filters['from'], $timezone)->utc()
+                    : null;
+                $end = ($filters['to'] ?? null)
+                    ? CarbonImmutable::createFromFormat('!Y-m-d', $filters['to'], $timezone)->addDay()->utc()
+                    : null;
+                $query->whereHas('bookings', function ($segments) use ($start, $end): void {
+                    $segments->when($start, fn ($slots) => $slots->where('starts_at', '>=', $start))
+                        ->when($end, fn ($slots) => $slots->where('starts_at', '<', $end));
+                });
             });
     }
 
-    private function money(string|int|float|null $value): string
-    {
-        $value = trim((string) $value);
-        if (! preg_match('/^(\d+)(?:\.(\d{1,2}))?$/', $value, $parts)) {
-            return '';
-        }
-
-        $whole = ltrim($parts[1], '0') ?: '0';
-        $fraction = str_pad($parts[2] ?? '', 2, '0');
-
-        return $whole.'.'.$fraction;
-    }
-
-    private function audit(int $userId, string $action, BankTransferTransaction $transaction, ?array $before, ?array $after): void
-    {
-        DB::table('audit_logs')->insert([
-            'user_id' => $userId,
-            'action' => $action,
-            'entity_type' => BankTransferTransaction::class,
-            'entity_id' => (string) $transaction->id,
-            'before_data' => $before ? json_encode($before) : null,
-            'after_data' => $after ? json_encode($after) : null,
-            'ip_address' => request()->ip(),
-            'user_agent' => mb_substr((string) request()->userAgent(), 0, 500),
-            'created_at' => now(),
-        ]);
-    }
 }

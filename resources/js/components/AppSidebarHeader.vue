@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
+import BookingNotificationsBell from '@/components/BookingNotificationsBell.vue';
+import { computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import type { BreadcrumbItem } from '@/types';
 
@@ -11,6 +14,9 @@ withDefaults(
         breadcrumbs: () => [],
     },
 );
+
+const page = usePage();
+const showBookingNotifications = computed(() => page.url.startsWith('/admin'));
 </script>
 
 <template>
@@ -23,5 +29,6 @@ withDefaults(
                 <Breadcrumbs :breadcrumbs="breadcrumbs" />
             </template>
         </div>
+        <BookingNotificationsBell v-if="showBookingNotifications" class="ml-auto" />
     </header>
 </template>

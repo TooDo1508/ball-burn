@@ -8,10 +8,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
-    'booking_code', 'status_token_hash', 'court_id', 'customer_name', 'customer_email',
-    'customer_phone', 'starts_at', 'ends_at', 'status', 'payment_deadline_at',
+    'booking_order_id', 'booking_code', 'court_id', 'customer_name', 'customer_email',
+    'customer_phone', 'starts_at', 'ends_at',
     'base_amount', 'discount_amount', 'total_amount', 'currency', 'customer_note',
-    'cancellation_reason', 'confirmed_at', 'cancelled_at',
 ])]
 class Booking extends Model
 {
@@ -21,9 +20,6 @@ class Booking extends Model
             'court_id' => 'integer',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
-            'payment_deadline_at' => 'datetime',
-            'confirmed_at' => 'datetime',
-            'cancelled_at' => 'datetime',
             'base_amount' => 'decimal:2',
             'discount_amount' => 'decimal:2',
             'total_amount' => 'decimal:2',
@@ -33,6 +29,11 @@ class Booking extends Model
     public function court(): BelongsTo
     {
         return $this->belongsTo(Court::class);
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(BookingOrder::class, 'booking_order_id');
     }
 
     public function statusHistory(): HasMany

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
     'booking_id', 'provider', 'provider_transaction_id', 'provider_order_id', 'amount', 'currency',
-    'status', 'payment_method', 'qr_payload', 'checkout_url', 'provider_metadata', 'paid_at', 'failed_at',
+    'payment_method', 'qr_payload', 'checkout_url', 'provider_metadata', 'proof_image_path', 'paid_at',
 ])]
 class Payment extends Model
 {
@@ -18,7 +18,6 @@ class Payment extends Model
             'amount' => 'decimal:2',
             'provider_metadata' => 'array',
             'paid_at' => 'datetime',
-            'failed_at' => 'datetime',
         ];
     }
 

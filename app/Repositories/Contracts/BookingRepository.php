@@ -3,27 +3,23 @@
 namespace App\Repositories\Contracts;
 
 use App\Models\Booking;
+use App\Models\BookingOrder;
 use App\Models\Court;
 use Carbon\CarbonImmutable;
 
 interface BookingRepository
 {
-    /** @param array<int, array<string, mixed>> $items
-     *  @return array<int, Booking>
-     */
-    public function createConfirmedBatchForGuest(array $items): array;
+    /** @param array<int, array<string, mixed>> $items */
+    public function guestPaymentInstructions(array $items, string $holdTokenHash): array;
 
-    public function createConfirmedForGuest(
-        Court $court,
-        CarbonImmutable $startsAtUtc,
-        CarbonImmutable $endsAtUtc,
-        int $dayOfWeek,
-        string $localStartsAt,
-        string $localEndsAt,
-        array $attributes,
-    ): Booking;
+    public function createPendingBatchForGuest(array $items, array $orderAttributes, string $paymentReference, string $holdTokenHash, string $proofImagePath): BookingOrder;
 
-    public function findGuestStatusByTokenHash(string $tokenHash): ?Booking;
+    /** @param array<int, array<string, mixed>> $slots */
+    public function syncGuestHolds(string $tokenHash, array $slots): array;
+
+    public function releaseGuestHolds(string $tokenHash): void;
+
+    public function findGuestStatusByTokenHash(string $tokenHash): ?BookingOrder;
 
     public function createConfirmedForAdmin(
         Court $court,
