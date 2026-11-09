@@ -1,7 +1,6 @@
 <script setup>
 import { computed, onUnmounted, reactive, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import QRCode from 'qrcode';
 import BookingCalendar from '../components/booking/BookingCalendar.vue';
 import BookingStepper from '../components/booking/BookingStepper.vue';
 import BookingSummary from '../components/booking/BookingSummary.vue';
@@ -22,8 +21,8 @@ const bookingStatus = ref(null);
 const currentStep = ref(1);
 const paymentSession = ref(null);
 const statusToken = ref('');
-const qrCodeDataUrl = ref('');
-const paymentQrUrl = ref('');
+const paymentQrUrl = computed(() => paymentSession.value?.qr_image_url ?? '');
+const transferDescription = computed(() => (paymentSession.value?.payment_reference ?? '').replace(/[^a-z0-9]/gi, '').toUpperCase());
 const paymentSecondsLeft = ref(300);
 const holdToken = ref('');
 const holdExpiresAt = ref(null);
@@ -92,31 +91,6 @@ const summaryNote = computed(() => currentStep.value === 1
         ? 'Nhập thông tin liên hệ để xem mã thanh toán. Đơn chưa được tạo ở bước này.'
         : 'Gửi ảnh chuyển khoản trước khi mã thanh toán hết hạn. Booking chỉ được xác nhận sau khi nhân viên đối soát.');
 
-watch(() => [paymentSession.value?.payment_reference, paymentSession.value?.total_amount, paymentSession.value?.currency, paymentQrUrl.value], async ([reference, total, currency, configuredQrUrl]) => {
-    qrCodeDataUrl.value = '';
-    if (!reference || configuredQrUrl) return;
-    const payload = `BALLBURN|${reference}|${total}|${currency}`;
-    try {
-        qrCodeDataUrl.value = await QRCode.toDataURL(payload, {
-            width: 260,
-            margin: 2,
-            color: { dark: '#123b2d', light: '#ffffff' },
-        });
-    } catch {
-        pageError.value = 'Không thể tạo mã QR. Vui lòng tải lại trang và thử lại.';
-    }
-});
-
-fetch('/api/site/contact-info', { headers: { Accept: 'application/json' } })
-    .then(async (response) => {
-        if (!response.ok) return;
-        const result = await response.json();
-        paymentQrUrl.value = result.data?.payment_qr_url ?? '';
-    })
-    .catch(() => {
-        // Keep the booking reference QR fallback if public settings cannot be loaded.
-    });
-
 function venueDate() {
     const parts = new Intl.DateTimeFormat('en', { timeZone: venueTimezone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
     const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
@@ -161,7 +135,6 @@ function createStatusToken() {
 function clearPaymentSelection() {
     paymentSession.value = null;
     statusToken.value = '';
-    qrCodeDataUrl.value = '';
     paymentSecondsLeft.value = 300;
     if (paymentCountdownTimer) window.clearInterval(paymentCountdownTimer);
     paymentCountdownTimer = null;
@@ -687,11 +660,10 @@ watch(() => route.params.token, (token) => {
                         <div class="booking-payment-layout">
                             <div class="booking-qr-card">
                                 <img v-if="paymentQrUrl" :src="paymentQrUrl" alt="Mã QR nhận thanh toán BALLBURN" />
-                                <img v-else-if="qrCodeDataUrl" :src="qrCodeDataUrl" alt="Mã QR tham chiếu thanh toán" />
-                                <div v-else class="booking-qr-loading">Đang tạo mã QR…</div>
-                                <span>Mã tham chiếu</span><strong>{{ paymentSession.payment_reference }}</strong>
+                                <div v-else class="booking-qr-loading">Chưa thể tạo mã QR thanh toán. Vui lòng thử lại hoặc liên hệ BALLBURN.</div>
+                                <span>Nội dung chuyển khoản</span><strong>{{ transferDescription }}</strong>
                                 <p>Tổng tiền: <b>{{ formatMoney(paymentSession.total_amount, paymentSession.currency) }}</b></p>
-                                <p v-if="paymentQrUrl">Vui lòng nhập mã tham chiếu ở trên làm nội dung chuyển khoản.</p>
+                                <p>Quét mã bằng ứng dụng ngân hàng. Nội dung chuyển khoản ngẫu nhiên ở trên được dùng để mapping với booking.</p>
                             </div>
                             <div class="booking-proof-form">
                                 <p class="booking-payment-countdown" :class="{ 'is-expired': paymentExpired }">{{ paymentExpired ? 'Mã thanh toán đã hết hạn' : `Thời gian còn lại ${paymentCountdownLabel}` }}</p>

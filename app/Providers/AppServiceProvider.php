@@ -7,6 +7,8 @@ use App\Models\Court;
 use App\Models\User;
 use App\Policies\BookingPolicy;
 use App\Policies\CourtPolicy;
+use App\Services\Payments\ReceiptOcrInterface;
+use App\Services\Payments\TesseractReceiptOcrService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -16,7 +18,10 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Register any application services.
      */
-    public function register(): void {}
+    public function register(): void
+    {
+        $this->app->bind(ReceiptOcrInterface::class, TesseractReceiptOcrService::class);
+    }
 
     /**
      * Bootstrap any application services.

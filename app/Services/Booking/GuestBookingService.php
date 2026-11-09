@@ -2,6 +2,7 @@
 
 namespace App\Services\Booking;
 
+use App\Jobs\ProcessPaymentReceiptJob;
 use App\Models\Booking;
 use App\Models\Court;
 use App\Models\CourtClosure;
@@ -184,6 +185,13 @@ class GuestBookingService
         $proofWasStored = $order->bookings->flatMap(fn (Booking $segment) => $segment->payments)
             ->contains(fn ($payment): bool => $payment->proof_image_path === $path);
         if (! $proofWasStored) Storage::disk('local')->delete($path);
+
+        $payment = $order->bookings->flatMap(fn (Booking $segment) => $segment->payments)
+            ->first(fn ($payment): bool => $payment->qr_payload === $validated['payment_reference']);
+        $receipt = $payment?->receipt;
+        if ($receipt && in_array($receipt->status, ['QUEUED', 'FAILED'], true)) {
+            ProcessPaymentReceiptJob::dispatch($receipt->id)->onQueue('payments')->afterCommit();
+        }
 
         return ['order' => $order, 'status_token' => $statusToken];
     }

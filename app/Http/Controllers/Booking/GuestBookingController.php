@@ -7,6 +7,7 @@ use App\Http\Requests\Booking\GetBookingAvailabilityRequest;
 use App\Http\Requests\Booking\StoreGuestPaymentProofRequest;
 use App\Http\Requests\Booking\StoreGuestBookingRequest;
 use App\Services\Booking\GuestBookingService;
+use App\Services\Payments\VietQrImageUrlService;
 use App\Services\Settings\ContactSettingsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
@@ -18,6 +19,7 @@ class GuestBookingController extends Controller
     public function __construct(
         private readonly GuestBookingService $bookings,
         private readonly ContactSettingsService $settings,
+        private readonly VietQrImageUrlService $vietQr,
     ) {}
 
     public function indexPage(): View
@@ -73,6 +75,13 @@ class GuestBookingController extends Controller
 
     public function paymentInstructions(StoreGuestBookingRequest $request): JsonResponse
     {
+        $accountNumber = $this->settings->paymentAccountNumber();
+        if (! $accountNumber) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'payment_account_number' => 'Website chưa cấu hình số tài khoản VPBank nhận thanh toán.',
+            ]);
+        }
+
         $instructions = $this->bookings->paymentInstructions($request->validated());
         return response()->json([
             'success' => true,
@@ -82,6 +91,12 @@ class GuestBookingController extends Controller
                 'payment_deadline_at' => $instructions['payment_deadline_at']->toISOString(),
                 'total_amount' => $instructions['total_amount'],
                 'currency' => $instructions['currency'],
+                'qr_image_url' => $this->vietQr->imageUrl(
+                    $accountNumber,
+                    $instructions['total_amount'],
+                    $instructions['currency'],
+                    $instructions['payment_reference'],
+                ),
             ],
         ]);
     }

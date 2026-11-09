@@ -5,31 +5,44 @@ namespace Tests\Unit;
 use App\Models\SiteSetting;
 use App\Repositories\Contracts\SiteSettingRepository;
 use App\Services\Settings\ContactSettingsService;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Mockery;
 use Tests\TestCase;
 
 class ContactSettingsServiceTest extends TestCase
 {
-    public function test_public_settings_exposes_a_url_for_the_shared_payment_qr_without_exposing_its_storage_path(): void
+    public function test_public_settings_hides_the_payment_account_number(): void
     {
-        Storage::fake('public');
-        Storage::disk('public')->put('payment-qr/current.png', 'qr-image');
-
         $repository = Mockery::mock(SiteSettingRepository::class);
         $repository->shouldReceive('findByKey')
             ->once()
             ->with('contact_info')
-            ->andReturn(new SiteSetting(['setting_value' => ['payment_qr_path' => 'payment-qr/current.png']]));
+            ->andReturn(new SiteSetting(['setting_value' => [
+                'email' => 'hello@ballburn.vn',
+                'payment_account_number' => '001234567890',
+            ]]));
 
         $settings = (new ContactSettingsService($repository))->publicSettings();
 
-        $this->assertSame(Storage::disk('public')->url('payment-qr/current.png'), $settings['payment_qr_url']);
-        $this->assertArrayNotHasKey('payment_qr_path', $settings);
+        $this->assertSame('hello@ballburn.vn', $settings['email']);
+        $this->assertArrayNotHasKey('payment_account_number', $settings);
     }
 
-    public function test_admin_can_replace_the_shared_payment_qr_and_the_old_file_is_removed(): void
+    public function test_admin_settings_and_payment_service_can_read_the_saved_account_number(): void
+    {
+        $repository = Mockery::mock(SiteSettingRepository::class);
+        $repository->shouldReceive('findByKey')
+            ->twice()
+            ->with('contact_info')
+            ->andReturn(new SiteSetting(['setting_value' => ['payment_account_number' => '001234567890']]));
+
+        $settings = new ContactSettingsService($repository);
+
+        $this->assertSame('001234567890', $settings->adminSettings()['payment_account_number']);
+        $this->assertSame('001234567890', $settings->paymentAccountNumber());
+    }
+
+    public function test_update_saves_account_number_and_removes_a_legacy_uploaded_qr(): void
     {
         Storage::fake('public');
         Storage::disk('public')->put('payment-qr/old.png', 'old-image');
@@ -42,41 +55,17 @@ class ContactSettingsServiceTest extends TestCase
         $repository->shouldReceive('updateOrCreate')
             ->once()
             ->with('contact_info', Mockery::on(function (array $attributes): bool {
-                $path = $attributes['setting_value']['payment_qr_path'] ?? null;
-
-                return is_string($path)
-                    && str_starts_with($path, 'payment-qr/')
-                    && $attributes['description'] === 'Public website contact details and payment QR code';
+                return $attributes['setting_value']['payment_account_number'] === '001234567890'
+                    && ! array_key_exists('payment_qr_path', $attributes['setting_value'])
+                    && $attributes['description'] === 'Public website contact details and VietQR payment account';
             }))
             ->andReturn(new SiteSetting());
 
-        (new ContactSettingsService($repository))->update(
-            ContactSettingsService::defaults(),
-            7,
-            UploadedFile::fake()->create('bank-qr.png', 50, 'image/png'),
-        );
+        (new ContactSettingsService($repository))->update([
+            ...ContactSettingsService::defaults(),
+            'payment_account_number' => '001234567890',
+        ], 7);
 
         Storage::disk('public')->assertMissing('payment-qr/old.png');
-        $this->assertCount(1, Storage::disk('public')->allFiles('payment-qr'));
-    }
-
-    public function test_admin_can_remove_the_shared_payment_qr(): void
-    {
-        Storage::fake('public');
-        Storage::disk('public')->put('payment-qr/current.png', 'qr-image');
-
-        $repository = Mockery::mock(SiteSettingRepository::class);
-        $repository->shouldReceive('findByKey')
-            ->once()
-            ->with('contact_info')
-            ->andReturn(new SiteSetting(['setting_value' => ['payment_qr_path' => 'payment-qr/current.png']]));
-        $repository->shouldReceive('updateOrCreate')
-            ->once()
-            ->with('contact_info', Mockery::on(fn (array $attributes): bool => $attributes['setting_value']['payment_qr_path'] === null))
-            ->andReturn(new SiteSetting());
-
-        (new ContactSettingsService($repository))->update(ContactSettingsService::defaults(), 7, null, true);
-
-        Storage::disk('public')->assertMissing('payment-qr/current.png');
     }
 }

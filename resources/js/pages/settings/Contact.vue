@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import { Mail, MapPin, Phone, Save, Settings2, Upload } from '@lucide/vue';
-import { onBeforeUnmount, ref, watch } from 'vue';
+import { Mail, MapPin, Phone, Save, Settings2 } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 
 type ContactSettings = {
@@ -13,50 +12,21 @@ type ContactSettings = {
     map_url: string;
     facebook_url: string;
     instagram_url: string;
-    payment_qr_url: string | null;
+    payment_account_number: string;
 };
 
 const props = defineProps<{ contact: ContactSettings }>();
-const form = useForm({
-    contact: { ...props.contact },
-    payment_qr: undefined as File | undefined,
-    remove_payment_qr: false,
-});
-const qrPreviewUrl = ref(props.contact.payment_qr_url ?? '');
-let temporaryPreviewUrl = '';
-
-watch(() => props.contact.payment_qr_url, (url) => {
-    if (temporaryPreviewUrl) URL.revokeObjectURL(temporaryPreviewUrl);
-    temporaryPreviewUrl = '';
-    qrPreviewUrl.value = url ?? '';
-    form.payment_qr = undefined;
-    form.remove_payment_qr = false;
-});
-
-onBeforeUnmount(() => {
-    if (temporaryPreviewUrl) URL.revokeObjectURL(temporaryPreviewUrl);
-});
-
-function choosePaymentQr(event: Event) {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-
-    if (temporaryPreviewUrl) URL.revokeObjectURL(temporaryPreviewUrl);
-    temporaryPreviewUrl = URL.createObjectURL(file);
-    qrPreviewUrl.value = temporaryPreviewUrl;
-    form.payment_qr = file;
-    form.remove_payment_qr = false;
-}
+const form = useForm({ contact: { ...props.contact } });
 
 function save() {
-    form.put('/admin/settings/contact', { preserveScroll: true, forceFormData: true });
+    form.put('/admin/settings/contact', { preserveScroll: true });
 }
 </script>
 
 <template>
     <Head title="Cài đặt website" />
     <section class="mx-auto flex w-full max-w-4xl flex-col gap-6 p-6">
-        <Heading title="Cài đặt website" description="Thông tin chung hiển thị trên các trang BALLBURN và mã QR dùng trong luồng thanh toán." />
+        <Heading title="Cài đặt website" description="Thông tin liên hệ dùng chung và tài khoản VPBank nhận thanh toán đặt sân." />
 
         <form class="grid gap-6 rounded-xl border bg-card p-5 sm:p-6" @submit.prevent="save">
             <div class="flex items-start gap-3 rounded-lg border border-orange-500/20 bg-orange-500/5 p-4 text-sm leading-6 text-muted-foreground">
@@ -114,32 +84,11 @@ function save() {
                     <p v-if="form.errors['contact.instagram_url']" class="text-sm text-destructive">{{ form.errors['contact.instagram_url'] }}</p>
                 </div>
 
-                <div class="grid gap-3 border-t pt-5 sm:col-span-2">
-                    <div>
-                        <h2 class="text-base font-semibold">QR nhận thanh toán</h2>
-                        <p class="mt-1 text-sm text-muted-foreground">Ảnh này được dùng chung và hiển thị ở bước thanh toán đặt sân. Hỗ trợ PNG, JPG hoặc WebP, tối đa 5 MB.</p>
-                    </div>
-                    <div class="flex flex-wrap items-start gap-5">
-                        <div v-if="qrPreviewUrl && !form.remove_payment_qr" class="grid gap-2">
-                            <img :src="qrPreviewUrl" alt="Ảnh QR nhận thanh toán" class="size-48 rounded-lg border bg-white object-contain p-2" />
-                            <label class="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-destructive">
-                                <input v-model="form.remove_payment_qr" type="checkbox" class="size-4 rounded border-border" />
-                                Xóa QR hiện tại
-                            </label>
-                        </div>
-                        <div v-else class="grid size-48 place-items-center rounded-lg border border-dashed bg-muted p-4 text-center text-sm text-muted-foreground">
-                            Chưa có ảnh QR thanh toán
-                        </div>
-                        <div class="grid content-start gap-2">
-                            <label for="payment-qr" class="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-md border bg-background px-4 py-2 text-sm font-semibold hover:bg-muted">
-                                <Upload class="size-4" />{{ qrPreviewUrl && !form.remove_payment_qr ? 'Thay ảnh QR' : 'Tải ảnh QR lên' }}
-                            </label>
-                            <input id="payment-qr" type="file" accept="image/png,image/jpeg,image/webp" class="sr-only" @change="choosePaymentQr" />
-                            <p v-if="form.errors.payment_qr" class="text-sm text-destructive">{{ form.errors.payment_qr }}</p>
-                            <p v-if="form.errors.remove_payment_qr" class="text-sm text-destructive">{{ form.errors.remove_payment_qr }}</p>
-                            <p class="max-w-sm text-xs leading-5 text-muted-foreground">Khách sẽ quét mã này để chuyển khoản và dùng mã tham chiếu hiển thị tại bước đặt sân làm nội dung chuyển khoản.</p>
-                        </div>
-                    </div>
+                <div class="grid gap-2 border-t pt-5 sm:col-span-2">
+                    <label for="payment-account-number" class="text-sm font-semibold">Số tài khoản VPBank nhận tiền *</label>
+                    <input id="payment-account-number" v-model.trim="form.contact.payment_account_number" type="text" inputmode="numeric" autocomplete="off" minlength="6" maxlength="19" pattern="[0-9]{6,19}" required placeholder="Nhập số tài khoản VPBank" class="min-h-11 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
+                    <p v-if="form.errors['contact.payment_account_number']" class="text-sm text-destructive">{{ form.errors['contact.payment_account_number'] }}</p>
+                    <p class="text-xs leading-5 text-muted-foreground">QR VietQR sẽ được tạo cho từng lượt đặt sân với đúng số tiền và mã tham chiếu ngẫu nhiên làm nội dung chuyển khoản. Mã này được dùng để mapping với đơn đặt sân.</p>
                 </div>
             </div>
 

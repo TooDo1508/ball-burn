@@ -47,6 +47,42 @@ docker compose exec app php artisan migrate
 
 Open [http://localhost:8000](http://localhost:8000). The `frontend` service runs Vite at port 5173. Stop the containers with `docker compose down`; keep the database when stopping. To also delete all database data, use `docker compose down -v`.
 
+### PHP debugging with VS Code
+
+The local `app` and `queue-worker` images install Xdebug 3.5.3. In VS Code, install the recommended **PHP Debug** extension, then open **Run and Debug** and start **Listen for Xdebug (Docker)**. The launch configuration maps the container's `/var/www/html` directory to the opened workspace.
+
+Rebuild the PHP services after changing the Dockerfile or Xdebug settings:
+
+```bash
+docker compose up -d --build app queue-worker
+```
+
+Set a breakpoint and add `?XDEBUG_TRIGGER=1` to the local page URL, for example `http://localhost:8000/?XDEBUG_TRIGGER=1`. For an Artisan command, set the trigger for that command:
+
+```bash
+docker compose exec -e XDEBUG_TRIGGER=1 app php artisan about
+```
+
+Check that the extension loaded with `docker compose exec app php --ri xdebug`. Xdebug connects from the PHP container to VS Code on `host.docker.internal:9003`; the debugger only starts for requests with a trigger.
+
+To debug a queued job, start the one-shot worker with the trigger after stopping the regular worker, so it cannot claim the job first:
+
+```bash
+docker compose stop queue-worker
+docker compose run --rm -e XDEBUG_TRIGGER=1 queue-worker php artisan queue:work database --queue=payments,default --once
+docker compose start queue-worker
+```
+
+### Payment receipt OCR queue
+
+The booking payment-proof endpoint now creates a `payment_receipts` row with the booking/payment, then queues OCR after the transaction commits. The worker runs Tesseract with Vietnamese and English data and saves the OCR and mapping result; a match never marks the payment as paid. After pulling this change, rebuild and migrate, then restart the worker:
+
+```bash
+docker compose up -d --build app queue-worker
+docker compose exec app php artisan migrate
+docker compose restart queue-worker
+```
+
 The frontend uses Vue 3 with Vite and Vue Router. Add pages, reusable components, composables, and assets under `src/`; the app entry and shared styles are `src/app.js` and `src/assets/styles/global.css`. Vite serves frontend assets from the `frontend` container.
 
 For a fresh checkout, copy `.env.example` to `.env`, then run `docker compose up -d --build`, `docker compose exec app composer install`, `docker compose exec app php artisan key:generate`, and `docker compose exec app php artisan migrate`.

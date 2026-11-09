@@ -15,17 +15,12 @@ class ContactSettingsController extends Controller
 
     public function edit(): Response
     {
-        return Inertia::render('settings/Contact', ['contact' => $this->settings->publicSettings()]);
+        return Inertia::render('settings/Contact', ['contact' => $this->settings->adminSettings()]);
     }
 
     public function update(UpdateContactSettingsRequest $request): RedirectResponse
     {
-        $this->settings->update(
-            $request->validated('contact'),
-            (int) $request->user()->id,
-            $request->file('payment_qr'),
-            $request->boolean('remove_payment_qr'),
-        );
+        $this->settings->update($request->validated('contact'), (int) $request->user()->id);
 
         return back()->with('success', 'Đã lưu cài đặt chung của website.');
     }

@@ -26,7 +26,7 @@ class EloquentBookingRepository implements BookingRepository
             $existing = BookingHold::query()->where('token_hash', $tokenHash)->lockForUpdate()->get();
             $existingExpiry = $existing->first()?->expires_at;
             $expires = $existingExpiry ? CarbonImmutable::instance($existingExpiry) : CarbonImmutable::now('UTC')->addMinutes(5);
-            $paymentReference = $existing->pluck('payment_reference')->filter()->first() ?? 'BBPAY-'.Str::upper(Str::random(10));
+            $paymentReference = $existing->pluck('payment_reference')->filter()->first() ?? 'BBPAY'.Str::upper(Str::random(10));
             if ($expires->lte(now('UTC'))) throw ValidationException::withMessages(['slots' => 'Thời gian giữ chỗ đã hết. Vui lòng chọn lại.']);
             BookingHold::query()->where('token_hash', $tokenHash)->delete();
             foreach ($slots as $slot) {
@@ -80,7 +80,7 @@ class EloquentBookingRepository implements BookingRepository
 
             $existingOrder = BookingOrder::query()->where('hold_token_hash', $holdTokenHash)->lockForUpdate()->first();
             if ($existingOrder) {
-                $existingOrder->load(['bookings.court', 'bookings.payments']);
+                $existingOrder->load(['bookings.court', 'bookings.payments.receipt']);
                 $hasSamePayment = $existingOrder->bookings->flatMap(fn (Booking $booking) => $booking->payments)
                     ->contains(fn (Payment $payment): bool => $payment->qr_payload === $paymentReference);
                 $hasSameStatusToken = hash_equals((string) $existingOrder->status_token_hash, (string) $orderAttributes['status_token_hash']);
@@ -185,7 +185,7 @@ class EloquentBookingRepository implements BookingRepository
 
             $primaryBooking = $created[0];
             BookingHold::query()->where('token_hash', $holdTokenHash)->delete();
-            Payment::query()->create([
+            $payment = Payment::query()->create([
                 'booking_id' => $primaryBooking->id,
                 'provider' => 'MANUAL_QR',
                 'amount' => $order->total_amount,
@@ -195,6 +195,7 @@ class EloquentBookingRepository implements BookingRepository
                 'proof_image_path' => $proofImagePath,
                 'provider_metadata' => ['payment_reference' => $paymentReference, 'booking_order_code' => $order->booking_code],
             ]);
+            $payment->receipt()->create(['status' => 'QUEUED']);
 
             $admins = DB::table('users')->where('is_active', true)
                 ->whereIn(DB::raw('UPPER(role)'), ['ADMIN', 'STAFF'])
@@ -219,7 +220,7 @@ class EloquentBookingRepository implements BookingRepository
                 ]);
             }
 
-            return $order->load(['bookings.court', 'bookings.payments']);
+            return $order->load(['bookings.court', 'bookings.payments.receipt']);
         });
     }
 
