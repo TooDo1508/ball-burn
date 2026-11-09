@@ -2,19 +2,32 @@
 
 namespace App\Services\Contact;
 
+use App\Jobs\SendContactMessageAdminNotification;
+use App\Jobs\SendContactMessageAcknowledgement;
 use App\Models\ContactMessage;
 use App\Repositories\Contracts\ContactMessageRepository;
+use App\Services\Settings\ContactSettingsService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class ContactMessageService
 {
-    public function __construct(private readonly ContactMessageRepository $messages) {}
+    public function __construct(
+        private readonly ContactMessageRepository $messages,
+        private readonly ContactSettingsService $settings,
+    ) {}
 
     public function submit(array $attributes): void
     {
         unset($attributes['website']);
         $attributes['status'] = 'NEW';
-        $this->messages->create($attributes);
+        $message = $this->messages->create($attributes);
+
+        SendContactMessageAcknowledgement::dispatch($message)->afterCommit();
+
+        $adminEmail = trim((string) ($this->settings->publicSettings()['email'] ?? ''));
+        if (filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
+            SendContactMessageAdminNotification::dispatch($message, $adminEmail)->afterCommit();
+        }
     }
 
     public function listing(array $filters, int $perPage = 10): LengthAwarePaginator

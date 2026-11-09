@@ -23,6 +23,7 @@ const currentStep = ref(1);
 const paymentSession = ref(null);
 const statusToken = ref('');
 const qrCodeDataUrl = ref('');
+const paymentQrUrl = ref('');
 const paymentSecondsLeft = ref(300);
 const holdToken = ref('');
 const holdExpiresAt = ref(null);
@@ -91,9 +92,9 @@ const summaryNote = computed(() => currentStep.value === 1
         ? 'Nhập thông tin liên hệ để xem mã thanh toán. Đơn chưa được tạo ở bước này.'
         : 'Gửi ảnh chuyển khoản trước khi mã thanh toán hết hạn. Booking chỉ được xác nhận sau khi nhân viên đối soát.');
 
-watch(() => [paymentSession.value?.payment_reference, paymentSession.value?.total_amount, paymentSession.value?.currency], async ([reference, total, currency]) => {
+watch(() => [paymentSession.value?.payment_reference, paymentSession.value?.total_amount, paymentSession.value?.currency, paymentQrUrl.value], async ([reference, total, currency, configuredQrUrl]) => {
     qrCodeDataUrl.value = '';
-    if (!reference) return;
+    if (!reference || configuredQrUrl) return;
     const payload = `BALLBURN|${reference}|${total}|${currency}`;
     try {
         qrCodeDataUrl.value = await QRCode.toDataURL(payload, {
@@ -105,6 +106,16 @@ watch(() => [paymentSession.value?.payment_reference, paymentSession.value?.tota
         pageError.value = 'Không thể tạo mã QR. Vui lòng tải lại trang và thử lại.';
     }
 });
+
+fetch('/api/site/contact-info', { headers: { Accept: 'application/json' } })
+    .then(async (response) => {
+        if (!response.ok) return;
+        const result = await response.json();
+        paymentQrUrl.value = result.data?.payment_qr_url ?? '';
+    })
+    .catch(() => {
+        // Keep the booking reference QR fallback if public settings cannot be loaded.
+    });
 
 function venueDate() {
     const parts = new Intl.DateTimeFormat('en', { timeZone: venueTimezone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
@@ -675,10 +686,12 @@ watch(() => route.params.token, (token) => {
                         <button type="button" class="booking-back-button" @click="returnToContactInformation">← Quay lại thông tin</button>
                         <div class="booking-payment-layout">
                             <div class="booking-qr-card">
-                                <img v-if="qrCodeDataUrl" :src="qrCodeDataUrl" alt="Mã QR tham chiếu thanh toán" />
+                                <img v-if="paymentQrUrl" :src="paymentQrUrl" alt="Mã QR nhận thanh toán BALLBURN" />
+                                <img v-else-if="qrCodeDataUrl" :src="qrCodeDataUrl" alt="Mã QR tham chiếu thanh toán" />
                                 <div v-else class="booking-qr-loading">Đang tạo mã QR…</div>
                                 <span>Mã tham chiếu</span><strong>{{ paymentSession.payment_reference }}</strong>
                                 <p>Tổng tiền: <b>{{ formatMoney(paymentSession.total_amount, paymentSession.currency) }}</b></p>
+                                <p v-if="paymentQrUrl">Vui lòng nhập mã tham chiếu ở trên làm nội dung chuyển khoản.</p>
                             </div>
                             <div class="booking-proof-form">
                                 <p class="booking-payment-countdown" :class="{ 'is-expired': paymentExpired }">{{ paymentExpired ? 'Mã thanh toán đã hết hạn' : `Thời gian còn lại ${paymentCountdownLabel}` }}</p>

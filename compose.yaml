@@ -17,6 +17,33 @@ services:
     networks:
       - laravel
 
+  queue-worker:
+    build:
+      context: ./.docker/php
+      dockerfile: Dockerfile
+      args:
+        WWWUSER: "${WWWUSER:-1000}"
+        WWWGROUP: "${WWWGROUP:-1000}"
+    working_dir: /var/www/html
+    command: php artisan queue:work database --queue=default --sleep=3 --tries=3 --timeout=60
+    restart: unless-stopped
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    networks:
+      - laravel
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    ports:
+      - "127.0.0.1:${MAILHOG_UI_PORT:-8025}:8025"
+    networks:
+      - laravel
+
   nginx:
     image: nginx:1.28-alpine
     ports:

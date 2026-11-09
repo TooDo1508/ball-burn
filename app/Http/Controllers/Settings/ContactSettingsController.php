@@ -20,8 +20,13 @@ class ContactSettingsController extends Controller
 
     public function update(UpdateContactSettingsRequest $request): RedirectResponse
     {
-        $this->settings->update($request->validated('contact'), (int) $request->user()->id);
+        $this->settings->update(
+            $request->validated('contact'),
+            (int) $request->user()->id,
+            $request->file('payment_qr'),
+            $request->boolean('remove_payment_qr'),
+        );
 
-        return back()->with('success', 'Đã lưu thông tin liên hệ của website.');
+        return back()->with('success', 'Đã lưu cài đặt chung của website.');
     }
 }

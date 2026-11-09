@@ -37,6 +37,7 @@ class ContactPageController extends Controller
 
     public function publicInfo(): JsonResponse
     {
-        return response()->json(['data' => $this->settings->publicSettings()]);
+        return response()->json(['data' => $this->settings->publicSettings()])
+            ->header('Cache-Control', 'no-store');
     }
 }

@@ -44,7 +44,7 @@ const mainNavItems: NavItem[] = [
         icon: Mail,
     },
     {
-        title: 'Cài đặt liên hệ',
+        title: 'Cài đặt website',
         href: '/admin/settings/contact',
         icon: Settings2,
     },

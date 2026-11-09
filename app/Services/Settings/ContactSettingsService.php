@@ -3,6 +3,10 @@
 namespace App\Services\Settings;
 
 use App\Repositories\Contracts\SiteSettingRepository;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use RuntimeException;
+use Throwable;
 
 class ContactSettingsService
 {
@@ -10,19 +14,59 @@ class ContactSettingsService
 
     public function publicSettings(): array
     {
-        return array_merge(
+        $settings = array_merge(
             self::defaults(),
             $this->settings->findByKey('contact_info')?->setting_value ?? [],
         );
+
+        $paymentQrPath = $settings['payment_qr_path'] ?? null;
+        unset($settings['payment_qr_path']);
+        $settings['payment_qr_url'] = $paymentQrPath
+            ? Storage::disk('public')->url($paymentQrPath)
+            : null;
+
+        return $settings;
     }
 
-    public function update(array $contact, int $updatedBy): void
+    public function update(
+        array $contact,
+        int $updatedBy,
+        ?UploadedFile $paymentQr = null,
+        bool $removePaymentQr = false,
+    ): void
     {
-        $this->settings->updateOrCreate('contact_info', [
-            'setting_value' => array_merge(self::defaults(), $contact),
-            'description' => 'Public website contact details and primary contact email',
-            'updated_by' => $updatedBy,
-        ]);
+        $existing = $this->settings->findByKey('contact_info')?->setting_value ?? [];
+        $oldPaymentQrPath = $existing['payment_qr_path'] ?? null;
+        $paymentQrPath = $oldPaymentQrPath;
+        $newPaymentQrPath = null;
+
+        if ($paymentQr) {
+            $newPaymentQrPath = $paymentQr->store('payment-qr', 'public');
+            if (! $newPaymentQrPath) {
+                throw new RuntimeException('Không thể lưu ảnh QR thanh toán.');
+            }
+            $paymentQrPath = $newPaymentQrPath;
+        } elseif ($removePaymentQr) {
+            $paymentQrPath = null;
+        }
+
+        try {
+            $this->settings->updateOrCreate('contact_info', [
+                'setting_value' => array_merge(self::defaults(), $contact, ['payment_qr_path' => $paymentQrPath]),
+                'description' => 'Public website contact details and payment QR code',
+                'updated_by' => $updatedBy,
+            ]);
+        } catch (Throwable $exception) {
+            if ($newPaymentQrPath) {
+                Storage::disk('public')->delete($newPaymentQrPath);
+            }
+
+            throw $exception;
+        }
+
+        if ($oldPaymentQrPath && $oldPaymentQrPath !== $paymentQrPath) {
+            Storage::disk('public')->delete($oldPaymentQrPath);
+        }
     }
 
     public static function defaults(): array

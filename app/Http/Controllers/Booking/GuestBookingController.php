@@ -7,6 +7,7 @@ use App\Http\Requests\Booking\GetBookingAvailabilityRequest;
 use App\Http\Requests\Booking\StoreGuestPaymentProofRequest;
 use App\Http\Requests\Booking\StoreGuestBookingRequest;
 use App\Services\Booking\GuestBookingService;
+use App\Services\Settings\ContactSettingsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Http\Request;
@@ -14,11 +15,17 @@ use Illuminate\View\View;
 
 class GuestBookingController extends Controller
 {
-    public function __construct(private readonly GuestBookingService $bookings) {}
+    public function __construct(
+        private readonly GuestBookingService $bookings,
+        private readonly ContactSettingsService $settings,
+    ) {}
 
     public function indexPage(): View
     {
-        return view('welcome', ['seo' => $this->bookingSeo()]);
+        return view('welcome', [
+            'seo' => $this->bookingSeo(),
+            'initialContactSettings' => $this->settings->publicSettings(),
+        ]);
     }
 
     public function statusPage(string $token): Response
