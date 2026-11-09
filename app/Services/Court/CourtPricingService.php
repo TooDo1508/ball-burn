@@ -27,25 +27,44 @@ class CourtPricingService
 
     public function slotAmount(Court $court, CarbonImmutable $date, string $startsAt): string
     {
-        $rule = $this->applicableRules($court, $date)
-            ->first(fn (CourtPriceRule $item): bool => $startsAt >= substr($item->starts_at, 0, 5)
-                && $startsAt < substr($item->ends_at, 0, 5));
-        $hourly = (string) ($rule?->price_per_hour ?? $court->price_per_hour);
+        return $this->amountForRules($court, $this->applicableRules($court, $date), $startsAt);
+    }
 
-        return $this->minorToDecimal(intdiv($this->decimalToMinor($hourly, $court->currency), 2), $court->currency);
+    /** @param array<int, string> $startsAtTimes @return array<string, string> */
+    public function slotAmounts(Court $court, CarbonImmutable $date, array $startsAtTimes): array
+    {
+        $rules = $this->applicableRules($court, $date);
+        $amounts = [];
+        foreach ($startsAtTimes as $startsAt) {
+            $amounts[$startsAt] = $this->amountForRules($court, $rules, $startsAt);
+        }
+
+        return $amounts;
     }
 
     public function rangeAmount(Court $court, CarbonImmutable $startsAt, CarbonImmutable $endsAt): string
     {
         $totalMinor = 0;
         $cursor = $startsAt;
+        $rulesByDate = [];
         while ($cursor->lt($endsAt)) {
-            $slotAmount = $this->slotAmount($court, $cursor->startOfDay(), $cursor->format('H:i'));
+            $dateKey = $cursor->format('Y-m-d');
+            $rulesByDate[$dateKey] ??= $this->applicableRules($court, $cursor->startOfDay());
+            $slotAmount = $this->amountForRules($court, $rulesByDate[$dateKey], $cursor->format('H:i'));
             $totalMinor += $this->decimalToMinor($slotAmount, $court->currency);
             $cursor = $cursor->addMinutes(30);
         }
 
         return $this->minorToDecimal($totalMinor, $court->currency);
+    }
+
+    private function amountForRules(Court $court, Collection $rules, string $startsAt): string
+    {
+        $rule = $rules->first(fn (CourtPriceRule $item): bool => $startsAt >= substr($item->starts_at, 0, 5)
+            && $startsAt < substr($item->ends_at, 0, 5));
+        $hourly = (string) ($rule?->price_per_hour ?? $court->price_per_hour);
+
+        return $this->minorToDecimal(intdiv($this->decimalToMinor($hourly, $court->currency), 2), $court->currency);
     }
 
     private function decimalToMinor(string $amount, string $currency): int

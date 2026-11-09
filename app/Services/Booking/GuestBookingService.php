@@ -4,14 +4,15 @@ namespace App\Services\Booking;
 
 use App\Jobs\ProcessPaymentReceiptJob;
 use App\Models\Booking;
+use App\Models\BookingOrder;
 use App\Models\Court;
 use App\Models\CourtClosure;
 use App\Repositories\Contracts\BookingRepository;
 use App\Repositories\Contracts\CourtRepository;
 use App\Services\Court\CourtPricingService;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -37,9 +38,9 @@ class GuestBookingService
 
         $dayStartUtc = $date->startOfDay()->utc();
         $dayEndUtc = $date->addDay()->startOfDay()->utc();
-        $bookings = $this->courts->bookingsBetween($dayStartUtc, $dayEndUtc);
-        $holds = $this->courts->holdsBetween($dayStartUtc, $dayEndUtc, $holdToken ? hash('sha256', $holdToken) : null);
-        $closures = $this->courts->closuresBetween($dayStartUtc, $dayEndUtc);
+        $bookings = $this->courts->bookingsBetween($dayStartUtc, $dayEndUtc)->groupBy('court_id');
+        $holds = $this->courts->holdsBetween($dayStartUtc, $dayEndUtc, $holdToken ? hash('sha256', $holdToken) : null)->groupBy('court_id');
+        $closures = $this->courts->closuresBetween($dayStartUtc, $dayEndUtc)->groupBy('court_id');
         $nowLocal = CarbonImmutable::now('UTC')->timezone($timezone);
         $courtSlots = [];
         $rangeStart = null;
@@ -49,6 +50,7 @@ class GuestBookingService
             $hours = $court->operatingHours->firstWhere('day_of_week', $date->dayOfWeekIso);
             if (! $hours || $hours->is_closed) {
                 $courtSlots[$court->id] = [];
+
                 continue;
             }
 
@@ -56,9 +58,9 @@ class GuestBookingService
             $closesAt = substr($hours->closes_at, 0, 5);
             $rangeStart = $rangeStart === null ? $opensAt : min($rangeStart, $opensAt);
             $rangeEnd = $rangeEnd === null ? $closesAt : max($rangeEnd, $closesAt);
-            $courtBookings = $bookings->where('court_id', $court->id);
-            $courtHolds = $holds->where('court_id', $court->id);
-            $courtClosures = $closures->where('court_id', $court->id);
+            $courtBookings = $bookings->get($court->id, collect());
+            $courtHolds = $holds->get($court->id, collect());
+            $courtClosures = $closures->get($court->id, collect());
             $cursor = CarbonImmutable::createFromFormat('Y-m-d H:i:s', $date->format('Y-m-d').' '.$opensAt.':00', $timezone);
             $close = CarbonImmutable::createFromFormat('Y-m-d H:i:s', $date->format('Y-m-d').' '.$closesAt.':00', $timezone);
             $courtSlots[$court->id] = [];
@@ -79,10 +81,15 @@ class GuestBookingService
                     'starts_at' => $startsAt,
                     'ends_at' => $endsAt,
                     'status' => $status,
-                    'amount' => $this->pricing->slotAmount($court, $date, $startsAt),
                 ];
                 $cursor = $slotEnd;
             }
+
+            $amounts = $this->pricing->slotAmounts($court, $date, array_column($courtSlots[$court->id], 'starts_at'));
+            $courtSlots[$court->id] = array_map(fn (array $slot): array => [
+                ...$slot,
+                'amount' => $amounts[$slot['starts_at']],
+            ], $courtSlots[$court->id]);
         }
 
         $gridTimeSlots = [];
@@ -117,15 +124,20 @@ class GuestBookingService
         $date = CarbonImmutable::createFromFormat('!Y-m-d', $dateValue, $timezone);
         $this->validateBookingDate($date, $timezone);
         $token ??= Str::random(64);
-        if (! preg_match('/^[A-Za-z0-9]{64}$/', $token)) throw ValidationException::withMessages(['hold_token' => 'Mã giữ chỗ không hợp lệ.']);
+        if (! preg_match('/^[A-Za-z0-9]{64}$/', $token)) {
+            throw ValidationException::withMessages(['hold_token' => 'Mã giữ chỗ không hợp lệ.']);
+        }
         $items = [];
         foreach ($slots as $i => $slot) {
             $start = CarbonImmutable::createFromFormat('Y-m-d H:i', $dateValue.' '.$slot['starts_at'], $timezone);
             $end = CarbonImmutable::createFromFormat('Y-m-d H:i', $dateValue.' '.$slot['ends_at'], $timezone);
-            if ((int) $start->diffInMinutes($end) !== 30 || $start->lt(CarbonImmutable::now($timezone))) throw ValidationException::withMessages(["slots.{$i}" => 'Mỗi lượt giữ chỗ phải là khung 30 phút trong tương lai.']);
+            if ((int) $start->diffInMinutes($end) !== 30 || $start->lt(CarbonImmutable::now($timezone))) {
+                throw ValidationException::withMessages(["slots.{$i}" => 'Mỗi lượt giữ chỗ phải là khung 30 phút trong tương lai.']);
+            }
             $items[] = ['court_id' => (int) $slot['court_id'], 'starts_at' => $start->utc(), 'ends_at' => $end->utc(), 'day_of_week' => $start->dayOfWeekIso, 'local_starts_at' => $start->format('H:i'), 'local_ends_at' => $end->format('H:i')];
         }
         $hold = $this->bookings->syncGuestHolds(hash('sha256', $token), $items);
+
         return [
             'token' => $token,
             'expires_at' => $hold['expires_at']->toISOString(),
@@ -135,13 +147,16 @@ class GuestBookingService
 
     public function releaseHolds(string $token): void
     {
-        if (preg_match('/^[A-Za-z0-9]{64}$/', $token)) $this->bookings->releaseGuestHolds(hash('sha256', $token));
+        if (preg_match('/^[A-Za-z0-9]{64}$/', $token)) {
+            $this->bookings->releaseGuestHolds(hash('sha256', $token));
+        }
     }
 
     public function paymentInstructions(array $validated): array
     {
         $context = $this->guestOrderContext($validated);
         $hold = $this->bookings->guestPaymentInstructions($context['items'], hash('sha256', $validated['hold_token']));
+
         return [
             'payment_reference' => $hold['payment_reference'],
             'payment_deadline_at' => $hold['expires_at'],
@@ -184,7 +199,9 @@ class GuestBookingService
 
         $proofWasStored = $order->bookings->flatMap(fn (Booking $segment) => $segment->payments)
             ->contains(fn ($payment): bool => $payment->proof_image_path === $path);
-        if (! $proofWasStored) Storage::disk('local')->delete($path);
+        if (! $proofWasStored) {
+            Storage::disk('local')->delete($path);
+        }
 
         $payment = $order->bookings->flatMap(fn (Booking $segment) => $segment->payments)
             ->first(fn ($payment): bool => $payment->qr_payload === $validated['payment_reference']);
@@ -255,35 +272,13 @@ class GuestBookingService
         ];
     }
 
-    public function status(string $token): ?array
+    public function status(string $token): ?BookingOrder
     {
         if (! preg_match('/^[A-Za-z0-9]{64}$/', $token)) {
             return null;
         }
 
-        $booking = $this->bookings->findGuestStatusByTokenHash(hash('sha256', $token));
-        if (! $booking) {
-            return null;
-        }
-
-        $timezone = (string) config('venue.timezone', 'Asia/Ho_Chi_Minh');
-        return [
-            'booking_code' => $booking->booking_code,
-            'bookings' => $booking->bookings->map(fn (Booking $segment): array => [
-                'court' => $segment->court->name,
-                'date' => $segment->starts_at->timezone($timezone)->format('Y-m-d'),
-                'starts_at' => $segment->starts_at->timezone($timezone)->format('H:i'),
-                'ends_at' => $segment->ends_at->timezone($timezone)->format('H:i'),
-                'total_amount' => $segment->total_amount,
-                'currency' => $segment->currency,
-                'status' => $booking->status,
-            ])->values(),
-            'total_amount' => $booking->total_amount,
-            'currency' => $booking->currency,
-            'status' => $booking->currentStatus(),
-            'payment_deadline_at' => $booking->payment_deadline_at?->toISOString(),
-            'payment_submitted' => $booking->bookings->flatMap(fn (Booking $segment) => $segment->payments)->contains(fn ($payment): bool => filled($payment->proof_image_path)),
-        ];
+        return $this->bookings->findGuestStatusByTokenHash(hash('sha256', $token));
     }
 
     private function validateBookingDate(CarbonImmutable $date, string $timezone): void

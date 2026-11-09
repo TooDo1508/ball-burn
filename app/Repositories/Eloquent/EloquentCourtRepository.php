@@ -27,12 +27,6 @@ class EloquentCourtRepository implements CourtRepository
             ->with('images', 'operatingHours', 'priceRules')->first();
     }
 
-    public function findActiveById(int $id): ?Court
-    {
-        return Court::query()->where('is_active', true)->whereKey($id)
-            ->with('images', 'operatingHours', 'priceRules')->first();
-    }
-
     public function allActiveForBooking(): Collection
     {
         return Court::query()->where('is_active', true)
@@ -90,10 +84,10 @@ class EloquentCourtRepository implements CourtRepository
     public function bookingsBetween(CarbonImmutable $startsAt, CarbonImmutable $endsAt): Collection
     {
         return Booking::query()
+            ->with('order')
             ->where('starts_at', '<', $endsAt)
             ->where('ends_at', '>', $startsAt)
-            ->whereHas('order', fn ($orders) => $orders->where('status', 'PAID')
-                ->orWhere(fn ($pending) => $pending->where('status', 'PENDING_PAYMENT')->where('payment_deadline_at', '>', now())))
+            ->occupyingSchedule()
             ->orderBy('starts_at')
             ->get();
     }
@@ -128,7 +122,7 @@ class EloquentCourtRepository implements CourtRepository
                 ->where('court_id', $courtId)
                 ->where('starts_at', '<', $endsAt)
                 ->where('ends_at', '>', $startsAt)
-                ->whereHas('order', fn ($orders) => $orders->where('status', 'PAID')->orWhere(fn ($pending) => $pending->where('status', 'PENDING_PAYMENT')->where('payment_deadline_at', '>', now())))
+                ->occupyingSchedule()
                 ->exists();
 
             if ($closureExists || $bookingExists) {

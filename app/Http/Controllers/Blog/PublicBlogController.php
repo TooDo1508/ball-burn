@@ -32,15 +32,7 @@ class PublicBlogController extends Controller
                 'url' => $canonical,
                 'publisher' => ['@type' => 'Organization', 'name' => 'BALLBURN PickleClub & Bistro'],
             ],
-        ], 'initialBlogPosts' => $listing->getCollection()->map(fn (BlogPost $post): array => [
-            'title' => $post->title,
-            'slug' => $post->slug,
-            'excerpt' => $post->excerpt,
-            'cover_image_url' => $this->blog->imageUrl($post->cover_image_path),
-            'cover_image_alt' => $post->cover_image_alt,
-            'published_at' => $post->published_at?->toAtomString(),
-            'categories' => $post->categories->pluck('name')->values(),
-        ])->all(), 'initialBlogPostsNextPageUrl' => $listing->nextPageUrl()]);
+        ], 'initialBlogPosts' => $listing->getCollection()->map(fn (BlogPost $post): array => $this->summary($post))->all(), 'initialBlogPostsNextPageUrl' => $listing->nextPageUrl()]);
     }
 
     public function showPage(string $slug): View
@@ -52,14 +44,8 @@ class PublicBlogController extends Controller
         return view('welcome', [
             'seo' => $seo,
             'initialBlogPost' => [
-                'title' => $post->title,
-                'slug' => $post->slug,
-                'excerpt' => $post->excerpt,
+                ...$this->summary($post),
                 'body' => $this->blog->safeBody($post->body),
-                'cover_image_url' => $this->blog->imageUrl($post->cover_image_path),
-                'cover_image_alt' => $post->cover_image_alt,
-                'published_at' => $post->published_at?->toAtomString(),
-                'categories' => $post->categories->pluck('name')->values(),
                 'author' => $post->author?->name ?: 'BALLBURN PickleClub & Bistro',
                 'seo' => $seo,
             ],
@@ -69,13 +55,7 @@ class PublicBlogController extends Controller
     public function posts(): JsonResponse
     {
         $posts = $this->blog->listing()->through(fn (BlogPost $post): array => [
-            'title' => $post->title,
-            'slug' => $post->slug,
-            'excerpt' => $post->excerpt,
-            'cover_image_url' => $this->blog->imageUrl($post->cover_image_path),
-            'cover_image_alt' => $post->cover_image_alt,
-            'published_at' => $post->published_at?->toAtomString(),
-            'categories' => $post->categories->pluck('name')->values(),
+            ...$this->summary($post),
             'url' => url('/blog/'.$post->slug),
         ]);
 
@@ -88,18 +68,25 @@ class PublicBlogController extends Controller
         $description = $post->meta_description ?: $post->excerpt ?: $post->title;
 
         return response()->json(['data' => [
-            'title' => $post->title,
-            'slug' => $post->slug,
-            'excerpt' => $post->excerpt,
+            ...$this->summary($post),
             'body' => $this->blog->safeBody($post->body),
-            'cover_image_url' => $this->blog->imageUrl($post->cover_image_path),
-            'cover_image_alt' => $post->cover_image_alt,
-            'published_at' => $post->published_at?->toAtomString(),
             'updated_at' => $post->updated_at?->toAtomString(),
-            'categories' => $post->categories->pluck('name')->values(),
             'author' => $post->author?->name ?: 'BALLBURN PickleClub & Bistro',
             'seo' => $this->articleSeo($post, $description),
         ]]);
+    }
+
+    private function summary(BlogPost $post): array
+    {
+        return [
+            'title' => $post->title,
+            'slug' => $post->slug,
+            'excerpt' => $post->excerpt,
+            'cover_image_url' => $this->blog->imageUrl($post->cover_image_path),
+            'cover_image_alt' => $post->cover_image_alt,
+            'published_at' => $post->published_at?->toAtomString(),
+            'categories' => $post->categories->pluck('name')->values(),
+        ];
     }
 
     private function articleSeo(BlogPost $post, string $description): array

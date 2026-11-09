@@ -37,7 +37,7 @@ class PaymentReceiptMappingServiceTest extends TestCase
         $this->assertSame('********7890', $result['checks']['recipient_account']['expected']);
         $this->assertSame('********7890', $result['checks']['recipient_account']['observed']);
         $this->assertFalse($result['payment_can_be_marked_paid']);
-        $this->assertSame('PENDING', $payment->status);
+        $this->assertNull($payment->paid_at);
     }
 
     public function test_amount_mismatch_requires_review(): void
@@ -76,7 +76,7 @@ class PaymentReceiptMappingServiceTest extends TestCase
     public function test_unknown_reference_and_ambiguous_reference_require_review(): void
     {
         $repository = Mockery::mock(PaymentMappingRepository::class);
-        $repository->shouldReceive('findByPaymentReference')->once()->with('BBPAYMISSING')->andReturn(new Collection());
+        $repository->shouldReceive('findByPaymentReference')->once()->with('BBPAYMISSING')->andReturn(new Collection);
         $repository->shouldReceive('findByPaymentReference')->once()->with('BBPAYDUPLICATE')->andReturn(new Collection([$this->payment(), $this->payment()]));
 
         $service = $this->service($repository);
@@ -114,7 +114,7 @@ class PaymentReceiptMappingServiceTest extends TestCase
             'status' => 'PENDING_PAYMENT',
             'payment_deadline_at' => $deadline ?? now('UTC')->addMinutes(5),
         ]);
-        $booking = new Booking();
+        $booking = new Booking;
         $booking->setRelation('order', $order);
         $payment = new Payment([
             'amount' => '75000.00',
@@ -122,7 +122,6 @@ class PaymentReceiptMappingServiceTest extends TestCase
             'qr_payload' => 'BBPAY-ABC123',
             'provider_metadata' => ['payment_reference' => 'BBPAY-ABC123'],
         ]);
-        $payment->forceFill(['status' => 'PENDING']);
         $payment->id = 31;
         $payment->setRelation('booking', $booking);
 

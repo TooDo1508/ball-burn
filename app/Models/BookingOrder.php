@@ -27,9 +27,4 @@ class BookingOrder extends Model
     {
         return $this->hasMany(Booking::class)->orderBy('starts_at');
     }
-
-    public function currentStatus(): string
-    {
-        return $this->status;
-    }
 }
