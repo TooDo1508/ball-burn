@@ -3,8 +3,8 @@
 namespace App\Repositories\Eloquent;
 
 use App\Models\Booking;
-use App\Models\BookingOrder;
 use App\Models\BookingHold;
+use App\Models\BookingOrder;
 use App\Models\Court;
 use App\Models\CourtClosure;
 use App\Models\CourtOperatingHour;
@@ -22,32 +22,39 @@ class EloquentBookingRepository implements BookingRepository
         return DB::transaction(function () use ($tokenHash, $slots): array {
             $courtIds = collect($slots)->pluck('court_id')->unique()->sort()->values();
             $lockedCourts = [];
-            foreach ($courtIds as $id) $lockedCourts[$id] = Court::query()->whereKey($id)->lockForUpdate()->firstOrFail();
+            foreach ($courtIds as $id) {
+                $lockedCourts[$id] = Court::query()->whereKey($id)->lockForUpdate()->firstOrFail();
+            }
             $existing = BookingHold::query()->where('token_hash', $tokenHash)->lockForUpdate()->get();
             $existingExpiry = $existing->first()?->expires_at;
             $expires = $existingExpiry ? CarbonImmutable::instance($existingExpiry) : CarbonImmutable::now('UTC')->addMinutes(5);
             $paymentReference = $existing->pluck('payment_reference')->filter()->first() ?? 'BBPAY'.Str::upper(Str::random(10));
-            if ($expires->lte(now('UTC'))) throw ValidationException::withMessages(['slots' => 'Thời gian giữ chỗ đã hết. Vui lòng chọn lại.']);
+            if ($expires->lte(now('UTC'))) {
+                throw ValidationException::withMessages(['slots' => 'Thời gian giữ chỗ đã hết. Vui lòng chọn lại.']);
+            }
             BookingHold::query()->where('token_hash', $tokenHash)->delete();
             foreach ($slots as $slot) {
                 $courtId = (int) $slot['court_id'];
                 $court = $lockedCourts[$courtId] ?? null;
-                if (! $court || ! $court->is_active) throw ValidationException::withMessages(['slots' => 'Sân không còn nhận đặt lịch.']);
-                $start = $slot['starts_at']; $end = $slot['ends_at'];
+                if (! $court || ! $court->is_active) {
+                    throw ValidationException::withMessages(['slots' => 'Sân không còn nhận đặt lịch.']);
+                }
+                $start = $slot['starts_at'];
+                $end = $slot['ends_at'];
                 $hours = CourtOperatingHour::query()->where('court_id', $courtId)->where('day_of_week', $slot['day_of_week'])->where('is_closed', false)->first();
                 if (! $hours || $slot['local_starts_at'] < substr($hours->opens_at, 0, 5) || $slot['local_ends_at'] > substr($hours->closes_at, 0, 5)) {
                     throw ValidationException::withMessages(['slots' => 'Khung giữ chỗ phải nằm trong giờ hoạt động của sân.']);
                 }
                 $bookingExists = Booking::query()->where('court_id', $courtId)->where('starts_at', '<', $end)->where('ends_at', '>', $start)
-                    ->where(function ($query): void {
-                        $query->whereHas('order', fn ($orders) => $orders->where('status', 'PAID')
-                            ->orWhere(fn ($pending) => $pending->where('status', 'PENDING_PAYMENT')->where('payment_deadline_at', '>', now())));
-                    })->exists();
+                    ->occupyingSchedule()->exists();
                 $closureExists = CourtClosure::query()->where('court_id', $courtId)->where('starts_at', '<', $end)->where('ends_at', '>', $start)->exists();
                 $otherHold = BookingHold::query()->where('court_id', $courtId)->where('token_hash', '<>', $tokenHash)->where('expires_at', '>', now())->where('starts_at', '<', $end)->where('ends_at', '>', $start)->exists();
-                if ($bookingExists || $closureExists || $otherHold) throw ValidationException::withMessages(['slots' => 'Khung giờ vừa được người khác giữ hoặc đặt. Vui lòng tải lại lịch.']);
+                if ($bookingExists || $closureExists || $otherHold) {
+                    throw ValidationException::withMessages(['slots' => 'Khung giờ vừa được người khác giữ hoặc đặt. Vui lòng tải lại lịch.']);
+                }
                 BookingHold::query()->create(['token_hash' => $tokenHash, 'payment_reference' => $paymentReference, 'court_id' => $courtId, 'starts_at' => $start, 'ends_at' => $end, 'expires_at' => $expires]);
             }
+
             return ['expires_at' => $expires, 'payment_reference' => $paymentReference];
         });
     }
@@ -152,7 +159,7 @@ class EloquentBookingRepository implements BookingRepository
                     ->where('court_id', $court->id)
                     ->where('starts_at', '<', $endsAtUtc)
                     ->where('ends_at', '>', $startsAtUtc)
-                    ->whereHas('order', fn ($orders) => $orders->where('status', 'PAID')->orWhere(fn ($pending) => $pending->where('status', 'PENDING_PAYMENT')->where('payment_deadline_at', '>', now())))
+                    ->occupyingSchedule()
                     ->exists();
 
                 if ($hasClosure || $hasBooking) {
@@ -263,7 +270,7 @@ class EloquentBookingRepository implements BookingRepository
                 ->where('court_id', $court->id)
                 ->where('starts_at', '<', $endsAtUtc)
                 ->where('ends_at', '>', $startsAtUtc)
-                ->whereHas('order', fn ($orders) => $orders->where('status', 'PAID')->orWhere(fn ($pending) => $pending->where('status', 'PENDING_PAYMENT')->where('payment_deadline_at', '>', now())))
+                ->occupyingSchedule()
                 ->exists();
 
             if ($hasClosure || $hasBooking) {

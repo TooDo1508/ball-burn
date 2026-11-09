@@ -4,14 +4,16 @@ namespace App\Http\Controllers\Booking;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Booking\GetBookingAvailabilityRequest;
-use App\Http\Requests\Booking\StoreGuestPaymentProofRequest;
 use App\Http\Requests\Booking\StoreGuestBookingRequest;
+use App\Http\Requests\Booking\StoreGuestPaymentProofRequest;
+use App\Http\Resources\GuestBookingOrderResource;
 use App\Services\Booking\GuestBookingService;
 use App\Services\Payments\VietQrImageUrlService;
 use App\Services\Settings\ContactSettingsService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class GuestBookingController extends Controller
@@ -60,9 +62,10 @@ class GuestBookingController extends Controller
         ]);
         foreach ($validated['slots'] as $index => $slot) {
             if (! in_array(substr($slot['starts_at'], -2), ['00', '30'], true) || ! in_array(substr($slot['ends_at'], -2), ['00', '30'], true)) {
-                throw \Illuminate\Validation\ValidationException::withMessages(["slots.{$index}" => 'Khung giữ chỗ phải bắt đầu và kết thúc theo mốc 30 phút.']);
+                throw ValidationException::withMessages(["slots.{$index}" => 'Khung giữ chỗ phải bắt đầu và kết thúc theo mốc 30 phút.']);
             }
         }
+
         return response()->json(['success' => true, 'data' => $this->bookings->syncHolds($validated['date'], $validated['slots'], $validated['hold_token'] ?? null)]);
     }
 
@@ -70,6 +73,7 @@ class GuestBookingController extends Controller
     {
         $validated = $request->validate(['hold_token' => ['required', 'regex:/^[A-Za-z0-9]{64}$/']]);
         $this->bookings->releaseHolds($validated['hold_token']);
+
         return response()->json(['success' => true]);
     }
 
@@ -77,12 +81,13 @@ class GuestBookingController extends Controller
     {
         $accountNumber = $this->settings->paymentAccountNumber();
         if (! $accountNumber) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 'payment_account_number' => 'Website chưa cấu hình số tài khoản VPBank nhận thanh toán.',
             ]);
         }
 
         $instructions = $this->bookings->paymentInstructions($request->validated());
+
         return response()->json([
             'success' => true,
             'message' => 'Lượt giữ sân và thông tin thanh toán đã sẵn sàng. Đơn đặt sân sẽ được tạo khi bạn gửi ảnh chuyển khoản.',
@@ -104,41 +109,22 @@ class GuestBookingController extends Controller
     public function submitPaymentProof(StoreGuestPaymentProofRequest $request): JsonResponse
     {
         $result = $this->bookings->createWithPaymentProof($request->validated());
-        $timezone = (string) config('venue.timezone', 'Asia/Ho_Chi_Minh');
-        $bookings = [];
-
-        foreach ($result['order']->bookings as $booking) {
-            $bookings[] = [
-                'status' => $result['order']->status,
-                'court' => $booking->court->name,
-                'date' => $booking->starts_at->timezone($timezone)->format('Y-m-d'),
-                'starts_at' => $booking->starts_at->timezone($timezone)->format('H:i'),
-                'ends_at' => $booking->ends_at->timezone($timezone)->format('H:i'),
-                'total_amount' => $booking->total_amount,
-                'currency' => $booking->currency,
-            ];
-        }
 
         return response()->json([
             'success' => true,
             'message' => 'Đã gửi một ảnh chuyển khoản cho đơn. Đơn đang chờ nhân viên xác nhận thanh toán.',
             'data' => [
-                'booking_code' => $result['order']->booking_code,
-                'bookings' => $bookings,
-                'total_amount' => $result['order']->total_amount,
-                'currency' => $result['order']->currency,
-                'status' => $result['order']->currentStatus(),
-                'payment_deadline_at' => $result['order']->payment_deadline_at?->toISOString(),
+                ...(new GuestBookingOrderResource($result['order']))->resolve($request),
                 'status_url' => url('/booking/status/'.$request->validated('status_token')),
-                'payment_submitted' => true,
             ],
         ], 201);
     }
 
     public function status(string $token): JsonResponse
     {
-        $status = $this->bookings->status($token);
-        abort_if($status === null, 404);
+        $order = $this->bookings->status($token);
+        abort_if($order === null, 404);
+        $status = (new GuestBookingOrderResource($order))->resolve();
         $status['status_url'] = url('/booking/status/'.$token);
 
         return response()->json(['success' => true, 'data' => $status])

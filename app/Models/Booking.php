@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -24,6 +25,16 @@ class Booking extends Model
             'discount_amount' => 'decimal:2',
             'total_amount' => 'decimal:2',
         ];
+    }
+
+    /** Paid orders and pending orders with time remaining occupy the schedule. */
+    public function scopeOccupyingSchedule(Builder $query): void
+    {
+        $query->whereHas('order', fn (Builder $orders) => $orders
+            ->where(fn (Builder $statuses) => $statuses->where('status', 'PAID')
+                ->orWhere(fn (Builder $pending) => $pending
+                    ->where('status', 'PENDING_PAYMENT')
+                    ->where('payment_deadline_at', '>', now()))));
     }
 
     public function court(): BelongsTo

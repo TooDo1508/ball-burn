@@ -208,7 +208,7 @@ class PaymentReceiptMappingService
 
     private function paymentStateCheck(Payment $payment, ?string $orderStatus, mixed $deadline): array
     {
-        if ($payment->status !== 'PENDING') {
+        if ($payment->paid_at !== null) {
             return ['status' => 'NEEDS_REVIEW', 'reason' => 'payment_not_pending'];
         }
         if ($orderStatus !== 'PENDING_PAYMENT') {

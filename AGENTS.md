@@ -1,376 +1,106 @@
-# AGENTS.md — Pickleball Court Booking Website
+# AGENTS.md — BALLBURN PickleClub & Bistro
 
-This file gives coding agents the project context, business requirements, architectural rules, and implementation expectations for the pickleball court-booking website.
+This file describes the implemented application. Check routes, migrations and tests before changing behavior; historical plans and SQL exports are reference material, not the current runtime contract.
 
-## 1. Project overview
+## Stack and project map
 
-Build a production-minded website for a pickleball venue using Laravel and MySQL.
+- Laravel 13, PHP 8.4 (Composer platform pin), MySQL 8.4 and Composer 2.
+- Vue 3, Vite 8, Tailwind 4 and TypeScript. Use `composer.lock` and `package-lock.json`; do not upgrade dependencies as part of routine setup.
+- Public home `/` is an Inertia page at `resources/js/pages/Home.vue`, styled with `resources/css/home.css`. Its content comes from `HomePageService` and `site_settings`.
+- Other public pages use `resources/views/welcome.blade.php`, `src/app.js`, Vue Router and `src/pages/`. Both frontend entry points are required; they are not duplicate applications to merge casually. `src/pages/HomePage.vue` is still reachable through the public Vue Router.
+- Admin and authentication use Inertia, `resources/js/pages/` and the layouts/components in `resources/js/`.
+- HTTP routes: `routes/web.php`, `routes/api.php`, `routes/settings.php`; API prefix is empty in `bootstrap/app.php`, so the court endpoints are `/courts`, not `/api/courts`.
+- Controllers validate/authorize and shape responses; services coordinate business rules; repository contracts and Eloquent implementations own database queries. Bindings are in `RepositoryServiceProvider`. Prefer reusable model scopes for shared query predicates.
+- Payment OCR uses local Tesseract with Vietnamese and English language data, a database queue, and `storage/app/private` through the local storage disk.
 
-The website includes:
-- Public landing page and About Us page
-- Court listing and court details
-- Court availability calendar and booking flow
-- Guest checkout (customers do not need accounts)
-- QR-based payment flow
-- Secure guest booking-status page
-- Customer email notifications
-- Contact Us form and admin inquiry management
-- Blog and content management
-- Admin dashboard for managing courts, schedules, bookings, payments, inquiries, and content
+## Implemented public workflows
 
-Keep the implementation maintainable, secure, testable, and suitable for gradual deployment.
+### Court availability and guest booking
 
-## 2. Technology assumptions
+- Guests do not create customer accounts. `/booking` displays a daily, 30-minute court grid; `/booking/data` supplies availability and server-calculated prices.
+- Venue timezone is `VENUE_TIMEZONE=Asia/Ho_Chi_Minh`; retain `APP_TIMEZONE=UTC`. Interpret venue input locally, convert to UTC for persistence, and display locally.
+- Public booking dates are today through today + 30 days inclusive. Reject past slots, invalid 30-minute boundaries and overlapping submitted ranges. A single order can contain multiple courts/ranges, up to 64 half-hours.
+- `/booking/holds` creates/synchronizes temporary `booking_holds`. An opaque 64-character token is hashed in storage. Holds expire after five minutes; synchronizing does not extend the original expiry. DELETE releases the token's holds.
+- Payment instructions verify held slots and server prices without creating an order. The recipient VPBank account is configured in site contact settings; VietQR image generation is in `VietQrImageUrlService`.
+- Uploading one receipt image to `/booking/payment-proof` creates the `booking_orders` record, its booking segments, one manual QR payment on the primary segment and a `payment_receipts` record. Supported images: JPG/JPEG/PNG/WebP, at most 5 MB. Receipt paths are private.
+- Submission is idempotent for the same hold token, status token, payment reference, slots and customer/amount details. A conflicting reuse must fail. Remove a newly uploaded file when the transaction fails or an existing order wins the retry.
+- The order retains the hold's payment deadline. Do not restart the countdown on submission.
+- Secure status pages are `/booking/status/{token}` and `/booking/status/{token}/data`. Persist only the SHA-256 token hash; use `no-store, private` on status responses. `GuestBookingOrderResource` is the shared public payload for submission and status. Keep customer contacts, token hashes, proof paths and internal OCR data out of it.
 
-- Backend: Laravel (use the version already installed in the repository; do not upgrade without approval).
-- Database: MySQL 8.0.16+.
-- Frontend: inspect the existing repository and follow its established framework and conventions. Do not introduce a new frontend stack without a clear need.
-- Queue: use Laravel queues for email and other background work.
-- Time handling: store timestamps in UTC; display and interpret booking times in the venue's configured timezone.
-- Payment provider: not yet selected. Implement a provider abstraction and do not invent provider-specific API details or credentials.
-- Currency: currently defaulted to VND in the proposed schema, but make currency configurable where appropriate.
+### Current status and concurrency rules
 
-If the repository or owner specifies different choices, treat the actual repository and explicit owner decisions as authoritative.
+- `booking_orders.status` is authoritative: current application statuses are `PENDING_PAYMENT` and `PAID`. Booking segments no longer have their own status, status token or payment deadline. `payments.status` was also removed; use `paid_at` and the owning order where appropriate.
+- Paid orders occupy the schedule. Pending orders occupy it only while `payment_deadline_at > now()`. The exact deadline is already expired. `Booking::occupyingSchedule()` is the common predicate used by availability and write-time conflict checks.
+- Time intervals are half-open: overlap means `starts_at < requested_end AND ends_at > requested_start`. Adjacent bookings must remain allowed.
+- Lock court rows inside the transaction and recheck availability before inserting holds/bookings/closures. Lock multiple courts in ascending ID order. Preserve atomicity and existing idempotency when refactoring.
+- Expired holds and pending orders are ignored by deadline-aware reads. There is currently no expiry command registered in `routes/console.php`; do not describe a scheduled cleanup job as implemented.
+- There is no integrated payment webhook or automatic bank confirmation. OCR matching is advisory and must never mark an order paid.
+- Existing admin status changes do not recheck newly conflicting reservations when marking an old pending order paid. Treat late-payment reconciliation and that overlap check as follow-up work, not an implemented guarantee.
 
-## 3. Core booking requirements
+### Content and contact
 
-### Booking slots and booking window
-- Bookings use 30-minute increments.
-- Customers may book within a rolling 30-day window.
-- Validate slot boundaries and the booking window on the server. Frontend validation is only for user experience.
-- Generate available slots dynamically from court operating hours, court closures, and active bookings. Do not pre-create every possible slot unless a later performance analysis justifies it.
-- Support booking one or more consecutive 30-minute slots if the product owner confirms this behavior. Until confirmed, do not silently assume multi-slot bookings are disallowed.
+- `/about`, `/blog`, `/blog/{slug}` and `/contact` render public pages. Blog JSON endpoints live under `/api/blog/posts`; contact information is available from `/api/site/contact-info`.
+- Blog readers return only published content. Keep body sanitization via `BlogContentSanitizer`, image URL handling, pagination and article SEO/JSON-LD consistent between HTML and JSON responses.
+- The contact form requires name, email, subject and message; phone is optional. It is rate limited. Submission queues an acknowledgement and an admin email after commit.
+- The configured contact email is both the public venue address and the admin inquiry recipient; SMTP settings are environment configuration.
 
-### Five-minute pending-payment hold
-- A new booking starts in `PENDING_PAYMENT`.
-- The backend sets `payment_deadline_at` to the actual creation time plus exactly five minutes, after the booking and payment instructions/QR data have been successfully prepared according to the selected provider flow.
-- The deadline stored in the database is authoritative. The browser countdown is display-only.
-- A pending booking whose deadline has passed must not block availability, even if a scheduled expiry job has not yet run.
-- Use both a scheduled expiry job and deadline-aware availability checks.
-- Once a booking expires, release the slot for other customers.
-- Never rely on a client-supplied countdown or client clock to determine expiry.
+## Implemented admin workflows
 
-### Prevent overlapping reservations
-MySQL does not provide a simple unique constraint for arbitrary overlapping datetime ranges. All code paths that create, confirm, cancel, or expire bookings must follow a consistent concurrency strategy.
+- Fortify authentication is under `/admin`: login, password reset, password confirmation and two-factor authentication. Public registration is disabled. `EnsureAdminAccount` and `can:access-admin` restrict access to active admin/staff users.
+- Create administrators with `php artisan admin:create`, which uses hidden password prompts. Do not hard-code passwords, create default admin credentials, or expose receipt files publicly.
+- `/admin` is the dashboard shell; do not assume every displayed metric is a live reporting service.
+- `/admin/courts`: court CRUD, active state, primary image, weekly operating hours, weekday/weekend price tiers, daily schedule, closures and admin-assisted paid bookings. `CourtCatalogSeeder` idempotently provides eight courts (1–3 CENTER, 4–8 REGULAR), 05:00–23:00 venue hours and the price sheet effective 2026-04-01.
+- `CourtPricingService` selects active, effective rules by weekday/weekend, using the latest effective rule for an identical interval and falling back to the base hourly price. Keep integer monetary arithmetic. Batch daily slot pricing resolves applicable rules once; a range crossing dates resolves each date separately.
+- `/admin/bookings`: order-oriented list/search/filter/statistics, segment detail, single and bulk status changes, bulk deletion of pending orders, private payment-proof access and in-app notifications. Status transitions record segment history; deletions create audit records and reject linked bank transactions.
+- `/admin/contact-messages`: paginated/searchable/filterable inbox, detail view, status and internal notes, including quick editing. Current statuses: NEW, IN_PROGRESS, RESOLVED, SPAM. Assignment and automated retention are not implemented.
+- `/admin/news`: posts, categories, image uploads, rich text editing, drafts/publishing, previews, SEO metadata and bulk deletion.
+- `/admin/settings`: profile, password/security/2FA, appearance, home-page content and venue contact/payment information.
+- Appearance is light/dark/system, stored in local storage and the appearance cookie. Theme setup belongs in `useAppearance.ts` and `resources/css/app.css`; admin UI should use semantic surface/text/border tokens.
 
-Recommended baseline:
-1. Start a database transaction.
-2. Lock the relevant court row with `SELECT ... FOR UPDATE` / Laravel `lockForUpdate()`.
-3. Re-check availability inside the transaction.
-4. Treat overdue pending bookings as expired.
-5. Check for overlapping `PENDING_PAYMENT` bookings whose deadline is still in the future and overlapping `CONFIRMED` bookings.
-6. Create or transition the booking while holding the lock.
-7. Commit before dispatching notifications.
+## Receipt OCR lifecycle
 
-Use consistent lock ordering and add concurrency tests. Do not check availability only before opening the transaction.
+- `ProcessPaymentReceiptJob` runs on `payments`, with the worker also consuming `default`.
+- `PaymentReceiptProcessingService` claims work, reads the private image, calls Tesseract, parses text and stores mapping results. Repeated claims/results are guarded in the receipt repository; failures queue retries and eventually mark failure.
+- Receipt states include QUEUED, PROCESSING, MATCHED, NEEDS_REVIEW and FAILED. MATCHED describes receipt content only.
+- Mapping checks reference uniqueness, amount, currency, order/deadline eligibility, recipient account when readable, and duplicate bank transaction IDs. Never treat OCR text as proof of settled funds or log unmasked bank accounts unnecessarily.
 
-### Booking statuses
-Use these states unless the repository already has an approved equivalent:
-- `PENDING_PAYMENT`
-- `CONFIRMED`
-- `EXPIRED`
-- `CANCELLED`
-- `COMPLETED`
+## Development and validation
 
-Validate state transitions in the application layer. Record meaningful transitions in `booking_status_history`.
+Use the existing checkout. Cloud tasks are already isolated; do not create a Git worktree unless explicitly requested.
 
-## 4. Payments and webhooks
+The repository-supported Docker workflow is:
 
-- Never mark a booking paid based only on a browser redirect or a client request.
-- Verify webhook signatures using the selected payment provider's official method.
-- Verify provider identity, transaction/order identifiers, amount, currency, and payment state before accepting a payment.
-- Make webhook processing idempotent. Provider retries must not create duplicate payments, confirmations, or notifications.
-- Store each provider event using a unique `(provider, provider_event_id)` key when the provider supplies a stable event ID.
-- Enforce appropriate uniqueness for provider transaction/order IDs.
-- Process payment and booking state changes transactionally.
-- Dispatch email/notification jobs only after the transaction commits.
-- A late payment must not overwrite another customer's confirmed reservation. If the slot has already been reassigned, follow a documented refund or manual-reconciliation path.
-- Keep provider secrets in environment/configuration, never in source control.
-- Do not log secrets, full payment credentials, or unnecessary personal data.
-- The exact provider, refund policy, cancellation policy, and reconciliation procedure require owner confirmation.
-
-## 5. Guest booking-status page
-
-Customers do not have accounts. After a booking is created, provide a secure link that lets the customer check their booking status.
-
-Security rules:
-- Do not expose sequential database IDs as authorization.
-- A booking code alone must not grant access to personal booking details.
-- Generate a high-entropy random token; store only its cryptographic hash in the database.
-- Send the raw token only in the customer's secure URL.
-- Use HTTPS in production. Avoid logging the token in application logs or analytics.
-- Show only necessary information: booking code, court, date/time, amount/currency, status, and payment deadline when relevant.
-- Do not expose full customer details, provider payloads, or internal notes.
-- Consider token rotation/revocation and a suitable expiry policy.
-- Avoid leaking tokens through third-party assets or referrer headers.
-
-## 6. Notifications
-
-Start with email notifications and the secure booking-status page. Customers do not need accounts or an in-app inbox.
-
-Useful customer email events:
-- Booking created and payment instructions available
-- Booking confirmed after verified payment
-- Booking expired
-- Booking cancelled
-- Refund requested/processed, if refunds are implemented
-
-Rules:
-- Use Laravel Notifications/Mail and queued jobs where practical.
-- Queue notifications after the relevant database transaction commits.
-- Use an idempotency key or equivalent protection to avoid duplicate logical notifications.
-- Retry transient email failures and retain useful failure information without storing secrets.
-- Do not email a message every minute for the countdown; display the countdown on the status page using the persisted deadline.
-- Admin alerts can be added for new contact messages, payment/reconciliation failures, and webhook processing errors.
-
-## 7. Contact Us form and admin workflow
-
-Public form fields:
-- Name (required)
-- Email (required)
-- Phone (optional unless the owner decides otherwise)
-- Subject (optional or required according to product decision)
-- Message (required)
-
-Admin workflow:
-- List and paginate submissions.
-- Search by name/email/phone.
-- Filter by status and date.
-- View the full inquiry.
-- Update status: `NEW`, `IN_PROGRESS`, `RESOLVED`, `SPAM`.
-- Add internal notes and optionally assign to an admin/staff member.
-- Optionally send an email alert to admins when a new message arrives.
-
-Security:
-- Validate on the server.
-- Apply rate limiting and anti-spam protection.
-- Escape submitted text when rendering it.
-- Never render arbitrary message HTML as trusted markup.
-- Collect only necessary personal information and define a retention policy.
-
-Keep contact inquiries separate from court bookings.
-
-## 8. Courts, hours, and closures
-
-Court management should support:
-- Name, slug, description, surface type, capacity if relevant
-- Hourly price and currency
-- Active/inactive state and sort order
-- Multiple court images
-- Weekly operating hours
-- One-off closures for maintenance, holidays, or private events
-
-Use server-side validation to prevent invalid hours and overlapping operating intervals. Validate booking ranges against operating hours and closures. Define how overnight operating periods are represented before implementing them; the initial schema assumes `opens_at < closes_at` within one day.
-
-## 9. Admin, blog, and content management
-
-Admin/staff accounts are separate from customers. Customers are guests.
-
-Admin features:
-- Authentication and authorization for every protected action
-- Role-based permissions appropriate to admin/staff responsibilities
-- Court and schedule management
-- Booking and payment visibility
-- Contact-message management
-- Blog posts and categories
-- Editable static pages such as About Us
-- Site settings
-- Audit trail for sensitive admin actions
-
-Content management:
-- Use unique slugs.
-- Separate draft/published/archived states as appropriate.
-- Only published content should be public.
-- Validate image uploads by type and size; store files using Laravel's storage abstraction.
-- Escape output and sanitize rich text using an appropriate allowlist if rich-text HTML is supported.
-
-## 10. Database reference
-
-A proposed schema is provided separately as `pickleball_booking_schema.sql`. It includes:
-- `users`
-- `courts`
-- `court_images`
-- `court_operating_hours`
-- `court_closures`
-- `bookings`
-- `payments`
-- `payment_webhook_events`
-- `refunds`
-- `booking_status_history`
-- `blog_categories`
-- `blog_posts`
-- `blog_post_categories`
-- `pages`
-- `site_settings`
-- `contact_messages`
-- `notifications`
-- `audit_logs`
-
-Important:
-- Treat this SQL as a design baseline, not an instruction to bypass Laravel migrations in an existing application.
-- Before applying it, inspect the repository and current database. Do not drop or overwrite existing data.
-- For a Laravel application, prefer versioned migrations that reflect the schema and can be reviewed and rolled back where safe.
-- Do not assume a production database is empty.
-- Review foreign-key delete behavior, retention, indexing, and any provider-specific fields before deployment.
-- Laravel queue tables should be generated with the appropriate Laravel queue migration command if the database queue driver is used.
-- Create the initial admin through a secure, documented seeding/setup process; never hard-code a real password.
-
-## 11. Suggested implementation sequence
-
-1. Inspect the existing repository, Laravel version, frontend, database configuration, tests, and coding conventions.
-2. Report what exists and propose a small implementation plan before making broad structural changes.
-3. Implement authentication and authorization for admin/staff.
-4. Add database migrations, models, factories, and seeders for core entities.
-5. Implement court management, operating hours, and closures.
-6. Implement availability calculation and booking creation with concurrency protection.
-7. Add the guest status link and booking-status page.
-8. Integrate the chosen payment provider behind a clear interface; implement webhook verification and idempotency.
-9. Add expiry processing and late-payment reconciliation.
-10. Add queued email notifications.
-11. Implement Contact Us and admin inquiry management.
-12. Implement blog, About Us, and static-page management.
-13. Add audit logging, operational monitoring, and production configuration.
-14. Run automated tests and document setup/deployment steps.
-
-Do not attempt a large rewrite in one step. Work in small, reviewable changes.
-
-## 12. Required tests
-
-At minimum, test:
-- A valid 30-minute booking can be created.
-- Invalid slot boundaries and dates outside the 30-day window are rejected.
-- A court closure prevents booking.
-- Two concurrent requests cannot confirm overlapping reservations.
-- A pending booking blocks a slot only until its payment deadline.
-- Expiry releases the slot even if the scheduled expiry job is delayed.
-- Valid payment confirms the booking once.
-- Duplicate webhook events do not duplicate state changes or emails.
-- Invalid webhook signatures and mismatched amount/currency are rejected.
-- Late payment cannot steal a slot from another confirmed booking.
-- Guest status tokens cannot be guessed from booking IDs/codes.
-- Unauthorized users cannot access admin actions.
-- Contact form validation, rate limiting, and HTML escaping work.
-- Draft blog posts and pages are not publicly visible.
-- Notification jobs are dispatched after commit and are safely retryable.
-
-Use Laravel feature tests and database transactions/parallel tests where appropriate. Avoid tests that depend on a live payment provider; use provider fakes or fixtures.
-
-## 13. Security and engineering standards
-
-- Keep backend layers explicit: controllers handle HTTP input, authorization, and response types, then call application services; services implement business rules and coordinate repositories; repositories encapsulate database reads and writes. Controllers and services must not build Eloquent queries directly.
-- Use Form Requests for input validation and Laravel API Resources or explicit Inertia response data for output shaping. Keep storage/provider integration in services or dedicated adapters, not controllers.
-- Follow existing Laravel conventions and use Form Requests for complex validation.
-- Use policies/gates or equivalent authorization checks; hiding a button is not authorization.
-- Use parameterized Eloquent/query-builder operations; do not concatenate untrusted SQL.
-- Protect state-changing web routes with appropriate CSRF protection.
-- Apply rate limiting to booking, contact, and token-related endpoints.
-- Validate uploaded files and store them safely.
-- Keep secrets in environment variables and example placeholders in `.env.example`.
-- Use database transactions for multi-table state changes.
-- Do not send external requests or email while holding database locks.
-- Log meaningful operational errors while redacting tokens, secrets, and unnecessary personal information.
-- Use decimal database types for money; avoid floating-point arithmetic for currency.
-- Add pagination to admin lists.
-- Provide clear error states and accessible form labels.
-- Do not silently change product requirements. Ask the owner when a decision materially affects behavior.
-
-## 14. Decisions that still need owner confirmation
-
-Do not invent answers for these:
-- Which payment provider will be used?
-- Is MySQL the confirmed production database?
-- Can a customer book multiple consecutive 30-minute slots in one booking?
-- What are the cancellation and refund policies?
-- Is phone number optional on the contact form?
-- Should the admin receive email alerts for contact submissions?
-- Which frontend stack and admin UI, if any, are already chosen?
-- Should customers be allowed to modify/cancel bookings through the secure status page, or only view status?
-
-## 15. Agent working protocol
-
-For each task:
-1. Inspect relevant files before editing.
-2. Summarize the intended changes and any assumptions.
-3. Prefer the smallest coherent change that fits existing architecture.
-4. Add or update tests alongside behavior changes.
-5. Run the relevant tests, formatter, and static checks available in the repository.
-6. Report changed files, commands run, test outcomes, and any remaining risks.
-7. Never claim tests passed unless they were actually run.
-8. Never run destructive database commands against a non-disposable environment without explicit approval.
-
-## 16. Frontend visual direction — Ball Burn reference
-
-Reference site: https://ballburn.vercel.app/#about
-
-Use this site as the visual reference for the public-facing landing page. Its content and brand direction are centered on **BALLBURN / PickleClub & Bistro**, with an energetic, premium sports-and-hospitality feel: bold display headings, high-contrast sections, strong photography/video, compact uppercase eyebrow labels, clear booking/consultation CTAs, and generous spacing around major sections. The site uses Vietnamese copy, so preserve Vietnamese diacritics and make sure the chosen font supports them.
-
-### Color-token rules
-
-**Important verification note:** the reference page was readable, but its live CSS/color declarations could not be retrieved in this environment. Therefore the HEX values below are a *provisional implementation palette*, not verified exact samples from the reference website. Do not describe them as exact brand values. Before final visual sign-off, inspect the live site in the browser (DevTools → Computed styles / color picker) and replace these values with sampled values from the actual page, especially the primary CTA, page background, and headline text.
-
-Use semantic tokens rather than scattering raw HEX values across components. The provisional palette is intentionally restrained and should be adjusted after direct visual verification:
-
-| Token | Provisional HEX | Intended use |
-|---|---|---|
-| `--color-brand` | `#F36B32` | Primary brand/CTA accent; verify against the reference logo and buttons |
-| `--color-brand-hover` | `#D95522` | Hover/active state for primary actions |
-| `--color-ink` | `#171717` | Main dark text and dark sections |
-| `--color-ink-muted` | `#666666` | Secondary text on light surfaces |
-| `--color-surface` | `#FFFFFF` | Main light surface |
-| `--color-surface-muted` | `#F5F4F1` | Alternate section/card background |
-| `--color-border` | `#E4E1DC` | Subtle borders and dividers |
-| `--color-on-brand` | `#FFFFFF` | Text/icons on the brand CTA, subject to contrast check |
-| `--color-success` | `#247A4B` | Success states only; not a substitute for the brand accent |
-| `--color-warning` | `#E6A323` | Pending-payment state (yellow/amber) |
-| `--color-danger` | `#C83D3D` | Error/cancelled state |
-
-Example CSS variables (keep the tokens centralized in the project's existing global stylesheet):
-
-```css
-:root {
-  --color-brand: #F36B32;
-  --color-brand-hover: #D95522;
-  --color-ink: #171717;
-  --color-ink-muted: #666666;
-  --color-surface: #FFFFFF;
-  --color-surface-muted: #F5F4F1;
-  --color-border: #E4E1DC;
-  --color-on-brand: #FFFFFF;
-  --color-success: #247A4B;
-  --color-warning: #E6A323;
-  --color-danger: #C83D3D;
-}
+```sh
+cp .env.example .env # only when .env does not already exist
+# Compose requires Docker Engine and Compose v2.
+docker compose up -d --build mysql mailhog app nginx
+docker compose exec -u www-data app composer install --no-interaction --prefer-dist
+docker compose exec -u www-data app php artisan key:generate # only for a new empty APP_KEY
+docker compose exec -u www-data app php artisan migrate --force
+docker compose exec -u www-data app php artisan storage:link
+docker compose exec -u www-data app php artisan db:seed --class=CourtCatalogSeeder --force
+docker compose exec -u www-data app php artisan wayfinder:generate --with-form
+npm ci
+docker compose exec -u www-data app php artisan test
+npm run types:check
+WAYFINDER_SKIP_GENERATION=true npm run build
+docker compose up -d --build queue-worker
 ```
 
-### UI consistency requirements
+- Seed demo news separately with `NewsArticlesSeeder` when needed. Avoid the general `DatabaseSeeder` for routine refreshes; it creates a demo user and is not an idempotent refresh command.
+- For hot reload, use the frontend Compose service or `npm run dev -- --host 0.0.0.0` with Node 22.12+ (or a supported newer version). In the host workflow, generate Wayfinder with container PHP first and set `WAYFINDER_SKIP_GENERATION=true` for Vite when host PHP is unavailable. Type checking needs the generated route/action modules too.
+- Cloud-only overrides/helpers may live outside the checkout. Preserve the inherited proxy and CA trust for containers; never disable TLS, signatures or checksums. Xdebug is optional and may be disabled by an external Compose override.
+- `phpunit.xml` uses in-memory SQLite, not the development MySQL database. The current default suite is blocked by MySQL-only `ALTER TABLE ... MODIFY` in the historical `2026_11_07_000001` migration. Cloud setup generates `/workspace/.cloud-setup/phpunit.mysql.xml` and a separate disposable `ballburn_testing` database; run it with `/workspace/.cloud-setup/dc exec -T -u www-data app php vendor/bin/phpunit -c /cloud-setup/phpunit.mysql.xml`. Keep that database isolated from development data. Use PHPUnit directly for custom configs to avoid duplicate configuration options from `artisan test`. Run MySQL migrations and functional HTTP requests as well; SQLite tests do not prove MySQL locking behavior. Never run destructive database commands against user data without explicit authorization.
+- Run relevant feature/unit tests, frontend types/build and Pint on changed PHP files. Report actual failures/skips; do not replace assertions with passing placeholders.
+- Preserve tracked source, tests and lockfiles during environment-only setup. Code changes require a coding request. Keep secrets and machine-specific configuration out of commits.
+- Do not import `database/migrations/pickleball_booking_schema.sql` or `database/exports/*.sql` over the development database; versioned migrations are authoritative.
 
-- Do not introduce unrelated bright colors, gradients, or a second accent color without a clear reason grounded in the reference.
-- Use the brand accent consistently for the main CTA and key interactive emphasis; keep secondary actions visually quieter.
-- Use dark/light section contrast, real venue/court photography, and bold typography to carry the visual identity rather than adding decorative effects everywhere.
-- Keep body text readable and maintain WCAG contrast targets: at least 4.5:1 for normal text and 3:1 for large text/UI components where applicable.
-- Booking-state colors are functional and must remain distinguishable: available, pending payment, confirmed/booked, expired/cancelled. Do not rely on color alone; pair each state with a label/icon.
-- The admin dashboard may prioritize information density and usability, but should reuse the same semantic tokens and brand accent so it feels like part of the same product.
-- Do not use the reference website's logo, photos, or other assets unless their reuse is authorized; use the reference for visual direction and color sampling.
-- Once exact colors are verified, update this section and the centralized CSS tokens together. Remove the “provisional” label only after verification.
+## Engineering and visual constraints
 
-## 17. Frontend architecture and typography
-
-- Keep public pages in `src/` with Vue Router and the public entry `src/app.js`; keep authenticated admin pages in `resources/js/` with Laravel Inertia. Do not create a second frontend runtime or move pages between these surfaces without updating `docs/admin-starter-kit.md` and route wiring together.
-- Both surfaces must use the shared design tokens in `src/assets/styles/tokens.css` for fonts, type sizes, and brand colors. Do not redefine brand font families or semantic colors inside page stylesheets.
-- Use **14px (1rem at the type scale)** as the minimum size for ordinary body copy, form labels, navigation, and buttons. Use 12px only for short captions, eyebrow labels, metadata, and decorative indices that remain secondary and readable.
-- Use the shared responsive heading tokens: H1 `clamp(2.5rem, 5vw, 4.5rem)`, H2 `clamp(2rem, 3.8vw, 3.25rem)`, and H3 `clamp(1.25rem, 2vw, 1.5rem)`. Display hero headings may use the display token, but should remain responsive and must not shrink body text to compensate.
-- Set body line height around 1.65–1.75, keep Vietnamese diacritics supported, and preserve clear contrast. Page-specific CSS may adjust spacing, weight, and color but should consume the shared typography tokens.
-
-## 18. Current implementation status and handoff
-
-- Public pages are implemented in `src/`; authenticated admin pages use Laravel Inertia under `resources/js/`.
-- The public contact form posts inquiries to the separate `contact_messages` workflow. Admins can review/search/filter/paginate inquiries at `/admin/contact-messages`, open a full detail page, and update status plus internal notes. The inbox also provides a quick-edit dialog from each row; successful updates return to the inbox and preserve its current filters/page.
-- Contact details used by the public contact page and shared site areas are managed at `/admin/settings/contact` and stored through the existing `site_settings` workflow. The configured contact email is both the public venue email and the recipient for new contact-form inquiries. SMTP transport credentials remain environment configuration.
-- Appearance preference is `light`, `dark`, or `system`, persisted in local storage and the `appearance` cookie. Admin pages should use semantic surface/text/border utilities (`bg-background`, `bg-card`, `bg-muted`, `text-foreground`, `text-muted-foreground`, `border-border`) so every workflow responds to theme changes; avoid fixed dark-page background and text classes.
-- Theme initialization belongs to `resources/js/composables/useAppearance.ts` and the root `.dark` class/CSS variables in `resources/css/app.css`. Keep the server-rendered appearance cookie and client preference in sync when changing this behavior.
-- New contact-form inquiries send a queued email to the configured contact email and a queued acknowledgement to the customer. Staff assignment, status history, and inquiry retention/cleanup are not implemented yet; contact inquiries remain separate from bookings.
-- Admin court operations are available at `/admin/courts`. The page follows `docs/Dark-Themed Court Booking Dashboard.png` with a 30-minute day grid, court CRUD, tiered price management, weekly operating hours, primary image upload, active/inactive state, quick schedule locks, and admin-assisted booking from an available slot. Implementation details and remaining phases are tracked in `docs/admin-court-management-plan.md`.
-- Court schedule queries include `CONFIRMED`, `COMPLETED`, and non-expired `PENDING_PAYMENT` bookings. Expired pending bookings do not occupy the admin grid. Creating a closure locks the court row, then rejects overlap with an effective booking or another closure before insert.
-- Venue operations are confirmed as 05:00–23:00 in `Asia/Ho_Chi_Minh`. Keep `APP_TIMEZONE=UTC`, interpret/display booking input with `VENUE_TIMEZONE`, and persist booking/closure datetimes in UTC.
-- The current venue catalog contains 8 courts: courts 1–3 are `CENTER`, courts 4–8 are `REGULAR`. `CourtCatalogSeeder` idempotently maintains their descriptions, daily hours, primary images, and weekday/weekend price tiers from the BALLBURN price sheet effective 2026-04-01.
-- Admin-assisted bookings are created as `CONFIRMED`, calculate their total from server-side price rules, record an `ADMIN` status-history entry, and use the same court-row lock plus overlap recheck required for public booking creation.
+- Use Form Requests, policies/gates, CSRF and rate limits. Keep queries in repositories, file/provider integration in services, and explicit response data in controllers/resources. Do not send external requests or emails while holding database locks.
+- Use decimal storage and integer arithmetic for money. Paginate admin lists and eager-load relations needed by loops; avoid one query per booking.
+- Do not remove Laravel-discovered policies, commands or Inertia pages based only on missing imports. Confirm runtime discovery and indirect entry points before deleting code. Keep migration history intact.
+- Preserve Vietnamese diacritics, accessible form labels, error states and status labels alongside colors.
+- Public visual reference: `https://ballburn.vercel.app/#about`; local reference images are under `docs/`. Brand colors in the old design notes were provisional, not measured from the live site. Follow existing semantic tokens rather than introducing unrelated accents.
+- Payment provider automation, refunds/cancellations, guest modification/cancellation, bank reconciliation, cleanup scheduling and production concurrency guarantees need explicit design work. Do not present them as existing features.
+- Keep this document aligned with implemented functionality. Record audit findings and validation limitations in `docs/project-audit.md`.

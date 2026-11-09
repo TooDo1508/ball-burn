@@ -4,11 +4,6 @@ namespace App\Http\Requests\Booking;
 
 class StoreGuestPaymentProofRequest extends StoreGuestBookingRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     public function rules(): array
     {
         return [
