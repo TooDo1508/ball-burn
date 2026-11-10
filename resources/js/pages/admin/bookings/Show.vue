@@ -2,6 +2,7 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, CalendarDays, Clock3, CreditCard, Mail, Phone, UserRound, X } from '@lucide/vue';
 import { ref } from 'vue';
+import { confirmAction } from '@/lib/confirmDialog';
 import { dashboard } from '@/routes';
 
 defineOptions({ layout: { breadcrumbs: [{ title: 'Quản trị', href: dashboard() }, { title: 'Quản lý đặt sân', href: '/admin/bookings' }, { title: 'Chi tiết booking' }] } });
@@ -9,7 +10,7 @@ defineOptions({ layout: { breadcrumbs: [{ title: 'Quản trị', href: dashboard
 type BookingDetail = {
     id: number;
     booking_code: string;
-    status: 'PENDING_PAYMENT' | 'PAID';
+    status: 'PENDING_PAYMENT' | 'PAID' | 'CANCELLED';
     status_options: { value: string; label: string }[];
     court: string;
     customer_name: string;
@@ -30,10 +31,17 @@ type BookingDetail = {
 
 const props = defineProps<{ booking: BookingDetail }>();
 const statusForm = useForm({ status: props.booking.status_options[0]?.value ?? '', note: '' });
-const statusLabels = { PENDING_PAYMENT: 'Ch\u1edd thanh to\u00e1n', PAID: '\u0110\u00e3 thanh to\u00e1n' } as const;
+const statusLabels = { PENDING_PAYMENT: 'Ch\u1edd thanh to\u00e1n', PAID: '\u0110\u00e3 thanh to\u00e1n', CANCELLED: 'Đã hủy sân' } as const;
 const selectedProof = ref<{ url: string; label: string } | null>(null);
 
-function updateStatus() {
+async function updateStatus() {
+    if (statusForm.status === 'CANCELLED' && !await confirmAction({
+        title: 'Hủy đơn đặt sân?',
+        description: 'Lịch sân sẽ được giải phóng. Nếu đơn đã thanh toán, việc hoàn tiền cần xử lý riêng.',
+        confirmLabel: 'Hủy sân',
+        destructive: true,
+    })) return;
+
     statusForm.put(`/admin/bookings/${props.booking.id}/status`, {
         preserveScroll: true,
         onSuccess: () => { statusForm.note = ''; },
@@ -51,7 +59,7 @@ function updateStatus() {
                 <p class="text-xs font-bold uppercase tracking-[0.16em] text-orange-700 dark:text-orange-400">CHI TIẾT ĐƠN ĐẶT SÂN</p>
                 <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
                     <div><h1 class="text-2xl font-bold sm:text-3xl">{{ booking.booking_code }}</h1><p class="mt-2 text-sm text-muted-foreground">{{ booking.court }} · {{ booking.slots.length }} khung giờ</p></div>
-                    <span class="inline-flex rounded-full border border-border bg-muted px-3 py-1.5 text-sm font-semibold">{{ statusLabels[booking.status] }}</span>
+                    <span :class="['inline-flex rounded-full border px-3 py-1.5 text-sm font-semibold', booking.status === 'CANCELLED' ? 'border-rose-500/30 bg-rose-500/10 text-rose-800 dark:text-rose-300' : 'border-border bg-muted']">{{ statusLabels[booking.status] }}</span>
                 </div>
             </header>
 
@@ -85,7 +93,7 @@ function updateStatus() {
             <section class="rounded-xl border border-border bg-card p-5 sm:p-6">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <h2 class="text-lg font-bold">Cập nhật trạng thái</h2>
-                    <p class="text-sm text-muted-foreground">Mọi thay đổi trạng thái sẽ được lưu vào lịch sử của đơn.</p>
+                    <p class="text-sm text-muted-foreground">Hủy đơn sẽ giải phóng lịch sân; việc hoàn tiền cần xử lý riêng.</p>
                 </div>
                 <form v-if="booking.status_options.length" class="mt-4 grid gap-3 sm:grid-cols-[minmax(180px,240px)_1fr_auto] sm:items-start" @submit.prevent="updateStatus">
                     <label class="grid gap-1.5 text-sm font-medium">Trạng thái mới
@@ -93,8 +101,8 @@ function updateStatus() {
                             <option v-for="option in booking.status_options" :key="option.value" :value="option.value">{{ option.label }}</option>
                         </select>
                     </label>
-                    <label class="grid gap-1.5 text-sm font-medium">Ghi chú nội bộ (không bắt buộc)
-                        <input v-model="statusForm.note" maxlength="500" class="min-h-10 rounded-lg border border-input bg-background px-3 text-foreground" placeholder="Lý do cập nhật trạng thái" />
+                    <label class="grid gap-1.5 text-sm font-medium">{{ statusForm.status === 'CANCELLED' ? 'Lý do hủy (bắt buộc)' : 'Ghi chú nội bộ (không bắt buộc)' }}
+                        <input v-model="statusForm.note" maxlength="500" :required="statusForm.status === 'CANCELLED'" class="min-h-10 rounded-lg border border-input bg-background px-3 text-foreground" :placeholder="statusForm.status === 'CANCELLED' ? 'Nhập lý do hủy sân' : 'Lý do cập nhật trạng thái'" />
                     </label>
                     <button type="submit" :disabled="statusForm.processing" class="mt-6 inline-flex min-h-10 items-center justify-center rounded-lg bg-orange-600 px-4 text-sm font-bold text-white hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60">{{ statusForm.processing ? 'Đang lưu…' : 'Lưu trạng thái' }}</button>
                     <p v-if="statusForm.errors.status" class="text-sm text-red-600 sm:col-span-3">{{ statusForm.errors.status }}</p>

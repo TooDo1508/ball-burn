@@ -37,7 +37,8 @@ Thông tin Sân Ballburn Pickleball:
 
 - Địa chỉ: 614 Đ. Lạc Long Quân, Nhật Tân, Tây Hồ, Hà Nội
 
-- Link Google Maps: https://maps.app.goo.gl/cLh8vZ8LKLJBdDAo9
+- Link Google Maps: https://maps.app.goo.gl/q4FVTh8toEBiqxgo9
+- Tọa độ: 21.075256962736187, 105.81640685092688
 
 - Quy mô: 8 sân (3 sân trung tâm, 5 sân thường)
 

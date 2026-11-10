@@ -18,6 +18,7 @@ class UpdateContactSettingsRequest extends FormRequest
             'contact.payment_account_number' => ['required', 'string', 'regex:/^\d{6,19}$/'],
             'contact.phone' => ['required', 'string', 'max:30'],
             'contact.address' => ['required', 'string', 'max:255'],
+            'contact.map_coordinates' => ['required', 'string', 'max:64', 'regex:/^-?\d{1,2}\.\d+,\s*-?\d{1,3}\.\d+$/'],
             'contact.business_hours' => ['required', 'string', 'max:120'],
             'contact.venue_description' => ['nullable', 'string', 'max:250'],
             'contact.map_url' => ['nullable', 'url', 'max:1000'],

@@ -29,8 +29,8 @@ This file describes the implemented application. Check routes, migrations and te
 
 ### Current status and concurrency rules
 
-- `booking_orders.status` is authoritative: current application statuses are `PENDING_PAYMENT` and `PAID`. Booking segments no longer have their own status, status token or payment deadline. `payments.status` was also removed; use `paid_at` and the owning order where appropriate.
-- Paid orders occupy the schedule. Pending orders occupy it only while `payment_deadline_at > now()`. The exact deadline is already expired. `Booking::occupyingSchedule()` is the common predicate used by availability and write-time conflict checks.
+- `booking_orders.status` is authoritative: current application statuses are `PENDING_PAYMENT`, `PAID` and admin-set `CANCELLED`. Cancellation is terminal, records a required admin reason in segment history and releases the schedule. Booking segments no longer have their own status, status token or payment deadline. `payments.status` was also removed; use `paid_at` and the owning order where appropriate.
+- Paid orders occupy the schedule. Pending orders occupy it only while `payment_deadline_at > now()`. Cancelled orders do not occupy it. The exact deadline is already expired. `Booking::occupyingSchedule()` is the common predicate used by availability and write-time conflict checks.
 - Time intervals are half-open: overlap means `starts_at < requested_end AND ends_at > requested_start`. Adjacent bookings must remain allowed.
 - Lock court rows inside the transaction and recheck availability before inserting holds/bookings/closures. Lock multiple courts in ascending ID order. Preserve atomicity and existing idempotency when refactoring.
 - Expired holds and pending orders are ignored by deadline-aware reads. There is currently no expiry command registered in `routes/console.php`; do not describe a scheduled cleanup job as implemented.
@@ -48,13 +48,14 @@ This file describes the implemented application. Check routes, migrations and te
 
 - Fortify authentication is under `/admin`: login, password reset, password confirmation and two-factor authentication. Public registration is disabled. `EnsureAdminAccount` and `can:access-admin` restrict access to active admin/staff users.
 - Create administrators with `php artisan admin:create`, which uses hidden password prompts. Do not hard-code passwords, create default admin credentials, or expose receipt files publicly.
-- `/admin` is the dashboard shell; do not assume every displayed metric is a live reporting service.
+- `/admin/users`: read-only, searchable directory of ADMIN/STAFF accounts. Guest booking customers do not have accounts; provision administrators with `php artisan admin:create`.
+- `/admin` is a date-filtered dashboard. Order counts and revenue use `booking_orders.created_at` and compare with the preceding interval of equal length. Revenue includes PAID orders and CANCELLED orders that still have `paid_at`; cancellations are not automatically refunded. Popular hours count schedule-occupying booking segments by local start hour. Upcoming bookings include PAID orders and PENDING_PAYMENT orders whose deadline has not passed.
 - `/admin/courts`: court CRUD, active state, primary image, weekly operating hours, weekday/weekend price tiers, daily schedule, closures and admin-assisted paid bookings. `CourtCatalogSeeder` idempotently provides eight courts (1–3 CENTER, 4–8 REGULAR), 05:00–23:00 venue hours and the price sheet effective 2026-04-01.
 - `CourtPricingService` selects active, effective rules by weekday/weekend, using the latest effective rule for an identical interval and falling back to the base hourly price. Keep integer monetary arithmetic. Batch daily slot pricing resolves applicable rules once; a range crossing dates resolves each date separately.
-- `/admin/bookings`: order-oriented list/search/filter/statistics, segment detail, single and bulk status changes, bulk deletion of pending orders, private payment-proof access and in-app notifications. Status transitions record segment history; deletions create audit records and reject linked bank transactions.
+- `/admin/bookings`: order-oriented list/search/filter/statistics, segment detail, single and bulk status changes, cancellation with a required reason, bulk deletion of pending orders, private payment-proof access and in-app notifications. `/admin/bookings/cancellations` lists cancelled orders. Status transitions record segment history; deletions create audit records and reject linked bank transactions. Cancellation does not automatically refund or notify the guest.
 - `/admin/contact-messages`: paginated/searchable/filterable inbox, detail view, status and internal notes, including quick editing. Current statuses: NEW, IN_PROGRESS, RESOLVED, SPAM. Assignment and automated retention are not implemented.
 - `/admin/news`: posts, categories, image uploads, rich text editing, drafts/publishing, previews, SEO metadata and bulk deletion.
-- `/admin/settings`: profile, password/security/2FA, appearance, home-page content and venue contact/payment information.
+- `/admin/settings`: profile, password/security/2FA, appearance and venue contact/payment information. Public homepage content is read through `HomePageService`; the admin editor has been removed.
 - Appearance is light/dark/system, stored in local storage and the appearance cookie. Theme setup belongs in `useAppearance.ts` and `resources/css/app.css`; admin UI should use semantic surface/text/border tokens.
 
 ## Receipt OCR lifecycle
@@ -102,5 +103,5 @@ docker compose up -d --build queue-worker
 - Do not remove Laravel-discovered policies, commands or Inertia pages based only on missing imports. Confirm runtime discovery and indirect entry points before deleting code. Keep migration history intact.
 - Preserve Vietnamese diacritics, accessible form labels, error states and status labels alongside colors.
 - Public visual reference: `https://ballburn.vercel.app/#about`; local reference images are under `docs/`. Brand colors in the old design notes were provisional, not measured from the live site. Follow existing semantic tokens rather than introducing unrelated accents.
-- Payment provider automation, refunds/cancellations, guest modification/cancellation, bank reconciliation, cleanup scheduling and production concurrency guarantees need explicit design work. Do not present them as existing features.
+- Payment provider automation, refunds, guest modification/cancellation, bank reconciliation, cleanup scheduling and production concurrency guarantees need explicit design work. Admin order cancellation exists, but it does not process refunds. Do not present the follow-up items as implemented features.
 - Keep this document aligned with implemented functionality. Record audit findings and validation limitations in `docs/project-audit.md`.

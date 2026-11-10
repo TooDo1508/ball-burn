@@ -6,9 +6,10 @@ const contactDefaults = {
     email: '',
     phone: '0886 688 614',
     address: '614 Lạc Long Quân, Tây Hồ, Hà Nội 100000',
+    map_coordinates: '21.075256962736187, 105.81640685092688',
     business_hours: 'Mỗi ngày · 05:00–24:00',
     venue_description: '8 sân pickleball và khu Bistro luôn sẵn sàng đón bạn.',
-    map_url: 'https://maps.app.goo.gl/cLh8vZ8LKLJBdDAo9',
+    map_url: 'https://maps.app.goo.gl/q4FVTh8toEBiqxgo9',
     facebook_url: 'https://www.facebook.com/ballburnvietnam',
     instagram_url: 'https://www.instagram.com/ballburnpickleclubbistro',
 };
@@ -93,7 +94,7 @@ function fieldError(name) {
                 <div class="contact-detail-list">
                     <div class="contact-detail-item">
                         <span class="contact-detail-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
-                        <div><h3>Địa chỉ</h3><p class="contact-address">{{ contact.address }}</p><a :href="contact.map_url" target="_blank" rel="noopener noreferrer">Chỉ đường đến BALLBURN <span aria-hidden="true">↗</span></a></div>
+                        <div><h3>Địa chỉ</h3><p class="contact-address">{{ contact.address }}</p><p class="contact-coordinates">Tọa độ: {{ contact.map_coordinates }}</p><a :href="contact.map_url" target="_blank" rel="noopener noreferrer">Chỉ đường đến BALLBURN <span aria-hidden="true">↗</span></a></div>
                     </div>
                     <div class="contact-detail-item">
                         <span class="contact-detail-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 16.5v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 1.1 3.8 2 2 0 0 1 3.1 1.6h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L7 9.5a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.8 2.1Z"/></svg></span>

@@ -2,6 +2,7 @@
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Check, Pencil, Plus, Tags, Trash2, X } from '@lucide/vue';
 import { ref } from 'vue';
+import { confirmAction } from '@/lib/confirmDialog';
 import InputError from '@/components/InputError.vue';
 import { dashboard } from '@/routes';
 
@@ -33,9 +34,14 @@ function save() {
     }
 }
 
-function destroyCategory(category: Category) {
+async function destroyCategory(category: Category) {
     const detail = category.posts_count ? ` Danh mục này đang gắn với ${category.posts_count} bài viết.` : '';
-    if (window.confirm(`Xóa danh mục “${category.name}”?${detail} Bài viết vẫn được giữ lại.`)) {
+    if (await confirmAction({
+        title: 'Xóa danh mục?',
+        description: `Xóa danh mục “${category.name}”?${detail} Bài viết vẫn được giữ lại.`,
+        confirmLabel: 'Xóa danh mục',
+        destructive: true,
+    })) {
         router.delete(`/admin/news/categories/${category.id}`, { preserveScroll: true });
     }
 }
@@ -68,7 +74,6 @@ function destroyCategory(category: Category) {
                     <div class="grid gap-2"><label for="category-slug" class="text-sm font-semibold">Slug</label><input id="category-slug" v-model="form.slug" maxlength="140" class="h-11 rounded-lg border border-input bg-background px-3 text-sm focus:border-orange-500 focus:outline-none" placeholder="tips-tricks" /><InputError :message="form.errors.slug" /></div>
                     <div class="grid gap-2"><label for="category-description" class="text-sm font-semibold">Mô tả</label><textarea id="category-description" v-model="form.description" rows="3" maxlength="500" class="rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="Mô tả ngắn về danh mục" /><InputError :message="form.errors.description" /></div>
                     <button type="submit" :disabled="form.processing" class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 text-sm font-bold text-white hover:bg-orange-600 disabled:opacity-60"><Check v-if="editingId" class="size-4" /><Plus v-else class="size-4" />{{ editingId ? 'Cập nhật danh mục' : 'Tạo danh mục' }}</button>
-                    <p v-if="$page.props.flash?.success" class="text-sm text-emerald-800 dark:text-emerald-300">{{ $page.props.flash.success }}</p>
                 </form>
             </div>
         </div>

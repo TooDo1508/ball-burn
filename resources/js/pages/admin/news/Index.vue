@@ -2,6 +2,7 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { CalendarDays, Check, Clock3, Eye, FileText, Filter, Newspaper, Pencil, Plus, RotateCcw, Search, Tags, Trash2 } from '@lucide/vue';
 import { computed, reactive, ref } from 'vue';
+import { confirmAction } from '@/lib/confirmDialog';
 import { dashboard } from '@/routes';
 
 defineOptions({ layout: { breadcrumbs: [{ title: 'Quản trị', href: dashboard() }, { title: 'Tin tức', href: '/admin/news' }] } });
@@ -62,14 +63,24 @@ function resetFilters() {
     applyFilters();
 }
 
-function destroyPost(post: Post) {
-    if (window.confirm(`Bạn muốn xóa bài viết “${post.title}”?`)) {
+async function destroyPost(post: Post) {
+    if (await confirmAction({
+        title: 'Xóa bài viết?',
+        description: `Bạn muốn xóa bài viết “${post.title}”?`,
+        confirmLabel: 'Xóa bài viết',
+        destructive: true,
+    })) {
         router.delete(`/admin/news/${post.id}`, { preserveScroll: true });
     }
 }
 
-function destroySelected() {
-    if (window.confirm(`Xóa ${selectedIds.value.length} bài viết đã chọn?`)) {
+async function destroySelected() {
+    if (await confirmAction({
+        title: 'Xóa bài viết đã chọn?',
+        description: `Xóa ${selectedIds.value.length} bài viết đã chọn? Thao tác này không thể hoàn tác.`,
+        confirmLabel: 'Xóa bài viết',
+        destructive: true,
+    })) {
         router.delete('/admin/news/bulk', {
             data: { ids: selectedIds.value },
             preserveScroll: true,

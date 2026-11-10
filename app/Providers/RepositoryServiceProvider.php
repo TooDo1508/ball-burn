@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Repositories\Contracts\AdminBookingRepository;
+use App\Repositories\Contracts\AdminDashboardRepository;
 use App\Repositories\Contracts\BlogCategoryRepository;
 use App\Repositories\Contracts\BlogPostRepository;
 use App\Repositories\Contracts\BookingRepository;
@@ -13,6 +14,7 @@ use App\Repositories\Contracts\PaymentReceiptRepository;
 use App\Repositories\Contracts\SiteSettingRepository;
 use App\Repositories\Contracts\UserRepository;
 use App\Repositories\Eloquent\EloquentAdminBookingRepository;
+use App\Repositories\Eloquent\EloquentAdminDashboardRepository;
 use App\Repositories\Eloquent\EloquentBlogCategoryRepository;
 use App\Repositories\Eloquent\EloquentBlogPostRepository;
 use App\Repositories\Eloquent\EloquentBookingRepository;
@@ -33,6 +35,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(PaymentReceiptRepository::class, EloquentPaymentReceiptRepository::class);
         $this->app->bind(BookingRepository::class, EloquentBookingRepository::class);
         $this->app->bind(AdminBookingRepository::class, EloquentAdminBookingRepository::class);
+        $this->app->bind(AdminDashboardRepository::class, EloquentAdminDashboardRepository::class);
         $this->app->bind(ContactMessageRepository::class, EloquentContactMessageRepository::class);
         $this->app->bind(BlogPostRepository::class, EloquentBlogPostRepository::class);
         $this->app->bind(BlogCategoryRepository::class, EloquentBlogCategoryRepository::class);

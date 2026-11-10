@@ -7,6 +7,7 @@ type ContactSettings = {
     email: string;
     phone: string;
     address: string;
+    map_coordinates: string;
     business_hours: string;
     venue_description: string;
     map_url: string;
@@ -61,6 +62,13 @@ function save() {
                 </div>
 
                 <div class="grid gap-2 sm:col-span-2">
+                    <label for="contact-coordinates" class="text-sm font-semibold">Tọa độ bản đồ</label>
+                    <input id="contact-coordinates" v-model.trim="form.contact.map_coordinates" maxlength="64" placeholder="21.075256962736187, 105.81640685092688" class="min-h-11 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
+                    <p v-if="form.errors['contact.map_coordinates']" class="text-sm text-destructive">{{ form.errors['contact.map_coordinates'] }}</p>
+                    <p class="text-xs text-muted-foreground">Tọa độ chính xác của địa điểm, dùng chung với liên kết Google Maps.</p>
+                </div>
+
+                <div class="grid gap-2 sm:col-span-2">
                     <label for="contact-venue-description" class="text-sm font-semibold">Mô tả ngắn địa điểm</label>
                     <textarea id="contact-venue-description" v-model.trim="form.contact.venue_description" rows="2" maxlength="250" class="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
                     <p v-if="form.errors['contact.venue_description']" class="text-sm text-destructive">{{ form.errors['contact.venue_description'] }}</p>
@@ -92,7 +100,6 @@ function save() {
                 </div>
             </div>
 
-            <p v-if="$page.props.flash?.success" class="text-sm font-medium text-green-700">{{ $page.props.flash.success }}</p>
             <div class="flex flex-wrap items-center gap-3 border-t pt-5">
                 <button type="submit" :disabled="form.processing" class="inline-flex min-h-11 items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"><Save class="size-4" />{{ form.processing ? 'Đang lưu…' : 'Lưu cài đặt' }}</button>
                 <a href="/contact" target="_blank" class="text-sm font-medium underline underline-offset-4">Xem trang Liên hệ</a>

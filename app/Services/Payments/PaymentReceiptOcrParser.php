@@ -23,6 +23,7 @@ class PaymentReceiptOcrParser
             '/\bSO\s+TIEN\b|\bAMOUNT\b/',
             '/(?<![A-Z0-9])(\d[\d., ]{0,22}\d|\d)(?=\s*(?:VND|DONG|D|USD|EUR|SGD|AUD|GBP|JPY|CNY|THB)?(?![A-Z0-9]))/',
         );
+        $amountToken ??= $this->valueBeforeCurrency($lines);
 
         return [
             'payment_reference' => $reference,
@@ -53,6 +54,27 @@ class PaymentReceiptOcrParser
             $candidates = [substr($line, $labelEnd), $lines[$index + 1] ?? '', $lines[$index + 2] ?? ''];
             foreach ($candidates as $candidate) {
                 if (preg_match($valuePattern, $candidate, $value) === 1) {
+                    return trim($value[1]);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /** @param array<int, string> $lines */
+    private function valueBeforeCurrency(array $lines): ?string
+    {
+        foreach ($lines as $index => $line) {
+            // Some bank receipts show a prominent amount without an "Amount" label.
+            // The currency marker anchors the number and avoids picking up dates or account numbers.
+            $candidates = [$line, trim($line.' '.($lines[$index + 1] ?? ''))];
+            foreach ($candidates as $candidate) {
+                if (preg_match(
+                    '/(?<![A-Z0-9])(\d[\d., ]{0,22}\d|\d)\s*(?:VND|DONG)(?![A-Z0-9])/',
+                    $candidate,
+                    $value,
+                ) === 1) {
                     return trim($value[1]);
                 }
             }

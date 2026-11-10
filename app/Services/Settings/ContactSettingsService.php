@@ -7,6 +7,12 @@ use Illuminate\Support\Facades\Storage;
 
 class ContactSettingsService
 {
+    private const LEGACY_MAP_URL = 'https://maps.app.goo.gl/cLh8vZ8LKLJBdDAo9';
+
+    private const MAP_URL = 'https://maps.app.goo.gl/q4FVTh8toEBiqxgo9';
+
+    private const MAP_COORDINATES = '21.075256962736187, 105.81640685092688';
+
     public function __construct(private readonly SiteSettingRepository $settings) {}
 
     public function publicSettings(): array
@@ -20,6 +26,12 @@ class ContactSettingsService
     public function adminSettings(): array
     {
         $settings = array_merge(self::defaults(), $this->storedSettings());
+
+        if (($settings['map_url'] ?? null) === self::LEGACY_MAP_URL) {
+            $settings['map_url'] = self::MAP_URL;
+            $settings['map_coordinates'] = self::MAP_COORDINATES;
+        }
+
         unset($settings['payment_qr_path'], $settings['payment_qr_url']);
 
         return $settings;
@@ -57,9 +69,10 @@ class ContactSettingsService
             'payment_account_number' => '',
             'phone' => '0886 688 614',
             'address' => '614 Lạc Long Quân, Tây Hồ, Hà Nội 100000',
+            'map_coordinates' => self::MAP_COORDINATES,
             'business_hours' => 'Mỗi ngày · 05:00–24:00',
             'venue_description' => '8 sân pickleball và khu Bistro luôn sẵn sàng đón bạn.',
-            'map_url' => 'https://maps.app.goo.gl/cLh8vZ8LKLJBdDAo9',
+            'map_url' => self::MAP_URL,
             'facebook_url' => 'https://www.facebook.com/ballburnvietnam',
             'instagram_url' => 'https://www.instagram.com/ballburnpickleclubbistro',
         ];

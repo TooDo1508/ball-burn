@@ -40,7 +40,6 @@ function save() {
                         <label class="grid gap-2 text-sm font-semibold">Ghi chú nội bộ
                             <textarea v-model="form.admin_notes" rows="7" maxlength="5000" placeholder="Ghi chú chỉ dành cho đội ngũ BALLBURN..." class="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-normal leading-6 outline-none placeholder:text-muted-foreground focus:border-orange-500" />
                         </label>
-                        <p v-if="$page.props.flash?.success" class="text-sm text-emerald-800 dark:text-emerald-300">{{ $page.props.flash.success }}</p>
                         <p v-if="form.errors.status || form.errors.admin_notes" class="text-sm text-rose-800 dark:text-rose-300">{{ form.errors.status || form.errors.admin_notes }}</p>
                         <button type="submit" :disabled="form.processing" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 text-sm font-bold text-white hover:bg-orange-600 disabled:opacity-50"><Save class="size-4" />{{ form.processing ? 'Đang lưu…' : 'Lưu cập nhật' }}</button>
                     </form>

@@ -15,8 +15,8 @@ class UpdateAdminBookingStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', Rule::in(['PENDING_PAYMENT', 'PAID'])],
-            'note' => ['nullable', 'string', 'max:500'],
+            'status' => ['required', Rule::in(['PENDING_PAYMENT', 'PAID', 'CANCELLED'])],
+            'note' => ['nullable', 'string', 'max:500', 'required_if:status,CANCELLED'],
         ];
     }
 }

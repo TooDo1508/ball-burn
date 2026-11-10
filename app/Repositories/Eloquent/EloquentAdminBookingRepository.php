@@ -32,9 +32,10 @@ class EloquentAdminBookingRepository implements AdminBookingRepository
         $startOfToday = $today->utc();
         $startOfTomorrow = $today->addDay()->utc();
         $revenueToday = BookingOrder::query()
-            ->where('status', 'PAID')
-            ->where('paid_at', '>=', $startOfToday)
-            ->where('paid_at', '<', $startOfTomorrow)
+            ->where(fn ($orders) => $orders->where('status', 'PAID')
+                ->orWhere(fn ($cancelled) => $cancelled->where('status', 'CANCELLED')->whereNotNull('paid_at')))
+            ->where('created_at', '>=', $startOfToday)
+            ->where('created_at', '<', $startOfTomorrow)
             ->selectRaw('currency, SUM(total_amount) as amount')
             ->groupBy('currency')
             ->get()
@@ -45,6 +46,7 @@ class EloquentAdminBookingRepository implements AdminBookingRepository
             'total' => (clone $orders)->count(),
             'paid_bookings' => (clone $orders)->where('status', 'PAID')->count(),
             'pending' => (clone $orders)->where('status', 'PENDING_PAYMENT')->count(),
+            'cancelled' => (clone $orders)->where('status', 'CANCELLED')->count(),
             'revenue_today' => $revenueToday,
         ];
     }
@@ -69,15 +71,21 @@ class EloquentAdminBookingRepository implements AdminBookingRepository
             $order = BookingOrder::query()->whereKey($snapshot->booking_order_id)->lockForUpdate()->firstOrFail();
             $segments = Booking::query()->whereIn('id', $bookingIds)->orderBy('id')->lockForUpdate()->get();
             $currentStatus = $order->status;
-            if (! in_array($status, ['PENDING_PAYMENT', 'PAID'], true)) {
+            if (! in_array($status, ['PENDING_PAYMENT', 'PAID', 'CANCELLED'], true)) {
                 throw ValidationException::withMessages(['status' => "Tr\u{1ea1}ng th\u{00e1}i \u{0111}\u{01a1}n kh\u{00f4}ng h\u{1ee3}p l\u{1ec7}."]);
             }
+            if ($currentStatus === 'CANCELLED' && $status !== 'CANCELLED') {
+                throw ValidationException::withMessages(['status' => 'Đơn đã hủy không thể được mở lại.']);
+            }
             if ($currentStatus !== $status) {
-                $order->forceFill([
-                    'status' => $status,
-                    'paid_at' => $status === 'PAID' ? now() : null,
-                ])->save();
+                $updates = ['status' => $status];
                 if ($status === 'PAID') {
+                    $updates['paid_at'] = now();
+                } elseif ($status === 'PENDING_PAYMENT') {
+                    $updates['paid_at'] = null;
+                }
+                $order->forceFill($updates)->save();
+                if (in_array($status, ['PAID', 'CANCELLED'], true)) {
                     DB::table('notifications')->whereIn('booking_id', $bookingIds)
                         ->where('channel', 'IN_APP')->where('type', 'BOOKING_PENDING_PAYMENT')->delete();
                 }
@@ -115,10 +123,14 @@ class EloquentAdminBookingRepository implements AdminBookingRepository
             if ($orders->count() !== $orderIds->count()) {
                 throw ValidationException::withMessages(['booking_order_ids' => 'Một hoặc nhiều đơn không còn tồn tại.']);
             }
+            if ($orders->contains(fn (BookingOrder $order): bool => $order->status === 'CANCELLED')) {
+                throw ValidationException::withMessages(['booking_order_ids' => 'Đơn đã hủy không thể được cập nhật hàng loạt.']);
+            }
             $segments = Booking::query()->whereIn('booking_order_id', $orderIds)->orderBy('id')->lockForUpdate()->get();
             foreach ($orders as $order) {
                 if ($order->status === $status) continue;
 
+                $oldStatus = $order->status;
                 $order->forceFill(['status' => $status, 'paid_at' => $status === 'PAID' ? now() : null])->save();
                 if ($status === 'PAID') {
                     DB::table('notifications')->whereIn('booking_id', $segments->where('booking_order_id', $order->id)->modelKeys())
@@ -126,7 +138,7 @@ class EloquentAdminBookingRepository implements AdminBookingRepository
                 }
                 foreach ($segments->where('booking_order_id', $order->id) as $segment) {
                     $segment->statusHistory()->create([
-                        'old_status' => $status === 'PAID' ? 'PENDING_PAYMENT' : 'PAID',
+                        'old_status' => $oldStatus,
                         'new_status' => $status,
                         'changed_by' => $userId,
                         'change_source' => 'ADMIN',

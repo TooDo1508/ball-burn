@@ -91,6 +91,18 @@ const summaryNote = computed(() => currentStep.value === 1
         ? 'Nhập thông tin liên hệ để xem mã thanh toán. Đơn chưa được tạo ở bước này.'
         : 'Gửi ảnh chuyển khoản trước khi mã thanh toán hết hạn. Booking chỉ được xác nhận sau khi nhân viên đối soát.');
 
+function statusLabel(status) {
+    if (status === 'PAID') return 'Đã thanh toán';
+    if (status === 'CANCELLED') return 'Đã hủy sân';
+    return 'Chờ thanh toán';
+}
+
+function statusClass(status) {
+    if (status === 'PAID') return 'booking-status-confirmed';
+    if (status === 'CANCELLED') return 'booking-status-cancelled';
+    return 'booking-status-pending';
+}
+
 function venueDate() {
     const parts = new Intl.DateTimeFormat('en', { timeZone: venueTimezone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
     const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
@@ -527,13 +539,13 @@ watch(() => route.params.token, (token) => {
             <aside class="booking-steps-column"><BookingStepper :current="activeStep" :complete="Boolean(bookingStatus)" @navigate="goToStep" /></aside>
 
             <section v-if="bookingStatus" class="booking-result" aria-live="polite">
-                <div class="booking-result-icon" aria-hidden="true">✓</div>
-                <p class="booking-eyebrow">{{ bookingStatus.payment_submitted ? 'ĐÃ GỬI MINH CHỨNG' : 'TRẠNG THÁI BOOKING' }}</p>
+                <div class="booking-result-icon" :class="{ 'booking-result-icon-cancelled': bookingStatus.status === 'CANCELLED' }" aria-hidden="true">{{ bookingStatus.status === 'CANCELLED' ? '×' : '✓' }}</div>
+                <p class="booking-eyebrow">{{ bookingStatus.status === 'CANCELLED' ? 'ĐƠN ĐÃ HỦY' : bookingStatus.payment_submitted ? 'ĐÃ GỬI MINH CHỨNG' : 'TRẠNG THÁI BOOKING' }}</p>
                 <template v-if="bookingStatus.bookings?.length">
-                    <h2>{{ bookingStatus.payment_submitted ? 'Đã nhận ảnh chuyển khoản' : 'Thông tin đơn đặt sân' }}</h2>
+                    <h2>{{ bookingStatus.status === 'CANCELLED' ? 'Đơn đặt sân đã bị hủy' : bookingStatus.payment_submitted ? 'Đã nhận ảnh chuyển khoản' : 'Thông tin đơn đặt sân' }}</h2>
                     <p class="booking-order-code">Mã đơn: <strong>{{ bookingStatus.booking_code }}</strong></p>
                     <p class="booking-order-total">Tổng tiền đơn: <strong>{{ formatMoney(bookingStatus.total_amount, bookingStatus.currency) }}</strong></p>
-                    <p>{{ bookingStatus.payment_submitted ? 'Booking đang chờ nhân viên đối soát. Ảnh chuyển khoản chưa đồng nghĩa với xác nhận thanh toán.' : 'Theo dõi trạng thái booking của bạn bên dưới.' }}</p>
+                    <p>{{ bookingStatus.status === 'CANCELLED' ? 'Lịch đặt sân này đã được hủy. Nếu bạn cần hỗ trợ về khoản thanh toán, vui lòng liên hệ BALLBURN.' : bookingStatus.payment_submitted ? 'Booking đang chờ nhân viên đối soát. Ảnh chuyển khoản chưa đồng nghĩa với xác nhận thanh toán.' : 'Theo dõi trạng thái booking của bạn bên dưới.' }}</p>
                     <div class="booking-result-list">
                         <article v-for="(booking, index) in bookingStatus.bookings" :key="`${booking.court}-${booking.date}-${booking.starts_at}-${index}`" class="booking-result-item">
                             <dl class="booking-result-details">
@@ -541,23 +553,23 @@ watch(() => route.params.token, (token) => {
                                 <div><dt>Ngày</dt><dd>{{ formatDate(booking.date) }}</dd></div>
                                 <div><dt>Giờ chơi</dt><dd>{{ booking.starts_at }} – {{ booking.ends_at }}</dd></div>
                                 <div><dt>Tổng tiền</dt><dd>{{ formatMoney(booking.total_amount, booking.currency) }}</dd></div>
-                                <div><dt>Trạng thái</dt><dd :class="booking.status === 'PAID' ? 'booking-status-confirmed' : 'booking-status-pending'">{{ booking.status === 'PAID' ? 'Đã thanh toán' : 'Chờ thanh toán' }}</dd></div>
+                                <div><dt>Trạng thái</dt><dd :class="statusClass(booking.status)">{{ statusLabel(booking.status) }}</dd></div>
                             </dl>
                         </article>
                     </div>
                     <a v-if="bookingStatus.status_url" :href="bookingStatus.status_url" class="booking-status-link">Liên kết xem trạng thái đơn ↗</a>
                 </template>
                 <template v-else>
-                    <h2>{{ bookingStatus.payment_submitted ? 'Đã nhận ảnh chuyển khoản' : 'Thông tin đơn đặt sân' }}</h2>
+                    <h2>{{ bookingStatus.status === 'CANCELLED' ? 'Đơn đặt sân đã bị hủy' : bookingStatus.payment_submitted ? 'Đã nhận ảnh chuyển khoản' : 'Thông tin đơn đặt sân' }}</h2>
                     <p class="booking-order-code">Mã đơn: <strong>{{ bookingStatus.booking_code }}</strong></p>
-                    <p>Trạng thái hiện tại: {{ bookingStatus.status === 'PAID' ? 'Đã thanh toán' : 'Chờ thanh toán' }}</p>
+                    <p>Trạng thái hiện tại: {{ statusLabel(bookingStatus.status) }}</p>
                     <dl class="booking-result-details">
                         <div><dt>Mã booking</dt><dd>{{ bookingStatus.booking_code }}</dd></div>
                         <div><dt>Sân</dt><dd>{{ bookingStatus.court }}</dd></div>
                         <div><dt>Ngày</dt><dd>{{ formatDate(bookingStatus.date) }}</dd></div>
                         <div><dt>Giờ chơi</dt><dd>{{ bookingStatus.starts_at }} – {{ bookingStatus.ends_at }}</dd></div>
                         <div><dt>Tổng tiền</dt><dd>{{ formatMoney(bookingStatus.total_amount, bookingStatus.currency) }}</dd></div>
-                        <div><dt>Trạng thái</dt><dd :class="bookingStatus.status === 'PAID' ? 'booking-status-confirmed' : 'booking-status-pending'">{{ bookingStatus.status === 'PAID' ? 'Đã thanh toán' : 'Chờ thanh toán' }}</dd></div>
+                        <div><dt>Trạng thái</dt><dd :class="statusClass(bookingStatus.status)">{{ statusLabel(bookingStatus.status) }}</dd></div>
                     </dl>
                 </template>
                 <a class="button button--outline" href="/">Về trang chủ</a>
@@ -774,6 +786,7 @@ watch(() => route.params.token, (token) => {
 .booking-receipt-preview{width:min(100%,420px);max-height:280px;object-fit:contain;border:1px solid var(--color-border);border-radius:12px;background:var(--color-surface-muted)}
 .booking-back-button{margin:0 0 16px;padding:8px 0;border:0;background:transparent;color:var(--color-ink-muted);font:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .booking-status-pending{color:var(--color-warning);font-weight:700}
+.booking-status-cancelled{color:#b42318;font-weight:700}.booking-result-icon-cancelled{background:#b42318}
 @media(max-width:700px){.booking-payment-layout{grid-template-columns:1fr}}
 @media(max-width:1100px){.booking-content{grid-template-columns:minmax(0,1fr) 270px;gap:18px}.booking-court-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.booking-date-time-layout{display:block}.booking-calendar{max-width:none;margin:0}}
 @media(max-width:800px){.booking-content{grid-template-columns:1fr;padding-top:25px}.booking-stepper{gap:10px;padding:10px}.booking-stepper::before{display:block;right:28px;left:28px}.booking-stepper li{gap:6px;font-size:11px}.booking-step-number{flex-basis:30px;width:30px;height:30px}.booking-summary{position:static;grid-row:auto}.booking-main-column{grid-row:auto}.booking-result{grid-column:1;grid-row:auto}.booking-court-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.booking-slot-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.booking-times-heading{grid-template-columns:1fr}.booking-selection-hint{font-size:12px}}

@@ -29,7 +29,8 @@ class AdminBookingManagementService
 
     public function updateStatus(int $bookingId, string $status, int $userId, ?string $note): Booking
     {
-        if (! in_array($status, ['PENDING_PAYMENT', 'PAID'], true)) {
+        if (! in_array($status, ['PENDING_PAYMENT', 'PAID', 'CANCELLED'], true)
+            || ($status === 'CANCELLED' && ! filled($note))) {
             throw ValidationException::withMessages(['status' => "Tr\u{1ea1}ng th\u{00e1}i \u{0111}\u{01a1}n kh\u{00f4}ng h\u{1ee3}p l\u{1ec7}."]);
         }
 

@@ -6,8 +6,9 @@ const contact = reactive({
     email: '',
     phone: '0886 688 614',
     address: '614 Lạc Long Quân, Tây Hồ, Hà Nội 100000',
+    map_coordinates: '21.075256962736187, 105.81640685092688',
     business_hours: 'Mỗi ngày · 05:00–24:00',
-    map_url: 'https://maps.app.goo.gl/cLh8vZ8LKLJBdDAo9',
+    map_url: 'https://maps.app.goo.gl/q4FVTh8toEBiqxgo9',
     facebook_url: 'https://www.facebook.com/ballburnvietnam',
     instagram_url: 'https://www.instagram.com/ballburnpickleclubbistro',
 });

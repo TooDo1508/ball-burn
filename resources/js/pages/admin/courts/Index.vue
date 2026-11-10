@@ -5,6 +5,7 @@ import {
     Clock3, ImagePlus, LockKeyhole, MapPin, Pencil, Plus, Save, UnlockKeyhole, UserPlus, X,
 } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
+import { confirmAction } from '@/lib/confirmDialog';
 import { dashboard } from '@/routes';
 
 defineOptions({ layout: { breadcrumbs: [{ title: 'Quản trị', href: dashboard() }, { title: 'Quản lý sân', href: '/admin/courts' }] } });
@@ -195,8 +196,12 @@ function saveBooking() {
     bookingForm.post('/admin/bookings', { preserveScroll: true, onSuccess: () => { bookingDialogOpen.value = false; } });
 }
 
-function removeClosure(closure: Closure) {
-    if (window.confirm(`Mở lại lịch ${closure.starts_at}–${closure.ends_at}?`)) {
+async function removeClosure(closure: Closure) {
+    if (await confirmAction({
+        title: 'Mở lại lịch sân?',
+        description: `Mở lại lịch ${closure.starts_at}–${closure.ends_at}?`,
+        confirmLabel: 'Mở lại lịch',
+    })) {
         router.delete(`/admin/court-closures/${closure.id}`, { preserveScroll: true });
     }
 }

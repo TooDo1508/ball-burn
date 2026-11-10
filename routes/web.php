@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Admin\Booking\AdminBookingController;
 use App\Http\Controllers\Admin\Booking\AdminBookingManagementController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\Contact\ContactMessageController as AdminContactMessageController;
 use App\Http\Controllers\Admin\Court\CourtAdminController;
 use App\Http\Controllers\Admin\Court\CourtClosureController;
@@ -11,17 +13,11 @@ use App\Http\Controllers\Booking\GuestBookingController;
 use App\Http\Controllers\Blog\PublicBlogController;
 use App\Http\Controllers\Contact\ContactMessageController;
 use App\Http\Controllers\Contact\ContactPageController;
-use App\Services\Settings\ContactSettingsService;
-use App\Services\Settings\HomePageService;
+use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function (HomePageService $homePage, ContactSettingsService $contactSettings) {
-    return Inertia::render('Home', [
-        'content' => $homePage->content(),
-        'contactInfo' => $contactSettings->publicSettings(),
-    ]);
-})->name('home');
+Route::get('/', HomeController::class)->name('home');
 
 Route::get('/about', function () {
     $title = 'Về BALLBURN | PickleClub & Bistro';
@@ -59,9 +55,11 @@ Route::get('/contact', [ContactPageController::class, 'indexPage'])->name('conta
 Route::post('/contact', [ContactMessageController::class, 'store'])->middleware('throttle:5,1')->name('contact.store');
 
 Route::middleware(['auth', 'can:access-admin'])->prefix('admin')->group(function () {
-    Route::inertia('/', 'Dashboard')->name('dashboard');
+    Route::get('/', DashboardController::class)->name('dashboard');
+    Route::get('users', [UserManagementController::class, 'index'])->name('admin.users.index');
     Route::post('bookings', [AdminBookingController::class, 'store'])->name('admin.bookings.store');
     Route::get('bookings', [AdminBookingManagementController::class, 'index'])->name('admin.bookings.index');
+    Route::get('bookings/cancellations', [AdminBookingManagementController::class, 'cancellations'])->name('admin.bookings.cancellations');
     Route::get('bookings/notifications', [AdminBookingManagementController::class, 'notifications'])->name('admin.bookings.notifications');
     Route::put('bookings/notifications/{notificationId}/read', [AdminBookingManagementController::class, 'markNotificationRead'])->whereNumber('notificationId')->name('admin.bookings.notifications.read');
     Route::put('bookings/bulk/status', [AdminBookingManagementController::class, 'bulkUpdateStatus'])->name('admin.bookings.bulk-status');

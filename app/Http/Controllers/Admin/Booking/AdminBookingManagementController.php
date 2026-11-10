@@ -70,6 +70,11 @@ class AdminBookingManagementController extends Controller
         ]);
     }
 
+    public function cancellations(IndexAdminBookingsRequest $request): Response
+    {
+        return $this->index($request);
+    }
+
     public function show(int $bookingId): Response
     {
         $this->authorize('viewAny', Booking::class);
@@ -196,9 +201,17 @@ class AdminBookingManagementController extends Controller
 
     private function statusOptions(string $status): array
     {
-        return $status === 'PENDING_PAYMENT'
+        if ($status === 'CANCELLED') {
+            return [];
+        }
+
+        $options = $status === 'PENDING_PAYMENT'
             ? [['value' => 'PAID', 'label' => "\u{0110}\u{00e3} thanh to\u{00e1}n"]]
             : [['value' => 'PENDING_PAYMENT', 'label' => "Ch\u{1edd} thanh to\u{00e1}n"]];
+
+        $options[] = ['value' => 'CANCELLED', 'label' => 'Hủy sân'];
+
+        return $options;
     }
 
     public function paymentProof(int $bookingId, int $paymentId)

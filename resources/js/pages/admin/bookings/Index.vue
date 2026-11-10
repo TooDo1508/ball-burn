@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { Banknote, CalendarDays, CheckCircle2, ChevronDown, Clock3, CreditCard, Mail, Phone, RotateCcw, Search, Trash2, UserRound, X } from '@lucide/vue';
+import { Banknote, CalendarDays, CalendarX, CheckCircle2, ChevronDown, Clock3, CreditCard, Mail, Phone, RotateCcw, Search, Trash2, UserRound, X } from '@lucide/vue';
 import { computed, reactive, ref } from 'vue';
+import { confirmAction } from '@/lib/confirmDialog';
 import { dashboard } from '@/routes';
 
 defineOptions({ layout: { breadcrumbs: [{ title: 'Quản trị', href: dashboard() }, { title: 'Quản lý đặt sân', href: '/admin/bookings' }] } });
 
-type BookingStatus = 'PENDING_PAYMENT' | 'PAID';
+type BookingStatus = 'PENDING_PAYMENT' | 'PAID' | 'CANCELLED';
 type BookingPayment = { id: number; booking_id: number; provider: string; payment_reference: string | null; proof_url: string | null; amount: string; currency: string; payment_method: string | null };
 type BookingDetail = { id: number; booking_code: string; status: BookingStatus; status_options: { value: string; label: string }[]; court: string; customer_name: string; customer_email: string; customer_phone: string | null; customer_note: string | null; payment_deadline_at: string | null; base_amount: string; discount_amount: string; total_amount: string; currency: string; slots: { court: string; starts_at: string; ends_at: string; amount: string }[]; payments: BookingPayment[]; history: { old_status: string | null; new_status: string; change_source: string; note: string | null; created_at: string | null }[] };
 type BookingRow = { id: number; order_id: number; booking_code: string; court: string; slots: { court: string; starts_at: string; ends_at: string }[]; customer_name: string; customer_email: string; customer_phone: string | null; starts_at: string; ends_at: string; total_amount: string; currency: string; status: BookingStatus; payment_deadline_at: string | null; created_at: string | null; detail: BookingDetail };
@@ -15,7 +16,7 @@ type BookingPage = { data: BookingRow[]; links: PageLink[]; from: number | null;
 
 const props = defineProps<{
     bookings: BookingPage;
-    stats: { total: number; pending: number; paid_bookings: number; revenue_today: { currency: string; amount: string }[] };
+    stats: { total: number; pending: number; paid_bookings: number; cancelled: number; revenue_today: { currency: string; amount: string }[] };
     filters: { search: string; court_id: number | string; status: string; from: string; to: string; per_page: number };
     courts: { id: number; name: string }[];
 }>();
@@ -29,10 +30,10 @@ const bulkStatus = ref<BookingStatus>('PAID');
 const bulkError = ref('');
 const selectedBooking = computed(() => props.bookings.data.find((booking) => booking.id === selectedBookingId.value)?.detail ?? null);
 const detailStatusForm = useForm({ status: '', note: '' });
-const visibleOrderIds = computed(() => props.bookings.data.map((booking) => booking.order_id));
+const visibleOrderIds = computed(() => props.bookings.data.filter((booking) => booking.status !== 'CANCELLED').map((booking) => booking.order_id));
 const allVisibleSelected = computed(() => visibleOrderIds.value.length > 0 && visibleOrderIds.value.every((id) => selectedOrderIds.value.includes(id)));
 const someVisibleSelected = computed(() => visibleOrderIds.value.some((id) => selectedOrderIds.value.includes(id)));
-const paidOrderSelected = computed(() => props.bookings.data.some((booking) => selectedOrderIds.value.includes(booking.order_id) && booking.status === 'PAID'));
+const ineligibleForBulkDelete = computed(() => props.bookings.data.some((booking) => selectedOrderIds.value.includes(booking.order_id) && booking.status !== 'PENDING_PAYMENT'));
 const dateRangeLabel = computed(() => {
     if (!filters.from && !filters.to) return 'Khoảng ngày sân';
     const format = (value: string) => value ? new Intl.DateTimeFormat('vi-VN').format(new Date(`${value}T00:00:00`)) : '';
@@ -46,8 +47,15 @@ function openBooking(booking: BookingRow) {
     detailStatusForm.note = '';
 }
 
-function saveBookingStatus() {
+async function saveBookingStatus() {
     if (!selectedBooking.value) return;
+    if (detailStatusForm.status === 'CANCELLED' && !await confirmAction({
+        title: 'Hủy đơn đặt sân?',
+        description: 'Lịch sân sẽ được giải phóng. Nếu đơn đã thanh toán, việc hoàn tiền cần xử lý riêng.',
+        confirmLabel: 'Hủy sân',
+        destructive: true,
+    })) return;
+
     detailStatusForm.put(`/admin/bookings/${selectedBooking.value.id}/status`, {
         preserveScroll: true,
         onSuccess: () => {
@@ -57,8 +65,8 @@ function saveBookingStatus() {
     });
 }
 
-const bookingLabels: Record<BookingStatus, string> = { PENDING_PAYMENT: 'Ch\u1edd thanh to\u00e1n', PAID: '\u0110\u00e3 thanh to\u00e1n' };
-const bookingClasses: Record<BookingStatus, string> = { PENDING_PAYMENT: 'border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300', PAID: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300' };
+const bookingLabels: Record<BookingStatus, string> = { PENDING_PAYMENT: 'Ch\u1edd thanh to\u00e1n', PAID: '\u0110\u00e3 thanh to\u00e1n', CANCELLED: 'Đã hủy sân' };
+const bookingClasses: Record<BookingStatus, string> = { PENDING_PAYMENT: 'border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300', PAID: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300', CANCELLED: 'border-rose-500/30 bg-rose-500/10 text-rose-800 dark:text-rose-300' };
 
 function money(value: string | number, currency = 'VND') {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency }).format(Number(value));
@@ -107,9 +115,15 @@ function updateSelectedStatus() {
     });
 }
 
-function deleteSelectedOrders() {
-    if (!selectedOrderIds.value.length || paidOrderSelected.value) return;
-    if (!window.confirm(`Xóa ${selectedOrderIds.value.length} đơn đang chờ thanh toán? Thao tác này không thể hoàn tác.`)) return;
+async function deleteSelectedOrders() {
+    if (!selectedOrderIds.value.length || ineligibleForBulkDelete.value) return;
+    if (!await confirmAction({
+        title: 'Xóa đơn đặt sân?',
+        description: `Xóa ${selectedOrderIds.value.length} đơn đang chờ thanh toán? Thao tác này không thể hoàn tác.`,
+        confirmLabel: 'Xóa đơn',
+        destructive: true,
+    })) return;
+
     bulkError.value = '';
     router.delete('/admin/bookings/bulk', {
         data: { booking_order_ids: selectedOrderIds.value },
@@ -131,23 +145,23 @@ function pageLabel(label: string) {
 </script>
 
 <template>
-    <Head title="Quản lý đặt sân" />
+    <Head :title="filters.status === 'CANCELLED' ? 'Danh sách hủy sân' : 'Quản lý đặt sân'" />
     <main class="min-h-full bg-background p-4 text-foreground sm:p-6 xl:p-8">
         <div class="mx-auto max-w-[1600px] space-y-6">
             <header class="flex flex-col justify-between gap-4 md:flex-row md:items-end">
                 <div>
                     <p class="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-orange-700 dark:text-orange-400">BALLBURN · ADMIN · VẬN HÀNH</p>
-                    <h1 class="flex items-center gap-3 text-2xl font-bold tracking-tight sm:text-3xl"><CalendarDays class="size-7 text-orange-700 dark:text-orange-400" />Danh sách đặt sân</h1>
-                    <p class="mt-2 text-sm text-muted-foreground">Theo dõi thông tin đơn, lịch sân và trạng thái thanh toán.</p>
+                    <h1 class="flex items-center gap-3 text-2xl font-bold tracking-tight sm:text-3xl"><component :is="filters.status === 'CANCELLED' ? CalendarX : CalendarDays" class="size-7 text-orange-700 dark:text-orange-400" />{{ filters.status === 'CANCELLED' ? 'Danh sách hủy sân' : 'Danh sách đặt sân' }}</h1>
+                    <p class="mt-2 text-sm text-muted-foreground">{{ filters.status === 'CANCELLED' ? 'Tra cứu các đơn quản trị viên đã hủy và lý do lưu trong lịch sử.' : 'Theo dõi thông tin đơn, lịch sân và trạng thái thanh toán.' }}</p>
                 </div>
             </header>
 
-            <p v-if="$page.props.flash?.success" class="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-800 dark:text-emerald-300">{{ $page.props.flash.success }}</p>
 
-            <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Booking totals">
+            <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-label="Booking totals">
                 <article class="rounded-xl border border-border bg-card p-4"><div class="flex items-center justify-between"><p class="text-sm text-muted-foreground">T&#7893;ng &#273;&#417;n</p><span class="grid size-9 place-items-center rounded-lg bg-orange-500/10 text-orange-700 dark:text-orange-400"><CalendarDays class="size-5" /></span></div><p class="mt-3 text-2xl font-bold">{{ stats.total }}</p></article>
                 <article class="rounded-xl border border-border bg-card p-4"><div class="flex items-center justify-between"><p class="text-sm text-muted-foreground">Ch&#7901; thanh to&#225;n</p><span class="grid size-9 place-items-center rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300"><Clock3 class="size-5" /></span></div><p class="mt-3 text-2xl font-bold">{{ stats.pending }}</p></article>
                 <article class="rounded-xl border border-border bg-card p-4"><div class="flex items-center justify-between"><p class="text-sm text-muted-foreground">&#272;&#227; thanh to&#225;n</p><span class="grid size-9 place-items-center rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"><CheckCircle2 class="size-5" /></span></div><p class="mt-3 text-2xl font-bold">{{ stats.paid_bookings }}</p></article>
+                <article class="rounded-xl border border-border bg-card p-4"><div class="flex items-center justify-between"><p class="text-sm text-muted-foreground">Đã hủy sân</p><span class="grid size-9 place-items-center rounded-lg bg-rose-500/10 text-rose-700 dark:text-rose-300"><CalendarX class="size-5" /></span></div><p class="mt-3 text-2xl font-bold">{{ stats.cancelled }}</p></article>
                 <article class="rounded-xl border border-border bg-card p-4"><div class="flex items-center justify-between"><p class="text-sm text-muted-foreground">Doanh thu h&#244;m nay</p><span class="grid size-9 place-items-center rounded-lg bg-orange-500/10 text-orange-700 dark:text-orange-400"><Banknote class="size-5" /></span></div><p class="mt-3 text-xl font-bold">{{ revenueTodayLabel() }}</p></article>
             </section>
 
@@ -155,7 +169,7 @@ function pageLabel(label: string) {
                 <form v-if="!selectedOrderIds.length" class="grid min-h-[78px] items-end gap-3 border-b border-border p-4 md:grid-cols-2 xl:grid-cols-[minmax(220px,1.4fr)_170px_180px_minmax(250px,1fr)_auto_auto]" @submit.prevent="applyFilters">
                     <label class="relative block"><span class="sr-only">T&#236;m booking</span><Search class="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" /><input v-model="filters.search" type="search" placeholder="M&#227; &#273;&#417;n, t&#234;n, S&#272;T, email..." class="h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm outline-none focus:border-orange-500" /></label>
                     <label><span class="sr-only">L&#7885;c s&#226;n</span><select v-model="filters.court_id" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"><option value="">T&#7845;t c&#7843; s&#226;n</option><option v-for="court in courts" :key="court.id" :value="court.id">{{ court.name }}</option></select></label>
-                    <label><span class="sr-only">Tr&#7841;ng th&#225;i &#273;&#417;n</span><select v-model="filters.status" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"><option value="">T&#7845;t c&#7843; tr&#7841;ng th&#225;i</option><option value="PENDING_PAYMENT">Ch&#7901; thanh to&#225;n</option><option value="PAID">&#272;&#227; thanh to&#225;n</option></select></label>
+                    <label><span class="sr-only">Tr&#7841;ng th&#225;i &#273;&#417;n</span><select v-model="filters.status" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"><option value="">T&#7845;t c&#7843; tr&#7841;ng th&#225;i</option><option value="PENDING_PAYMENT">Ch&#7901; thanh to&#225;n</option><option value="PAID">&#272;&#227; thanh to&#225;n</option><option value="CANCELLED">Đã hủy sân</option></select></label>
                     <div class="relative">
                         <span class="sr-only">Kho&#7843;ng ng&#224;y s&#226;n</span>
                         <button type="button" class="flex h-10 w-full items-center justify-between gap-2 rounded-lg border border-input bg-background px-3 text-left text-sm hover:border-orange-500" aria-haspopup="dialog" :aria-expanded="dateRangeOpen" @click="dateRangeOpen = !dateRangeOpen"><span class="flex min-w-0 items-center gap-2"><CalendarDays class="size-4 shrink-0 text-muted-foreground" /><span class="truncate">{{ dateRangeLabel }}</span></span><ChevronDown class="size-4 shrink-0 text-muted-foreground" /></button>
@@ -173,7 +187,7 @@ function pageLabel(label: string) {
                         <span class="px-2 text-sm font-semibold">{{ selectedOrderIds.length }} &#273;&#417;n &#273;&#227; ch&#7885;n</span>
                         <select v-model="bulkStatus" class="h-9 rounded-lg border border-input bg-background px-3 text-sm"><option value="PENDING_PAYMENT">Ch&#7901; thanh to&#225;n</option><option value="PAID">&#272;&#227; thanh to&#225;n</option></select>
                         <button type="button" :disabled="!selectedOrderIds.length" class="h-9 rounded-lg bg-orange-600 px-3 text-sm font-bold text-white hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-40" @click="updateSelectedStatus">C&#7853;p nh&#7853;t tr&#7841;ng th&#225;i</button>
-                        <button type="button" class="inline-flex h-9 items-center gap-2 rounded-lg border border-destructive/40 px-3 text-sm font-semibold text-destructive hover:border-red-600 hover:bg-red-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-destructive/40 disabled:hover:bg-transparent disabled:hover:text-destructive" :disabled="!selectedOrderIds.length || paidOrderSelected" @click="deleteSelectedOrders"><Trash2 class="size-4" />X&#243;a &#273;&#417;n</button>
+                        <button type="button" class="inline-flex h-9 items-center gap-2 rounded-lg border border-destructive/40 px-3 text-sm font-semibold text-destructive hover:border-red-600 hover:bg-red-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-destructive/40 disabled:hover:bg-transparent disabled:hover:text-destructive" :disabled="!selectedOrderIds.length || ineligibleForBulkDelete" @click="deleteSelectedOrders"><Trash2 class="size-4" />X&#243;a &#273;&#417;n</button>
                         <button type="button" class="h-9 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-muted" @click="clearSelection">B&#7887; ch&#7885;n</button>
                         <span v-if="bulkError" class="basis-full text-right text-sm text-destructive">{{ bulkError }}</span>
                     </div>
@@ -181,10 +195,10 @@ function pageLabel(label: string) {
 
                 <div class="overflow-x-auto">
                     <table class="w-full min-w-[1180px] text-left text-sm">
-                        <thead class="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground"><tr><th class="w-12 px-4 py-3"><input type="checkbox" aria-label="Ch&#7885;n t&#7845;t &#273;&#417;n tr&#234;n trang" :checked="allVisibleSelected" :indeterminate.prop="someVisibleSelected && !allVisibleSelected" class="size-4 accent-orange-600" @change="toggleVisibleOrders" /></th><th class="px-4 py-3">Mã đơn</th><th class="px-4 py-3">Thời gian</th><th class="px-4 py-3">Sân</th><th class="px-4 py-3">Người đặt</th><th class="px-4 py-3">Liên hệ</th><th class="px-4 py-3">Thành tiền</th><th class="px-4 py-3">Trạng thái</th><th class="px-4 py-3 text-right">Chi tiết</th></tr></thead>
+                        <thead class="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground"><tr><th class="w-12 px-4 py-3"><input type="checkbox" aria-label="Ch&#7885;n t&#7845;t &#273;&#417;n tr&#234;n trang" :checked="allVisibleSelected" :indeterminate.prop="someVisibleSelected && !allVisibleSelected" :disabled="!visibleOrderIds.length" class="size-4 accent-orange-600 disabled:opacity-30" @change="toggleVisibleOrders" /></th><th class="px-4 py-3">Mã đơn</th><th class="px-4 py-3">Thời gian</th><th class="px-4 py-3">Sân</th><th class="px-4 py-3">Người đặt</th><th class="px-4 py-3">Liên hệ</th><th class="px-4 py-3">Thành tiền</th><th class="px-4 py-3">Trạng thái</th><th class="px-4 py-3 text-right">Chi tiết</th></tr></thead>
                         <tbody class="divide-y divide-border">
                             <tr v-for="booking in bookings.data" :key="booking.order_id" class="transition hover:bg-accent">
-                                <td class="px-4 py-4"><input type="checkbox" :aria-label="`Ch&#7885;n &#273;&#417;n ${booking.booking_code}`" :checked="selectedOrderIds.includes(booking.order_id)" class="size-4 accent-orange-600" @change="toggleOrder(booking.order_id, $event)" /></td>
+                                <td class="px-4 py-4"><input type="checkbox" :aria-label="`Ch&#7885;n &#273;&#417;n ${booking.booking_code}`" :checked="selectedOrderIds.includes(booking.order_id)" :disabled="booking.status === 'CANCELLED'" class="size-4 accent-orange-600 disabled:opacity-30" @change="toggleOrder(booking.order_id, $event)" /></td>
                                 <td class="whitespace-nowrap px-4 py-4 font-bold">{{ booking.booking_code }}</td>
                                 <td class="px-4 py-4"><p v-for="(slot, index) in booking.slots" :key="`${slot.starts_at}-${index}`" :class="index ? 'mt-2 border-t border-border pt-2' : ''">{{ slot.starts_at }}–{{ slot.ends_at }}</p></td>
                                 <td class="px-4 py-4"><p v-for="(slot, index) in booking.slots" :key="`${slot.court}-${index}`" :class="index ? 'mt-2 border-t border-border pt-2' : ''">{{ slot.court }}</p></td>
@@ -227,10 +241,10 @@ function pageLabel(label: string) {
                     </div>
 
                     <section class="mt-4 rounded-xl border border-border bg-card p-4 sm:p-5">
-                        <div class="flex flex-wrap items-center justify-between gap-2"><h3 class="font-bold">Trạng thái đơn</h3><p class="text-xs text-muted-foreground">Chuyển trạng thái đơn giữa chờ thanh toán và đã thanh toán.</p></div>
+                        <div class="flex flex-wrap items-center justify-between gap-2"><h3 class="font-bold">Trạng thái đơn</h3><p class="text-xs text-muted-foreground">Hủy đơn sẽ giải phóng lịch sân; việc hoàn tiền cần xử lý riêng.</p></div>
                         <form v-if="selectedBooking.status_options.length" class="mt-3 grid gap-2 sm:grid-cols-[190px_1fr_auto] sm:items-end" @submit.prevent="saveBookingStatus">
                             <label class="grid gap-1 text-sm font-medium">Trạng thái mới<select v-model="detailStatusForm.status" class="h-10 rounded-lg border border-input bg-background px-3"><option v-for="option in selectedBooking.status_options" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
-                            <label class="grid gap-1 text-sm font-medium">Ghi chú nội bộ<input v-model="detailStatusForm.note" maxlength="500" class="h-10 rounded-lg border border-input bg-background px-3" placeholder="Không bắt buộc" /></label>
+                            <label class="grid gap-1 text-sm font-medium">{{ detailStatusForm.status === 'CANCELLED' ? 'Lý do hủy (bắt buộc)' : 'Ghi chú nội bộ' }}<input v-model="detailStatusForm.note" maxlength="500" :required="detailStatusForm.status === 'CANCELLED'" class="h-10 rounded-lg border border-input bg-background px-3" :placeholder="detailStatusForm.status === 'CANCELLED' ? 'Nhập lý do hủy sân' : 'Không bắt buộc'" /></label>
                             <button type="submit" :disabled="detailStatusForm.processing" class="h-10 rounded-lg bg-orange-600 px-4 text-sm font-bold text-white hover:bg-orange-700 disabled:opacity-50">Lưu trạng thái</button>
                             <p v-if="detailStatusForm.errors.status || detailStatusForm.errors.note" class="text-sm text-destructive sm:col-span-3">{{ detailStatusForm.errors.status || detailStatusForm.errors.note }}</p>
                         </form>

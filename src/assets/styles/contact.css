@@ -19,6 +19,7 @@
 .contact-detail-item a:not(.contact-detail-value) { display: inline-flex; gap: 7px; margin-top: 6px; color: var(--color-brand-hover); font-size: 13px; font-weight: 700; text-decoration: none; }
 .contact-detail-item .contact-detail-value { display: inline-block; margin-bottom: 3px; color: var(--color-ink); font-size: 16px; font-weight: 700; text-decoration: none; }
 .contact-detail-note { margin-top: 3px !important; }
+.contact-coordinates { margin-top: 2px !important; font-size: 12px !important; }
 .contact-map-card { position: relative; display: block; min-height: 220px; margin-top: 30px; overflow: hidden; border-radius: 14px; background: var(--color-green-deep); color: #fff; text-decoration: none; }
 .contact-map-card::after { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(7,33,26,.82), rgba(7,33,26,0) 75%); content: ''; }
 .contact-map-card img { position: absolute; width: 100%; height: 100%; object-fit: cover; transition: transform .4s ease; }

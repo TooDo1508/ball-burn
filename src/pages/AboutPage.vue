@@ -120,7 +120,7 @@ onMounted(() => {
 
             <section class="about-visit">
                 <div><p class="about-label"><span>03</span><span>HẸN GẶP Ở HỒ TÂY</span></p><h2>Ngay tại<br /><em>614 Lạc Long Quân.</em></h2><p>Chúng tôi mở cửa mỗi ngày từ 05:00 đến 24:00. Chọn giờ chơi, rủ đồng đội và để BALLBURN lo phần còn lại.</p></div>
-                <div class="about-visit-actions"><a class="button button--outline" href="https://maps.app.goo.gl/cLh8vZ8LKLJBdDAo9" target="_blank" rel="noopener noreferrer">Mở Google Maps <span aria-hidden="true">↗</span></a><a class="button button--outline" href="tel:0886688614">Gọi 0886 688 614 <span aria-hidden="true">↗</span></a></div>
+                <div class="about-visit-actions"><a class="button button--outline" href="https://maps.app.goo.gl/q4FVTh8toEBiqxgo9" target="_blank" rel="noopener noreferrer">Mở Google Maps <span aria-hidden="true">↗</span></a><a class="button button--outline" href="tel:0886688614">Gọi 0886 688 614 <span aria-hidden="true">↗</span></a></div>
             </section>
         </div>
         <section class="about-final-cta"><div><p class="eyebrow">YOUR COURT IS WAITING</p><h2>Trận đấu tiếp theo<br />bắt đầu từ đây.</h2></div><BaseButton to="/booking">Đặt sân ngay <span aria-hidden="true">↗</span></BaseButton></section>
