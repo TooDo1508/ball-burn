@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Admin\Booking;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\IndexAdminBookingsRequest;
 use App\Http\Requests\Admin\BulkDeleteAdminBookingsRequest;
 use App\Http\Requests\Admin\BulkUpdateAdminBookingStatusRequest;
+use App\Http\Requests\Admin\IndexAdminBookingsRequest;
 use App\Http\Requests\Admin\UpdateAdminBookingStatusRequest;
 use App\Models\Booking;
 use App\Models\BookingOrder;
@@ -67,6 +67,7 @@ class AdminBookingManagementController extends Controller
                 'per_page' => $perPage,
             ],
             'courts' => $this->bookings->courtsForFilter(),
+            'canDeleteBookings' => $request->user()->canManageBookingDestructively(),
         ]);
     }
 
@@ -81,6 +82,7 @@ class AdminBookingManagementController extends Controller
         $booking = $this->bookings->find($bookingId);
         $this->authorize('view', $booking);
         $timezone = (string) config('venue.timezone', 'Asia/Ho_Chi_Minh');
+
         return Inertia::render('admin/bookings/Show', [
             'booking' => $this->bookingDetails($booking, $timezone),
         ]);
@@ -177,7 +179,9 @@ class AdminBookingManagementController extends Controller
     {
         $data = $request->validated();
         $bookings = Booking::query()->whereIn('booking_order_id', $data['booking_order_ids'])->get();
-        foreach ($bookings as $booking) $this->authorize('updateStatus', $booking);
+        foreach ($bookings as $booking) {
+            $this->authorize('updateStatus', $booking);
+        }
 
         $count = $this->bookings->bulkUpdateStatus(
             $data['booking_order_ids'],
@@ -192,7 +196,9 @@ class AdminBookingManagementController extends Controller
     {
         $data = $request->validated();
         $bookings = Booking::query()->whereIn('booking_order_id', $data['booking_order_ids'])->get();
-        foreach ($bookings as $booking) $this->authorize('delete', $booking);
+        foreach ($bookings as $booking) {
+            $this->authorize('delete', $booking);
+        }
 
         $count = $this->bookings->bulkDelete($data['booking_order_ids'], (int) $request->user()->id);
 
@@ -209,7 +215,9 @@ class AdminBookingManagementController extends Controller
             ? [['value' => 'PAID', 'label' => "\u{0110}\u{00e3} thanh to\u{00e1}n"]]
             : [['value' => 'PENDING_PAYMENT', 'label' => "Ch\u{1edd} thanh to\u{00e1}n"]];
 
-        $options[] = ['value' => 'CANCELLED', 'label' => 'Hủy sân'];
+        if (request()->user()->canManageBookingDestructively()) {
+            $options[] = ['value' => 'CANCELLED', 'label' => 'Hủy sân'];
+        }
 
         return $options;
     }
@@ -225,5 +233,4 @@ class AdminBookingManagementController extends Controller
 
         return Storage::disk('local')->response($path);
     }
-
 }

@@ -16,7 +16,7 @@ import { request } from '@/routes/password';
 defineOptions({
     layout: {
         title: 'Đăng nhập quản trị',
-        description: 'Dành cho quản trị viên và nhân viên BALLBURN',
+        description: 'Dành cho đội ngũ quản trị BALLBURN',
     },
 });
 

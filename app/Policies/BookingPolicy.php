@@ -24,12 +24,11 @@ class BookingPolicy
 
     public function delete(User $user, Booking $booking): bool
     {
-        return $user->canAccessAdmin();
+        return $user->canManageBookingDestructively();
     }
 
     public function create(User $user): bool
     {
         return $user->canAccessAdmin();
     }
-
 }

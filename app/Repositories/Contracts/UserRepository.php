@@ -4,6 +4,7 @@ namespace App\Repositories\Contracts;
 
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 interface UserRepository
 {
@@ -11,5 +12,13 @@ interface UserRepository
 
     public function updatePassword(User $user, string $password): User;
 
-    public function paginateForAdmin(?string $search = null, int $perPage = 20): LengthAwarePaginator;
+    public function paginateForAdmin(array $filters = [], int $perPage = 10): LengthAwarePaginator;
+
+    public function managementStats(): array;
+
+    public function lockForManagement(int $actorId, ?int $targetId): Collection;
+
+    public function saveManagedUser(?User $user, array $attributes): User;
+
+    public function deleteManagedUser(User $user): void;
 }

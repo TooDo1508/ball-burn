@@ -9,7 +9,8 @@ class UpdateAdminBookingStatusRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->canAccessAdmin() ?? false;
+        return ($this->user()?->canAccessAdmin() ?? false)
+            && ($this->input('status') !== 'CANCELLED' || $this->user()->canManageBookingDestructively());
     }
 
     public function rules(): array

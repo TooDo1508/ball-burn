@@ -89,6 +89,18 @@ For a fresh checkout, copy `.env.example` to `.env`, then run `docker compose up
 
 The existing `database/migrations/pickleball_booking_schema.sql` is a standalone schema for an empty database; it is not automatically imported by Compose. Use Laravel migrations for the default app setup. For better file performance, consider keeping active development copies in the WSL filesystem (for example, `~/projects/ballburn`) instead of under `/mnt`.
 
+## Quản lý người dùng
+
+Màn hình `/admin/users` hỗ trợ thêm, sửa, xóa tài khoản, tìm theo tên/email/số điện thoại, lọc vai trò/trạng thái và phân trang. CSV xuất những dòng đã chọn hoặc trang hiện tại, có thể mở bằng Excel.
+
+- Phân cấp: **Admin > Quản lý > Nhân viên** (`ADMIN`, `MANAGER`, `STAFF`). Chỉ cấp và quản lý tài khoản cùng cấp hoặc thấp hơn; không được tự xóa, tự khóa hoặc tự đổi vai trò.
+- Admin và Quản lý có cùng quyền nghiệp vụ. Nhân viên không được xóa hoặc hủy đơn booking, kể cả gọi trực tiếp API hoặc thao tác hàng loạt.
+- Trạng thái: hoạt động, tạm khóa, vô hiệu hóa. Hai trạng thái khóa chặn cả đăng nhập mới và truy cập trang quản trị qua phiên hiện có.
+- Tạo tài khoản cần mật khẩu tối thiểu 12 ký tự, có chữ hoa, chữ thường và số. Để trống mật khẩu khi sửa để giữ mật khẩu hiện tại.
+- Chạy `php artisan migrate` sau khi cập nhật để thêm số điện thoại và trạng thái tài khoản; tài khoản cũ giữ vai trò và trạng thái hoạt động.
+
+Kiểm thử quyền và CRUD: `php vendor/bin/phpunit --filter UserManagementTest`. Trong cloud dùng cấu hình MySQL riêng được mô tả trong `AGENTS.md` do migration lịch sử không tương thích SQLite.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
