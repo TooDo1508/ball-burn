@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\Court;
 use App\Models\CourtClosure;
 use App\Repositories\Contracts\CourtRepository;
+use App\Services\Court\PublicCourtCatalogCache;
 use App\Services\Court\CourtPricingService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\UploadedFile;
@@ -20,6 +21,7 @@ class CourtManagementService
     public function __construct(
         private readonly CourtRepository $courts,
         private readonly CourtPricingService $pricing,
+        private readonly PublicCourtCatalogCache $catalogCache,
     ) {}
 
     public function schedule(string $date): array
@@ -175,6 +177,8 @@ class CourtManagementService
         if ($newImagePath && $this->isStoredPath($oldPrimaryImage)) {
             Storage::disk('public')->delete($oldPrimaryImage);
         }
+
+        $this->catalogCache->invalidate();
 
         return $saved;
     }

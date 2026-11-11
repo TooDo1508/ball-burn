@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Blog;
 
 use App\Http\Controllers\Controller;
-use App\Models\BlogPost;
 use App\Services\Blog\PublicBlogService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -32,21 +31,21 @@ class PublicBlogController extends Controller
                 'url' => $canonical,
                 'publisher' => ['@type' => 'Organization', 'name' => 'BALLBURN PickleClub & Bistro'],
             ],
-        ], 'initialBlogPosts' => $listing->getCollection()->map(fn (BlogPost $post): array => $this->summary($post))->all(), 'initialBlogPostsNextPageUrl' => $listing->nextPageUrl()]);
+        ], 'initialBlogPosts' => $listing->getCollection()->map(fn (array $post): array => $this->summary($post))->all(), 'initialBlogPostsNextPageUrl' => $listing->nextPageUrl()]);
     }
 
     public function showPage(string $slug): View
     {
         $post = $this->blog->find($slug);
-        $description = $post->meta_description ?: $post->excerpt ?: $post->title;
+        $description = $post['meta_description'] ?: $post['excerpt'] ?: $post['title'];
         $seo = $this->articleSeo($post, $description);
 
         return view('welcome', [
             'seo' => $seo,
             'initialBlogPost' => [
                 ...$this->summary($post),
-                'body' => $this->blog->safeBody($post->body),
-                'author' => $post->author?->name ?: 'BALLBURN PickleClub & Bistro',
+                'body' => $this->blog->safeBody($post['body']),
+                'author' => $post['author'] ?: 'BALLBURN PickleClub & Bistro',
                 'seo' => $seo,
             ],
         ]);
@@ -54,9 +53,9 @@ class PublicBlogController extends Controller
 
     public function posts(): JsonResponse
     {
-        $posts = $this->blog->listing()->through(fn (BlogPost $post): array => [
+        $posts = $this->blog->listing()->through(fn (array $post): array => [
             ...$this->summary($post),
-            'url' => url('/blog/'.$post->slug),
+            'url' => url('/blog/'.$post['slug']),
         ]);
 
         return response()->json($posts);
@@ -65,49 +64,49 @@ class PublicBlogController extends Controller
     public function post(string $slug): JsonResponse
     {
         $post = $this->blog->find($slug);
-        $description = $post->meta_description ?: $post->excerpt ?: $post->title;
+        $description = $post['meta_description'] ?: $post['excerpt'] ?: $post['title'];
 
         return response()->json(['data' => [
             ...$this->summary($post),
-            'body' => $this->blog->safeBody($post->body),
-            'updated_at' => $post->updated_at?->toAtomString(),
-            'author' => $post->author?->name ?: 'BALLBURN PickleClub & Bistro',
+            'body' => $this->blog->safeBody($post['body']),
+            'updated_at' => $post['updated_at'],
+            'author' => $post['author'] ?: 'BALLBURN PickleClub & Bistro',
             'seo' => $this->articleSeo($post, $description),
         ]]);
     }
 
-    private function summary(BlogPost $post): array
+    private function summary(array $post): array
     {
         return [
-            'title' => $post->title,
-            'slug' => $post->slug,
-            'excerpt' => $post->excerpt,
-            'cover_image_url' => $this->blog->imageUrl($post->cover_image_path),
-            'cover_image_alt' => $post->cover_image_alt,
-            'published_at' => $post->published_at?->toAtomString(),
-            'categories' => $post->categories->pluck('name')->values(),
+            'title' => $post['title'],
+            'slug' => $post['slug'],
+            'excerpt' => $post['excerpt'],
+            'cover_image_url' => $this->blog->imageUrl($post['cover_image_path']),
+            'cover_image_alt' => $post['cover_image_alt'],
+            'published_at' => $post['published_at'],
+            'categories' => $post['categories'],
         ];
     }
 
-    private function articleSeo(BlogPost $post, string $description): array
+    private function articleSeo(array $post, string $description): array
     {
-        $title = $post->meta_title ?: $post->title.' | BALLBURN';
-        $canonical = url('/blog/'.$post->slug);
-        $image = $this->blog->imageUrl($post->cover_image_path);
-        $publishedAt = $post->published_at?->toAtomString();
-        $modifiedAt = $post->updated_at?->toAtomString();
+        $title = $post['meta_title'] ?: $post['title'].' | BALLBURN';
+        $canonical = url('/blog/'.$post['slug']);
+        $image = $this->blog->imageUrl($post['cover_image_path']);
+        $publishedAt = $post['published_at'];
+        $modifiedAt = $post['updated_at'];
         $structuredData = [
             '@context' => 'https://schema.org',
             '@type' => 'NewsArticle',
-            'headline' => $post->title,
+            'headline' => $post['title'],
             'description' => $description,
             'datePublished' => $publishedAt,
             'dateModified' => $modifiedAt,
             'mainEntityOfPage' => ['@type' => 'WebPage', '@id' => $canonical],
             'url' => $canonical,
-            'author' => ['@type' => 'Organization', 'name' => $post->author?->name ?: 'BALLBURN PickleClub & Bistro'],
+            'author' => ['@type' => 'Organization', 'name' => $post['author'] ?: 'BALLBURN PickleClub & Bistro'],
             'publisher' => ['@type' => 'Organization', 'name' => 'BALLBURN PickleClub & Bistro'],
-            'articleSection' => $post->categories->pluck('name')->values()->all(),
+            'articleSection' => $post['categories'],
             'inLanguage' => 'vi-VN',
         ];
 

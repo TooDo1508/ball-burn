@@ -23,6 +23,8 @@ RUN apt-get update \
         pcntl \
         pdo_mysql \
         zip \
+    && pecl install redis-6.2.0 \
+    && docker-php-ext-enable redis \
     && if [ "$INSTALL_XDEBUG" = "1" ]; then \
         pecl install xdebug-3.5.3 \
         && docker-php-ext-enable xdebug; \

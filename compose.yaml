@@ -17,6 +17,10 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      redis-queue:
+        condition: service_healthy
     networks:
       - laravel
 
@@ -29,7 +33,7 @@ services:
         WWWGROUP: "${WWWGROUP:-1000}"
         INSTALL_XDEBUG: "1"
     working_dir: /var/www/html
-    command: php artisan queue:work database --queue=payments,default --sleep=3 --tries=3 --timeout=60
+    command: php artisan queue:work redis --queue=payments,default --sleep=3 --tries=3 --timeout=60
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -37,6 +41,10 @@ services:
       - ./:/var/www/html
     depends_on:
       mysql:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      redis-queue:
         condition: service_healthy
       mailhog:
         condition: service_started
@@ -87,6 +95,30 @@ services:
     networks:
       - laravel
 
+  redis-cache:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - laravel
+
+  redis-queue:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis_queue_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - laravel
+
   frontend:
     image: node:22-alpine
     environment:
@@ -111,4 +143,5 @@ networks:
 
 volumes:
   mysql_data:
+  redis_queue_data:
   node_modules:

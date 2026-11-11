@@ -61,7 +61,7 @@ const phoneHref = `tel:${props.contactInfo.phone.replace(/[^+\d]/g, '')}`;
             <header class="home-header">
                 <a class="home-brand" href="/" aria-label="BALLBURN - Trang chủ">BALLBURN<span>®</span><small>PICKLECLUB & BISTRO</small></a>
                 <nav class="home-nav" aria-label="Điều hướng chính">
-                    <a href="#home">Trang chủ</a><a href="#courts">Sân chơi</a><a href="#experience">Trải nghiệm</a><a href="#stories">Cẩm nang</a><a href="#visit">Liên hệ</a>
+                    <a href="/">Trang chủ</a><a href="/about">Về chúng tôi</a><a href="/booking">Đặt sân</a><a href="/blog">Tin tức</a><a href="/contact">Liên hệ</a>
                 </nav>
                 <a class="home-button home-button--small" href="/booking">Đặt sân <span aria-hidden="true">↗</span></a>
             </header>

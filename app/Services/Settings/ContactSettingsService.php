@@ -3,10 +3,15 @@
 namespace App\Services\Settings;
 
 use App\Repositories\Contracts\SiteSettingRepository;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class ContactSettingsService
 {
+    private const PUBLIC_CACHE_KEY = 'public:contact-settings';
+
+    private const PUBLIC_CACHE_TTL_SECONDS = 300;
+
     private const LEGACY_MAP_URL = 'https://maps.app.goo.gl/cLh8vZ8LKLJBdDAo9';
 
     private const MAP_URL = 'https://maps.app.goo.gl/q4FVTh8toEBiqxgo9';
@@ -17,10 +22,12 @@ class ContactSettingsService
 
     public function publicSettings(): array
     {
-        $settings = $this->adminSettings();
-        unset($settings['payment_account_number']);
+        return Cache::remember(self::PUBLIC_CACHE_KEY, now()->addSeconds(self::PUBLIC_CACHE_TTL_SECONDS), function (): array {
+            $settings = $this->adminSettings();
+            unset($settings['payment_account_number']);
 
-        return $settings;
+            return $settings;
+        });
     }
 
     public function adminSettings(): array
@@ -56,6 +63,8 @@ class ContactSettingsService
             'description' => 'Public website contact details and VietQR payment account',
             'updated_by' => $updatedBy,
         ]);
+
+        Cache::forget(self::PUBLIC_CACHE_KEY);
 
         if ($legacyQrPath) {
             Storage::disk('public')->delete($legacyQrPath);

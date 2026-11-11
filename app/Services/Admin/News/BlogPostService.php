@@ -5,6 +5,7 @@ namespace App\Services\Admin\News;
 use App\Models\BlogPost;
 use App\Repositories\Contracts\BlogCategoryRepository;
 use App\Repositories\Contracts\BlogPostRepository;
+use App\Services\Blog\PublicBlogService;
 use App\Services\Content\BlogContentSanitizer;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
@@ -79,7 +80,7 @@ class BlogPostService
         }
 
         try {
-            return $this->posts->save(new BlogPost, $attributes, $this->categoryIds($validated));
+            $post = $this->posts->save(new BlogPost, $attributes, $this->categoryIds($validated));
         } catch (Throwable $exception) {
             if ($newCover) {
                 Storage::disk('public')->delete($newCover);
@@ -87,6 +88,10 @@ class BlogPostService
 
             throw $exception;
         }
+
+        PublicBlogService::invalidateCache();
+
+        return $post;
     }
 
     public function update(BlogPost $post, array $validated, ?UploadedFile $cover): BlogPost
@@ -115,6 +120,8 @@ class BlogPostService
             Storage::disk('public')->delete($oldCover);
         }
 
+        PublicBlogService::invalidateCache();
+
         return $saved;
     }
 
@@ -122,6 +129,7 @@ class BlogPostService
     {
         $cover = $post->cover_image_path;
         $this->posts->delete($post);
+        PublicBlogService::invalidateCache();
         if ($this->isStoredPath($cover)) {
             Storage::disk('public')->delete($cover);
         }
@@ -137,6 +145,7 @@ class BlogPostService
 
         $covers = $posts->pluck('cover_image_path')->filter(fn (?string $path): bool => $this->isStoredPath($path))->all();
         $this->posts->deleteMany($ids);
+        PublicBlogService::invalidateCache();
         Storage::disk('public')->delete($covers);
 
         return count($ids);

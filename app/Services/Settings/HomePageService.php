@@ -3,17 +3,22 @@
 namespace App\Services\Settings;
 
 use App\Repositories\Contracts\SiteSettingRepository;
+use Illuminate\Support\Facades\Cache;
 
 class HomePageService
 {
+    private const CACHE_KEY = 'public:home-page';
+
+    private const CACHE_TTL_SECONDS = 300;
+
     public function __construct(private readonly SiteSettingRepository $settings) {}
 
     public function content(): array
     {
-        $content = array_merge(
+        $content = Cache::remember(self::CACHE_KEY, now()->addSeconds(self::CACHE_TTL_SECONDS), fn (): array => array_merge(
             self::defaults(),
             $this->settings->findByKey('home_page')?->setting_value ?? [],
-        );
+        ));
 
         foreach (['hero_image', 'og_image'] as $imageKey) {
             if (is_string($content[$imageKey] ?? null) && str_contains($content[$imageKey], 'images.unsplash.com')) {
@@ -35,6 +40,8 @@ class HomePageService
             'description' => 'Public home page content and SEO metadata',
             'updated_by' => $updatedBy,
         ]);
+
+        Cache::forget(self::CACHE_KEY);
     }
 
     public static function defaults(): array

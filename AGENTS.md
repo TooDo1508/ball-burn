@@ -4,14 +4,15 @@ This file describes the implemented application. Check routes, migrations and te
 
 ## Stack and project map
 
-- Laravel 13, PHP 8.4 (Composer platform pin), MySQL 8.4 and Composer 2.
+- Laravel 13, PHP 8.4 (Composer platform pin), MySQL 8.4, Redis 7.4 and Composer 2. Compose PHP images include `phpredis` 6.2.0. `redis-cache` backs cache/rate limits; `redis-queue` backs sessions and queues. Production/staging Redis provisioning is separate.
 - Vue 3, Vite 8, Tailwind 4 and TypeScript. Use `composer.lock` and `package-lock.json`; do not upgrade dependencies as part of routine setup.
 - Public home `/` is an Inertia page at `resources/js/pages/Home.vue`, styled with `resources/css/home.css`. Its content comes from `HomePageService` and `site_settings`.
+- Redis caches public homepage content and contact settings for five minutes, plus public blog/court catalog payloads for one minute. Admin writes invalidate affected cache entries. Booking availability remains live from MySQL.
 - Other public pages use `resources/views/welcome.blade.php`, `src/app.js`, Vue Router and `src/pages/`. Both frontend entry points are required; they are not duplicate applications to merge casually. `src/pages/HomePage.vue` is still reachable through the public Vue Router.
 - Admin and authentication use Inertia, `resources/js/pages/` and the layouts/components in `resources/js/`.
 - HTTP routes: `routes/web.php`, `routes/api.php`, `routes/settings.php`; API prefix is empty in `bootstrap/app.php`, so the court endpoints are `/courts`, not `/api/courts`.
 - Controllers validate/authorize and shape responses; services coordinate business rules; repository contracts and Eloquent implementations own database queries. Bindings are in `RepositoryServiceProvider`. Prefer reusable model scopes for shared query predicates.
-- Payment OCR uses local Tesseract with Vietnamese and English language data, a database queue, and `storage/app/private` through the local storage disk.
+- Payment OCR uses local Tesseract with Vietnamese and English language data, a Redis `payments` queue, and `storage/app/private` through the local storage disk. The worker also consumes `default`.
 
 ## Implemented public workflows
 
@@ -74,7 +75,7 @@ The repository-supported Docker workflow is:
 ```sh
 cp .env.example .env # only when .env does not already exist
 # Compose requires Docker Engine and Compose v2.
-docker compose up -d --build mysql mailhog app nginx
+docker compose up -d --build mysql mailhog redis-cache redis-queue app nginx
 docker compose exec -u www-data app composer install --no-interaction --prefer-dist
 docker compose exec -u www-data app php artisan key:generate # only for a new empty APP_KEY
 docker compose exec -u www-data app php artisan migrate --force

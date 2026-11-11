@@ -4,6 +4,7 @@ namespace App\Services\Admin\News;
 
 use App\Models\BlogCategory;
 use App\Repositories\Contracts\BlogCategoryRepository;
+use App\Services\Blog\PublicBlogService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -24,17 +25,24 @@ class BlogCategoryService
 
     public function create(array $validated): BlogCategory
     {
-        return $this->categories->save(new BlogCategory, $this->attributes($validated));
+        $category = $this->categories->save(new BlogCategory, $this->attributes($validated));
+        PublicBlogService::invalidateCache();
+
+        return $category;
     }
 
     public function update(BlogCategory $category, array $validated): BlogCategory
     {
-        return $this->categories->save($category, $this->attributes($validated, $category->id));
+        $saved = $this->categories->save($category, $this->attributes($validated, $category->id));
+        PublicBlogService::invalidateCache();
+
+        return $saved;
     }
 
     public function delete(BlogCategory $category): void
     {
         $this->categories->delete($category);
+        PublicBlogService::invalidateCache();
     }
 
     private function attributes(array $validated, ?int $ignoreId = null): array
