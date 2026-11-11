@@ -2,20 +2,19 @@
 
 use App\Http\Controllers\Admin\Booking\AdminBookingController;
 use App\Http\Controllers\Admin\Booking\AdminBookingManagementController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\Contact\ContactMessageController as AdminContactMessageController;
 use App\Http\Controllers\Admin\Court\CourtAdminController;
 use App\Http\Controllers\Admin\Court\CourtClosureController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\News\BlogCategoryController;
 use App\Http\Controllers\Admin\News\NewsController;
-use App\Http\Controllers\Booking\GuestBookingController;
+use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Blog\PublicBlogController;
+use App\Http\Controllers\Booking\GuestBookingController;
 use App\Http\Controllers\Contact\ContactMessageController;
 use App\Http\Controllers\Contact\ContactPageController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::get('/', HomeController::class)->name('home');
 
@@ -56,6 +55,9 @@ Route::post('/contact', [ContactMessageController::class, 'store'])->middleware(
 
 Route::middleware(['auth', 'can:access-admin'])->prefix('admin')->group(function () {
     Route::get('/', DashboardController::class)->name('dashboard');
+    Route::post('users', [UserManagementController::class, 'store'])->name('admin.users.store');
+    Route::put('users/{user}', [UserManagementController::class, 'update'])->whereNumber('user')->name('admin.users.update');
+    Route::delete('users/{user}', [UserManagementController::class, 'destroy'])->whereNumber('user')->name('admin.users.destroy');
     Route::get('users', [UserManagementController::class, 'index'])->name('admin.users.index');
     Route::post('bookings', [AdminBookingController::class, 'store'])->name('admin.bookings.store');
     Route::get('bookings', [AdminBookingManagementController::class, 'index'])->name('admin.bookings.index');

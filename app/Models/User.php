@@ -20,7 +20,21 @@ class User extends Authenticatable
 
     public function canAccessAdmin(): bool
     {
-        return $this->is_active && in_array(strtoupper((string) $this->role), ['ADMIN', 'STAFF'], true);
+        return $this->is_active && $this->account_status === 'ACTIVE' && in_array(strtoupper((string) $this->role), ['ADMIN', 'MANAGER', 'STAFF'], true);
+    }
+
+    protected $attributes = ['account_status' => 'ACTIVE', 'is_active' => true];
+
+    public const ROLES = ['ADMIN' => 3, 'MANAGER' => 2, 'STAFF' => 1];
+
+    public function roleLevel(): int
+    {
+        return self::ROLES[strtoupper((string) $this->role)] ?? 0;
+    }
+
+    public function canManageBookingDestructively(): bool
+    {
+        return $this->canAccessAdmin() && $this->roleLevel() >= self::ROLES['MANAGER'];
     }
 
     /**
@@ -32,6 +46,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'is_active' => 'boolean',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];

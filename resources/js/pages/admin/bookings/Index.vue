@@ -16,6 +16,7 @@ type BookingPage = { data: BookingRow[]; links: PageLink[]; from: number | null;
 
 const props = defineProps<{
     bookings: BookingPage;
+    canDeleteBookings: boolean;
     stats: { total: number; pending: number; paid_bookings: number; cancelled: number; revenue_today: { currency: string; amount: string }[] };
     filters: { search: string; court_id: number | string; status: string; from: string; to: string; per_page: number };
     courts: { id: number; name: string }[];
@@ -187,7 +188,7 @@ function pageLabel(label: string) {
                         <span class="px-2 text-sm font-semibold">{{ selectedOrderIds.length }} &#273;&#417;n &#273;&#227; ch&#7885;n</span>
                         <select v-model="bulkStatus" class="h-9 rounded-lg border border-input bg-background px-3 text-sm"><option value="PENDING_PAYMENT">Ch&#7901; thanh to&#225;n</option><option value="PAID">&#272;&#227; thanh to&#225;n</option></select>
                         <button type="button" :disabled="!selectedOrderIds.length" class="h-9 rounded-lg bg-orange-600 px-3 text-sm font-bold text-white hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-40" @click="updateSelectedStatus">C&#7853;p nh&#7853;t tr&#7841;ng th&#225;i</button>
-                        <button type="button" class="inline-flex h-9 items-center gap-2 rounded-lg border border-destructive/40 px-3 text-sm font-semibold text-destructive hover:border-red-600 hover:bg-red-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-destructive/40 disabled:hover:bg-transparent disabled:hover:text-destructive" :disabled="!selectedOrderIds.length || ineligibleForBulkDelete" @click="deleteSelectedOrders"><Trash2 class="size-4" />X&#243;a &#273;&#417;n</button>
+                        <button v-if="canDeleteBookings" type="button" class="inline-flex h-9 items-center gap-2 rounded-lg border border-destructive/40 px-3 text-sm font-semibold text-destructive hover:border-red-600 hover:bg-red-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-destructive/40 disabled:hover:bg-transparent disabled:hover:text-destructive" :disabled="!selectedOrderIds.length || ineligibleForBulkDelete" @click="deleteSelectedOrders"><Trash2 class="size-4" />X&#243;a &#273;&#417;n</button>
                         <button type="button" class="h-9 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-muted" @click="clearSelection">B&#7887; ch&#7885;n</button>
                         <span v-if="bulkError" class="basis-full text-right text-sm text-destructive">{{ bulkError }}</span>
                     </div>
