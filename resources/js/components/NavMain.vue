@@ -8,6 +8,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
+import { useSidebar } from '@/components/ui/sidebar';
 import type { NavItem } from '@/types';
 
 defineProps<{
@@ -15,6 +16,7 @@ defineProps<{
 }>();
 
 const { isCurrentUrl } = useCurrentUrl();
+const { setOpenMobile } = useSidebar();
 </script>
 
 <template>
@@ -28,7 +30,7 @@ const { isCurrentUrl } = useCurrentUrl();
                     :is-active="isCurrentUrl(item.href)"
                     :tooltip="item.title"
                 >
-                    <Link :href="item.href">
+                    <Link :href="item.href" @click="setOpenMobile(false)">
                         <component :is="item.icon" />
                         <span>{{ item.title }}</span>
                     </Link>

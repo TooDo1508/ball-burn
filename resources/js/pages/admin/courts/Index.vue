@@ -139,7 +139,7 @@ function openEditCourt(court: Court | null = selectedCourt.value) {
         _method: 'put', name: court.name, slug: court.slug, description: court.description ?? '',
         surface_type: court.surface_type ?? '', court_type: court.court_type, capacity: court.capacity, price_per_hour: Number(court.price_per_hour),
         currency: court.currency, is_active: court.is_active, sort_order: court.sort_order, image: null,
-        operating_hours: hours.map((hour) => ({ ...hour })), price_rules: court.price_rules.map((rule) => ({ ...rule })),
+        operating_hours: hours.map((hour) => ({ ...hour })), price_rules: court.price_rules.map((rule) => ({ ...rule, price_per_hour: Number(rule.price_per_hour) })),
     });
     courtForm.clearErrors();
     imagePreview.value = court.image_url;
@@ -293,7 +293,7 @@ function slotPrice(court: Court, startsAt: string): number {
 }
 
 function formatMoney(value: string | number, currency = 'VND'): string {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency, maximumFractionDigits: currency === 'VND' ? 0 : 2 }).format(Number(value));
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(value));
 }
 </script>
 

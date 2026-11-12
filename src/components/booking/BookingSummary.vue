@@ -16,7 +16,7 @@ defineProps({
 const emit = defineEmits(['submit']);
 
 function formatMoney(amount, currency = 'VND') {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency, maximumFractionDigits: currency === 'VND' ? 0 : 2 }).format(Number(amount));
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(amount));
 }
 
 function formatDate(value) {
@@ -47,7 +47,7 @@ function formatDate(value) {
         <div class="booking-summary-total"><span>Tổng tiền</span><strong>{{ court ? formatMoney(total, court.currency) : items.length ? formatMoney(total, items[0].currency) : '—' }}</strong></div>
         <p class="booking-summary-note">{{ note }}</p>
         <button v-if="!complete" type="button" class="button button--primary booking-submit" :disabled="submitting || buttonDisabled" @click="emit('submit')">
-            {{ submitting ? 'Đang xử lý…' : buttonLabel }} <span aria-hidden="true">→</span>
+            {{ submitting ? 'Đang xử lý…' : buttonLabel }} <span aria-hidden="true">→︎</span>
         </button>
         <div v-else class="booking-confirmed-note"><span aria-hidden="true">✓</span><strong>{{ completeLabel }}</strong></div>
     </aside>

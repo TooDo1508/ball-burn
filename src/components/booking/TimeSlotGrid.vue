@@ -8,12 +8,12 @@ defineProps({
 const emit = defineEmits(['select']);
 
 function formatMoney(amount, currency) {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency, maximumFractionDigits: currency === 'VND' ? 0 : 2 }).format(Number(amount));
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(amount));
 }
 </script>
 
 <template>
-    <div v-if="slots.length" class="booking-slot-grid" aria-label="Các khung giờ sân">
+    <div v-if="slots.length" class="booking-slot-grid" aria-label="Các khung giờ sân" :aria-busy="loading">
         <button
             v-for="slot in slots"
             :key="slot.starts_at"

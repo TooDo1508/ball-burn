@@ -104,7 +104,7 @@ function formatDate(value) {
                                 <div class="blog-card-meta"><span v-for="category in post.categories" :key="category">{{ category }}</span><time v-if="post.published_at" :datetime="post.published_at">{{ formatDate(post.published_at) }}</time></div>
                                 <h3><RouterLink :to="`/blog/${post.slug}`">{{ post.title }}</RouterLink></h3>
                                 <p>{{ post.excerpt }}</p>
-                                <RouterLink class="blog-read-link" :to="`/blog/${post.slug}`">ĐỌC BÀI VIẾT <span aria-hidden="true">→</span></RouterLink>
+                                <RouterLink class="blog-read-link" :to="`/blog/${post.slug}`">ĐỌC BÀI VIẾT <span aria-hidden="true">→︎</span></RouterLink>
                             </div>
                         </article>
                     </div>
@@ -115,11 +115,11 @@ function formatDate(value) {
 
                 <aside class="blog-sidebar" aria-label="Khám phá thêm">
                     <section class="blog-sidebar-card blog-newsletter-card">
-                        <span class="blog-sidebar-mark" aria-hidden="true">✳</span>
+                        <span class="blog-sidebar-mark" aria-hidden="true">✳︎</span>
                         <p class="blog-eyebrow">HẸN GẶP BẠN TRÊN SÂN</p>
                         <h2>Chơi một trận nhé?</h2>
                         <p>Chọn khung giờ phù hợp và khám phá không khí pickleball tại BALLBURN.</p>
-                        <BaseButton to="/booking">Đặt sân ngay <span aria-hidden="true">↗</span></BaseButton>
+                        <BaseButton to="/booking">Đặt sân ngay <span aria-hidden="true">↗︎</span></BaseButton>
                     </section>
                     <section v-if="categories.length" class="blog-sidebar-tags">
                         <h2>Chủ đề nổi bật</h2>
@@ -129,12 +129,12 @@ function formatDate(value) {
                     </section>
                     <RouterLink class="blog-sidebar-feature" to="/about">
                         <img :src="'/images/pickleball/player-action.jpg'" alt="Người chơi pickleball trên sân BALLBURN" loading="lazy" />
-                        <span><strong>Chơi. Kết nối.<br />Lặp lại.</strong><small>Khám phá BALLBURN <span aria-hidden="true">↗</span></small></span>
+                        <span><strong>Chơi. Kết nối.<br />Lặp lại.</strong><small>Khám phá BALLBURN <span aria-hidden="true">↗︎</span></small></span>
                     </RouterLink>
                 </aside>
             </div>
         </section>
 
-        <section class="blog-cta"><p class="blog-eyebrow">SẴN SÀNG LÊN SÂN?</p><h2>Kiến thức tốt.<br /><em>Trận đấu vui hơn.</em></h2><BaseButton to="/booking">Đặt sân tại BALLBURN <span aria-hidden="true">↗</span></BaseButton></section>
+        <section class="blog-cta"><p class="blog-eyebrow">SẴN SÀNG LÊN SÂN?</p><h2>Kiến thức tốt.<br /><em>Trận đấu vui hơn.</em></h2><BaseButton to="/booking">Đặt sân tại BALLBURN <span aria-hidden="true">↗︎</span></BaseButton></section>
     </main>
 </template>

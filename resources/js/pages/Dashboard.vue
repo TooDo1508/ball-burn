@@ -126,13 +126,14 @@ function formatMoney(amount: string | number, currency = 'VND') {
     return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
         currency,
-        maximumFractionDigits: currency === 'VND' ? 0 : 2,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
     }).format(Number(amount));
 }
 
 function compactMoney(amount: number, currency: string) {
     const suffix = currency === 'VND' ? ' ₫' : ` ${currency}`;
-    if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(amount >= 10_000_000 ? 0 : 1)} tr${suffix}`;
+    if (amount >= 1_000_000) return `${Math.round(amount / 1_000_000)} tr${suffix}`;
     if (amount >= 1_000) return `${Math.round(amount / 1_000)}k${suffix}`;
     return `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(amount)}${suffix}`;
 }

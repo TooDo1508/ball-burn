@@ -15,6 +15,7 @@
 }
 
 .site-header {
+    position: relative;
     min-height: 82px;
     display: flex;
     align-items: center;
@@ -46,6 +47,27 @@
     color: var(--color-ink-muted);
     font-size: 14px;
     font-weight: 600;
+}
+
+.mobile-menu-toggle {
+    display: none;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    place-items: center;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface);
+    color: var(--color-ink);
+    cursor: pointer;
+}
+
+.mobile-menu-toggle svg {
+    width: 23px;
+    height: 23px;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
 }
 
 .main-nav a,
@@ -597,9 +619,24 @@
 }
 
 .footer-contact-row > span:first-child {
-    min-width: 15px;
+    display: grid;
+    width: 18px;
+    min-width: 18px;
+    flex: 0 0 18px;
+    place-items: center;
     color: var(--color-brand);
     text-align: center;
+}
+
+.footer-contact-row > span:first-child svg {
+    display: block;
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.7;
 }
 
 .footer-socials {
@@ -655,12 +692,41 @@
     }
 
     .main-nav {
-        gap: 15px;
-        font-size: 14px;
+        display: none;
     }
 
-    .main-nav a:nth-child(3) {
+    .main-nav.is-open {
+        position: absolute;
+        z-index: 20;
+        top: calc(100% + 1px);
+        right: 0;
+        left: 0;
+        display: grid;
+        gap: 0;
+        padding: 8px;
+        border: 1px solid var(--color-border);
+        border-radius: 0 0 14px 14px;
+        background: var(--color-surface);
+        box-shadow: 0 16px 32px rgb(18 38 30 / 14%);
+    }
+
+    .main-nav.is-open a {
+        display: block;
+        padding: 13px 12px;
+        color: var(--color-ink);
+        font-size: 15px;
+    }
+
+    .main-nav.is-open a + a {
+        border-top: 1px solid var(--color-border);
+    }
+
+    .site-header > .button {
         display: none;
+    }
+
+    .mobile-menu-toggle {
+        display: grid;
     }
 
     .hero {
@@ -727,17 +793,6 @@
 
     .footer-nav {
         justify-content: start;
-    }
-}
-
-@media (max-width: 430px) {
-    .main-nav a:nth-child(5) {
-        display: none;
-    }
-
-    .site-header > .button {
-        min-height: 38px;
-        padding-inline: 14px;
     }
 }
 

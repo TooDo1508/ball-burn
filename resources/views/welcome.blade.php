@@ -80,7 +80,7 @@
                                                 <div class="blog-card-meta">@foreach ($post['categories'] as $category)<span>{{ $category }}</span>@endforeach @if ($post['published_at'])<time datetime="{{ $post['published_at'] }}">{{ \Illuminate\Support\Carbon::parse($post['published_at'])->locale('vi')->translatedFormat('j F Y') }}</time>@endif</div>
                                                 <h3><a href="/blog/{{ $post['slug'] }}">{{ $post['title'] }}</a></h3>
                                                 <p>{{ $post['excerpt'] }}</p>
-                                                <a class="blog-read-link" href="/blog/{{ $post['slug'] }}">ĐỌC BÀI VIẾT <span aria-hidden="true">→</span></a>
+                                                <a class="blog-read-link" href="/blog/{{ $post['slug'] }}">ĐỌC BÀI VIẾT <span aria-hidden="true">→︎</span></a>
                                             </div>
                                         </article>
                                     @endforeach
@@ -88,12 +88,12 @@
                                 @if ($initialBlogPostsNextPageUrl)<p class="blog-more"><a class="button button-outline" href="{{ $initialBlogPostsNextPageUrl }}">Xem thêm bài viết</a></p>@endif
                             </div>
                             <aside class="blog-sidebar" aria-label="Khám phá thêm">
-                                <section class="blog-sidebar-card blog-newsletter-card"><span class="blog-sidebar-mark" aria-hidden="true">✳</span><p class="blog-eyebrow">HẸN GẶP BẠN TRÊN SÂN</p><h2>Chơi một trận nhé?</h2><p>Chọn khung giờ phù hợp và khám phá không khí pickleball tại BALLBURN.</p><a class="button button-primary" href="/booking">Đặt sân ngay <span aria-hidden="true">↗</span></a></section>
-                                <a class="blog-sidebar-feature" href="/about"><img src="/images/pickleball/player-action.jpg" alt="Người chơi pickleball trên sân BALLBURN" loading="lazy"><span><strong>Chơi. Kết nối.<br>Lặp lại.</strong><small>Khám phá BALLBURN <span aria-hidden="true">↗</span></small></span></a>
+                                <section class="blog-sidebar-card blog-newsletter-card"><span class="blog-sidebar-mark" aria-hidden="true">✳︎</span><p class="blog-eyebrow">HẸN GẶP BẠN TRÊN SÂN</p><h2>Chơi một trận nhé?</h2><p>Chọn khung giờ phù hợp và khám phá không khí pickleball tại BALLBURN.</p><a class="button button-primary" href="/booking">Đặt sân ngay <span aria-hidden="true">↗︎</span></a></section>
+                                <a class="blog-sidebar-feature" href="/about"><img src="/images/pickleball/player-action.jpg" alt="Người chơi pickleball trên sân BALLBURN" loading="lazy"><span><strong>Chơi. Kết nối.<br>Lặp lại.</strong><small>Khám phá BALLBURN <span aria-hidden="true">↗︎</span></small></span></a>
                             </aside>
                         </div>
                     </section>
-                    <section class="blog-cta"><p class="blog-eyebrow">SẴN SÀNG LÊN SÂN?</p><h2>Kiến thức tốt.<br><em>Trận đấu vui hơn.</em></h2><a class="button button-primary" href="/booking">Đặt sân tại BALLBURN <span aria-hidden="true">↗</span></a></section>
+                    <section class="blog-cta"><p class="blog-eyebrow">SẴN SÀNG LÊN SÂN?</p><h2>Kiến thức tốt.<br><em>Trận đấu vui hơn.</em></h2><a class="button button-primary" href="/booking">Đặt sân tại BALLBURN <span aria-hidden="true">↗︎</span></a></section>
                 </main>
             @endif
         </div>

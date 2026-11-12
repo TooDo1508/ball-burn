@@ -63,7 +63,7 @@ const phoneHref = `tel:${props.contactInfo.phone.replace(/[^+\d]/g, '')}`;
                 <nav class="home-nav" aria-label="Điều hướng chính">
                     <a href="/">Trang chủ</a><a href="/about">Về chúng tôi</a><a href="/booking">Đặt sân</a><a href="/blog">Tin tức</a><a href="/contact">Liên hệ</a>
                 </nav>
-                <a class="home-button home-button--small" href="/booking">Đặt sân <span aria-hidden="true">↗</span></a>
+                <a class="home-button home-button--small" href="/booking">Đặt sân <span aria-hidden="true">↗︎</span></a>
             </header>
 
             <section id="home" class="home-hero" aria-labelledby="hero-title">
@@ -74,13 +74,13 @@ const phoneHref = `tel:${props.contactInfo.phone.replace(/[^+\d]/g, '')}`;
                     <h1 id="hero-title">{{ heroTitle }}</h1>
                     <p class="hero-description">{{ props.content.hero_description }}</p>
                     <div class="hero-actions">
-                        <a class="home-button" href="/booking">Tìm giờ chơi phù hợp <span aria-hidden="true">↗</span></a>
+                        <a class="home-button" href="/booking">Tìm giờ chơi phù hợp <span aria-hidden="true">↗︎</span></a>
                         <a class="home-text-link home-text-link--light" href="#overview">Khám phá BALLBURN <span aria-hidden="true">↓</span></a>
                     </div>
                 </div>
                 <div class="hero-index"><span>01</span><i></i><span>04</span></div>
                 <p class="hero-caption">CHƠI HẾT MÌNH. VUI HẾT CỠ. <span>HỒ TÂY · HÀ NỘI</span></p>
-                <a class="hero-side-link" href="/about">CÂU CHUYỆN BALLBURN <span>↗</span></a>
+                <a class="hero-side-link" href="/about">CÂU CHUYỆN BALLBURN <span>↗︎</span></a>
             </section>
 
             <section id="overview" class="overview-section">
@@ -90,7 +90,7 @@ const phoneHref = `tel:${props.contactInfo.phone.replace(/[^+\d]/g, '')}`;
                         <p class="home-eyebrow">MORE THAN JUST A GAME</p>
                         <h2>{{ props.content.about_title }}</h2>
                         <p>{{ props.content.about_text }}</p>
-                        <a class="home-text-link" href="/about">Tìm hiểu về chúng tôi <span aria-hidden="true">↗</span></a>
+                        <a class="home-text-link" href="/about">Tìm hiểu về chúng tôi <span aria-hidden="true">↗︎</span></a>
                     </div>
                     <div class="overview-facts" aria-label="Thông tin BALLBURN">
                         <article><strong>{{ String(props.courtCount).padStart(2, '0') }}</strong><span>sân pickleball<br />đang hoạt động</span></article>
@@ -103,17 +103,17 @@ const phoneHref = `tel:${props.contactInfo.phone.replace(/[^+\d]/g, '')}`;
             <section id="courts" class="courts-section">
                 <div class="section-topline">
                     <div><div class="section-kicker"><span>02</span><span>CHỌN SÂN, GỌI ĐỒNG ĐỘI</span></div><h2>{{ props.content.courts_title }}</h2></div>
-                    <a class="home-text-link" href="/booking">Xem lịch và giá sân <span aria-hidden="true">↗</span></a>
+                    <a class="home-text-link" href="/booking">Xem lịch và giá sân <span aria-hidden="true">↗︎</span></a>
                 </div>
                 <p class="section-description">{{ props.content.courts_text }}</p>
                 <div v-if="props.courts.length" class="court-grid">
                     <a v-for="(court, index) in props.courts" :key="court.name" class="court-card" href="/booking">
-                        <div class="court-photo"><img :src="court.image" :alt="court.imageAlt" loading="lazy" /><span class="court-number">{{ String(index + 1).padStart(2, '0') }}</span><span class="court-arrow" aria-hidden="true">↗</span></div>
+                        <div class="court-photo"><img :src="court.image" :alt="court.imageAlt" loading="lazy" /><span class="court-number">{{ String(index + 1).padStart(2, '0') }}</span><span class="court-arrow" aria-hidden="true">↗︎</span></div>
                         <div class="court-info"><div class="court-meta"><span>{{ court.type }}</span><span>{{ court.surface }}</span></div><h3>{{ court.name }}</h3><p>{{ court.description }}</p></div>
                     </a>
                 </div>
-                <div v-else class="courts-empty"><p>Chúng tôi đang cập nhật danh sách sân.</p><a class="home-text-link" href="/contact">Liên hệ BALLBURN <span aria-hidden="true">↗</span></a></div>
-                <div class="court-bottomline"><span>{{ String(props.courtCount).padStart(2, '0') }} SÂN SẴN SÀNG ĐÓN BẠN</span><a href="/booking">Chọn giờ chơi <span aria-hidden="true">↗</span></a></div>
+                <div v-else class="courts-empty"><p>Chúng tôi đang cập nhật danh sách sân.</p><a class="home-text-link" href="/contact">Liên hệ BALLBURN <span aria-hidden="true">↗︎</span></a></div>
+                <div class="court-bottomline"><span>{{ String(props.courtCount).padStart(2, '0') }} SÂN SẴN SÀNG ĐÓN BẠN</span><a href="/booking">Chọn giờ chơi <span aria-hidden="true">↗︎</span></a></div>
             </section>
         </div>
 
@@ -122,17 +122,17 @@ const phoneHref = `tel:${props.contactInfo.phone.replace(/[^+\d]/g, '')}`;
                 <div class="section-kicker section-kicker--light"><span>03</span><span>MỘT NGÀY Ở BALLBURN</span></div>
                 <div class="experience-heading"><p class="home-eyebrow">PLAY · CONNECT · REPEAT</p><h2>Đến vì trận đấu.<br /><em>Ở lại vì cuộc vui.</em></h2><p>Từ cú giao bóng đầu tiên đến lúc ngồi lại cùng đồng đội, mọi trải nghiệm đều ở ngay bên nhau.</p></div>
                 <div class="experience-grid">
-                    <article><span class="experience-icon" aria-hidden="true">01</span><div><h3>Sân chơi quanh năm</h3><p>Tám sân có mái che, làm mát và hệ thống VAR tại sân trung tâm.</p></div><a href="/booking" aria-label="Khám phá sân chơi">↗</a></article>
-                    <article><span class="experience-icon" aria-hidden="true">02</span><div><h3>Dễ bắt đầu</h3><p>Người mới có thể thuê vợt, mượn bóng và tìm hiểu lớp học phù hợp.</p></div><a href="/about#facilities" aria-label="Tìm hiểu tiện ích">↗</a></article>
-                    <article><span class="experience-icon" aria-hidden="true">03</span><div><h3>Kết nối cộng đồng</h3><p>Giao lưu, lớp học và giải đấu cho các nhóm trình độ khác nhau.</p></div><a href="/about" aria-label="Tìm hiểu cộng đồng">↗</a></article>
-                    <article><span class="experience-icon" aria-hidden="true">04</span><div><h3>Bistro sau trận</h3><p>Thưởng thức món ngon, nghỉ ngơi và kể lại những pha bóng hay.</p></div><a href="#visit" aria-label="Ghé thăm bistro">↗</a></article>
+                    <article><span class="experience-icon" aria-hidden="true">01</span><div><h3>Sân chơi quanh năm</h3><p>Tám sân có mái che, làm mát và hệ thống VAR tại sân trung tâm.</p></div><a href="/booking" aria-label="Khám phá sân chơi">↗︎</a></article>
+                    <article><span class="experience-icon" aria-hidden="true">02</span><div><h3>Dễ bắt đầu</h3><p>Người mới có thể thuê vợt, mượn bóng và tìm hiểu lớp học phù hợp.</p></div><a href="/about#facilities" aria-label="Tìm hiểu tiện ích">↗︎</a></article>
+                    <article><span class="experience-icon" aria-hidden="true">03</span><div><h3>Kết nối cộng đồng</h3><p>Giao lưu, lớp học và giải đấu cho các nhóm trình độ khác nhau.</p></div><a href="/about" aria-label="Tìm hiểu cộng đồng">↗︎</a></article>
+                    <article><span class="experience-icon" aria-hidden="true">04</span><div><h3>Bistro sau trận</h3><p>Thưởng thức món ngon, nghỉ ngơi và kể lại những pha bóng hay.</p></div><a href="#visit" aria-label="Ghé thăm bistro">↗︎</a></article>
                 </div>
             </div>
         </section>
 
         <div class="home-shell">
             <section class="booking-section" aria-labelledby="booking-title">
-                <div class="booking-intro"><div class="section-kicker"><span>04</span><span>ĐẶT SÂN THẬT DỄ</span></div><h2 id="booking-title">Chọn giờ chơi.<br /><em>Hẹn nhau trên sân.</em></h2><p>Xem lịch theo ngày, chọn một hoặc nhiều sân rồi hoàn tất yêu cầu đặt chỗ ngay trên website.</p><a class="home-button" href="/booking">Bắt đầu đặt sân <span aria-hidden="true">↗</span></a></div>
+                <div class="booking-intro"><div class="section-kicker"><span>04</span><span>ĐẶT SÂN THẬT DỄ</span></div><h2 id="booking-title">Chọn giờ chơi.<br /><em>Hẹn nhau trên sân.</em></h2><p>Xem lịch theo ngày, chọn một hoặc nhiều sân rồi hoàn tất yêu cầu đặt chỗ ngay trên website.</p><a class="home-button" href="/booking">Bắt đầu đặt sân <span aria-hidden="true">↗︎</span></a></div>
                 <ol class="booking-steps">
                     <li><span>01</span><div><h3>Chọn sân và thời gian</h3><p>Lịch trống và giá được cập nhật khi bạn chọn ngày chơi.</p></div></li>
                     <li><span>02</span><div><h3>Giữ chỗ trong 5 phút</h3><p>Điền thông tin đội chơi để tạo yêu cầu đặt chỗ tạm thời.</p></div></li>
@@ -141,10 +141,10 @@ const phoneHref = `tel:${props.contactInfo.phone.replace(/[^+\d]/g, '')}`;
             </section>
 
             <section v-if="props.posts.length" id="stories" class="stories-section">
-                <div class="section-topline"><div><div class="section-kicker"><span>05</span><span>ĐỌC, HỌC, CHƠI HAY HƠN</span></div><h2>Câu chuyện trên sân.</h2></div><a class="home-text-link" href="/blog">Xem tất cả bài viết <span aria-hidden="true">↗</span></a></div>
+                <div class="section-topline"><div><div class="section-kicker"><span>05</span><span>ĐỌC, HỌC, CHƠI HAY HƠN</span></div><h2>Câu chuyện trên sân.</h2></div><a class="home-text-link" href="/blog">Xem tất cả bài viết <span aria-hidden="true">↗︎</span></a></div>
                 <div class="story-grid">
                     <a v-for="(post, index) in props.posts" :key="post.slug" class="story-card" :class="{ 'story-card--featured': index === 0 }" :href="`/blog/${post.slug}`">
-                        <div class="story-image"><img v-if="post.image" :src="post.image" :alt="post.imageAlt" loading="lazy" /><span v-else class="story-image-placeholder">BALLBURN</span><span class="story-arrow" aria-hidden="true">↗</span></div>
+                        <div class="story-image"><img v-if="post.image" :src="post.image" :alt="post.imageAlt" loading="lazy" /><span v-else class="story-image-placeholder">BALLBURN</span><span class="story-arrow" aria-hidden="true">↗︎</span></div>
                         <div class="story-meta"><span>{{ post.category || 'CẨM NANG PICKLEBALL' }}</span><time v-if="post.publishedAt" :datetime="post.publishedAt">{{ articleDate(post.publishedAt) }}</time></div>
                         <h3>{{ post.title }}</h3><p v-if="post.excerpt">{{ post.excerpt }}</p>
                     </a>
@@ -155,14 +155,14 @@ const phoneHref = `tel:${props.contactInfo.phone.replace(/[^+\d]/g, '')}`;
         <section id="visit" class="visit-section">
             <div class="home-shell visit-shell">
                 <div class="visit-image"><img :src="'/images/pickleball/court-community.jpg'" alt="Không khí giao lưu tại sân pickleball BALLBURN" loading="lazy" /><span>HẸN GẶP BẠN Ở HỒ TÂY</span></div>
-                <div class="visit-copy"><p class="home-eyebrow">BALLBURN PICKLECLUB & BISTRO</p><h2>{{ props.content.bistro_title }}</h2><p>{{ props.content.bistro_text }}</p><div class="visit-details"><p><span aria-hidden="true">⌖</span>{{ props.contactInfo.address }}</p><p class="visit-coordinates"><span aria-hidden="true">◎</span>{{ props.contactInfo.map_coordinates }}</p><p><span aria-hidden="true">◷</span>{{ props.contactInfo.business_hours }}</p><p v-if="props.contactInfo.venue_description"><span aria-hidden="true">✳</span>{{ props.contactInfo.venue_description }}</p></div><div class="visit-actions"><a class="home-button" :href="props.contactInfo.map_url" target="_blank" rel="noopener noreferrer">Chỉ đường đến BALLBURN <span aria-hidden="true">↗</span></a><a class="visit-phone" :href="phoneHref">Gọi {{ props.contactInfo.phone }}</a></div></div>
+                <div class="visit-copy"><p class="home-eyebrow">BALLBURN PICKLECLUB & BISTRO</p><h2>{{ props.content.bistro_title }}</h2><p>{{ props.content.bistro_text }}</p><div class="visit-details"><p><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span>{{ props.contactInfo.address }}</p><p class="visit-coordinates"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8M18.4 5.6 5.6 18.4"/></svg></span>{{ props.contactInfo.map_coordinates }}</p><p><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>{{ props.contactInfo.business_hours }}</p><p v-if="props.contactInfo.venue_description"><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 2 1.8 6.2L20 6l-3.8 5 6 3-6.5.8.8 6.5-4.5-4.8L8 22l1.5-6.4L3 14l6.2-2L6 6l5.2 3z"/></svg></span>{{ props.contactInfo.venue_description }}</p></div><div class="visit-actions"><a class="home-button" :href="props.contactInfo.map_url" target="_blank" rel="noopener noreferrer">Chỉ đường đến BALLBURN <span aria-hidden="true">↗︎</span></a><a class="visit-phone" :href="phoneHref">Gọi {{ props.contactInfo.phone }}</a></div></div>
             </div>
         </section>
 
         <footer class="home-footer"><div class="home-shell footer-inner">
             <div class="footer-brand"><a class="home-brand home-brand--light" href="/">BALLBURN<span>®</span><small>PICKLECLUB & BISTRO</small></a><p>Chơi hết mình. Vui hết cỡ.</p><span>© {{ new Date().getFullYear() }} BALLBURN. All rights reserved.</span></div>
-            <nav class="footer-nav" aria-label="Liên kết chân trang"><a href="/about">Về chúng tôi</a><a href="/booking">Sân chơi & đặt sân</a><a href="/blog">Tin tức</a><a href="/contact">Liên hệ</a></nav>
-            <div class="footer-contact"><strong>614 Lạc Long Quân, Tây Hồ</strong><a :href="phoneHref">{{ props.contactInfo.phone }}</a><a v-if="props.contactInfo.email" :href="`mailto:${props.contactInfo.email}`">{{ props.contactInfo.email }}</a><div><a v-if="props.contactInfo.facebook_url" :href="props.contactInfo.facebook_url" target="_blank" rel="noopener noreferrer">Facebook ↗</a><a v-if="props.contactInfo.instagram_url" :href="props.contactInfo.instagram_url" target="_blank" rel="noopener noreferrer">Instagram ↗</a></div></div>
+            <nav class="footer-nav" aria-label="Liên kết chân trang"><a href="/about">Về chúng tôi</a><a href="/booking">Đặt sân</a><a href="/blog">Tin tức</a><a href="/contact">Liên hệ</a></nav>
+            <div class="footer-contact"><strong>614 Lạc Long Quân, Tây Hồ</strong><a :href="phoneHref">{{ props.contactInfo.phone }}</a><a v-if="props.contactInfo.email" :href="`mailto:${props.contactInfo.email}`">{{ props.contactInfo.email }}</a><div><a v-if="props.contactInfo.facebook_url" :href="props.contactInfo.facebook_url" target="_blank" rel="noopener noreferrer">Facebook ↗︎</a><a v-if="props.contactInfo.instagram_url" :href="props.contactInfo.instagram_url" target="_blank" rel="noopener noreferrer">Instagram ↗︎</a></div></div>
         </div></footer>
     </main>
 </template>

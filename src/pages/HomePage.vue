@@ -25,7 +25,7 @@ const courts = [
                 />
                 <div class="hero-actions">
                     <BaseButton to="/booking">Khám phá sân</BaseButton>
-                    <BaseButton to="/about" variant="light">Tìm hiểu thêm <span aria-hidden="true">↗</span></BaseButton>
+                    <BaseButton to="/about" variant="light">Tìm hiểu thêm <span aria-hidden="true">↗︎</span></BaseButton>
                 </div>
                 <div class="hero-note">
                     <span class="status-dot" aria-hidden="true"></span>
@@ -52,7 +52,7 @@ const courts = [
                     title="Sẵn sàng vào sân?"
                     description="Không gian trong nhà thoáng mát, mặt sân chuẩn và mọi thứ đã sẵn sàng cho bạn."
                 />
-                <BaseButton to="/booking" variant="outline">Xem tất cả sân <span aria-hidden="true">↗</span></BaseButton>
+                <BaseButton to="/booking" variant="outline">Xem tất cả sân <span aria-hidden="true">↗︎</span></BaseButton>
             </div>
             <div class="court-grid">
                 <CourtCard v-for="court in courts" :key="court.number" :court="court" />
@@ -68,7 +68,7 @@ const courts = [
                 title="Nơi cuộc vui không dừng lại sau tiếng còi."
                 description="Chơi một trận thật hay, thưởng thức món ngon và gặp gỡ những người bạn mới. Ballburn là điểm hẹn cho tất cả."
             />
-            <BaseButton to="/about" variant="light">Khám phá Ballburn <span aria-hidden="true">↗</span></BaseButton>
+            <BaseButton to="/about" variant="light">Khám phá Ballburn <span aria-hidden="true">↗︎</span></BaseButton>
         </AppSection>
 
         <AppSection id="booking" class="booking-strip">
@@ -76,7 +76,7 @@ const courts = [
                 <p class="eyebrow">YOUR COURT IS WAITING</p>
                 <h2>Trận đấu tiếp theo bắt đầu từ đây.</h2>
             </div>
-            <BaseButton to="/contact">Liên hệ đặt sân <span aria-hidden="true">↗</span></BaseButton>
+            <BaseButton to="/contact">Liên hệ đặt sân <span aria-hidden="true">↗︎</span></BaseButton>
         </AppSection>
     </main>
 </template>

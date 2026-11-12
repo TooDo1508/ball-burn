@@ -63,9 +63,9 @@ function formatDate(value) {
 <template>
     <main class="blog-article-page">
         <p v-if="loading" class="blog-status">Đang tải bài viết…</p>
-        <section v-else-if="error" class="blog-not-found"><p class="blog-eyebrow">BALLBURN · TIN TỨC</p><h1>{{ error }}</h1><RouterLink class="blog-read-link" to="/blog">← VỀ TẤT CẢ BÀI VIẾT</RouterLink></section>
+        <section v-else-if="error" class="blog-not-found"><p class="blog-eyebrow">BALLBURN · TIN TỨC</p><h1>{{ error }}</h1><RouterLink class="blog-read-link" to="/blog">←︎ VỀ TẤT CẢ BÀI VIẾT</RouterLink></section>
         <article v-else-if="post" class="blog-article">
-            <nav class="blog-breadcrumb" aria-label="Điều hướng"><RouterLink to="/">Trang chủ</RouterLink><span aria-hidden="true">/</span><RouterLink to="/blog">Tin tức</RouterLink><span aria-hidden="true">/</span><span>{{ post.title }}</span></nav>
+            <nav class="blog-breadcrumb" aria-label="Điều hướng"><a href="/">Trang chủ</a><span aria-hidden="true">/</span><RouterLink to="/blog">Tin tức</RouterLink><span aria-hidden="true">/</span><span>{{ post.title }}</span></nav>
             <header class="blog-article-header">
                 <div class="blog-card-meta"><span v-for="category in post.categories" :key="category">{{ category }}</span><time v-if="post.published_at" :datetime="post.published_at">{{ formatDate(post.published_at) }}</time></div>
                 <h1>{{ post.title }}</h1>
@@ -74,7 +74,7 @@ function formatDate(value) {
             </header>
             <img v-if="post.cover_image_url" class="blog-article-cover" :src="post.cover_image_url" :alt="post.cover_image_alt || post.title" fetchpriority="high" />
             <div class="blog-article-content" v-html="post.body" />
-            <footer class="blog-article-footer"><p>Chia sẻ bài viết với bạn bè cùng chơi pickleball.</p><RouterLink class="blog-read-link" to="/blog">← XEM CÁC BÀI VIẾT KHÁC</RouterLink></footer>
+            <footer class="blog-article-footer"><p>Chia sẻ bài viết với bạn bè cùng chơi pickleball.</p><RouterLink class="blog-read-link" to="/blog">←︎ XEM CÁC BÀI VIẾT KHÁC</RouterLink></footer>
         </article>
     </main>
 </template>

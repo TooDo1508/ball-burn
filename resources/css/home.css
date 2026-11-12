@@ -117,6 +117,7 @@
 .visit-details { margin-top: 25px; padding-top: 8px; border-top: 1px solid rgb(255 255 255 / 25%); }
 .visit-details p { display: flex; gap: 12px; align-items: flex-start; margin: 12px 0; color: rgb(255 255 255 / 82%); font-size: 12px; line-height: 1.7; }
 .visit-details p > span { min-width: 18px; color: var(--color-brand); font-weight: 800; text-align: center; }
+.visit-details p > span svg { display: block; width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
 .visit-details .visit-coordinates { font-size: 11px; letter-spacing: .02em; }
 .visit-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 21px; margin-top: 25px; }
 .visit-phone { color: #fff; font-size: 12px; font-weight: 700; text-decoration: none; text-underline-offset: 4px; }

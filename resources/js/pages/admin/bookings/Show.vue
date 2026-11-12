@@ -34,6 +34,10 @@ const statusForm = useForm({ status: props.booking.status_options[0]?.value ?? '
 const statusLabels = { PENDING_PAYMENT: 'Ch\u1edd thanh to\u00e1n', PAID: '\u0110\u00e3 thanh to\u00e1n', CANCELLED: 'Đã hủy sân' } as const;
 const selectedProof = ref<{ url: string; label: string } | null>(null);
 
+function formatMoney(value: string | number, currency = 'VND') {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(value));
+}
+
 async function updateStatus() {
     if (statusForm.status === 'CANCELLED' && !await confirmAction({
         title: 'Hủy đơn đặt sân?',
@@ -79,13 +83,13 @@ async function updateStatus() {
                     <div class="mt-4 divide-y divide-border text-sm">
                         <div v-for="(slot, index) in booking.slots" :key="`${slot.starts_at}-${index}`" class="flex justify-between gap-3 py-3 first:pt-0">
                             <div><p class="font-semibold">{{ slot.court }}</p><p class="mt-1 text-muted-foreground">{{ slot.starts_at }} – {{ slot.ends_at }}</p></div>
-                            <span class="whitespace-nowrap font-medium">{{ slot.amount }} {{ booking.currency }}</span>
+                            <span class="whitespace-nowrap font-medium">{{ formatMoney(slot.amount, booking.currency) }}</span>
                         </div>
                     </div>
                     <dl class="mt-2 grid gap-3 text-sm">
                         <div v-if="booking.payment_deadline_at"><dt class="text-muted-foreground">Hạn thanh toán</dt><dd class="mt-1 flex items-center gap-2"><Clock3 class="size-4" />{{ booking.payment_deadline_at }}</dd></div>
-                        <div class="border-t border-border pt-3"><dt class="text-muted-foreground">Tạm tính · giảm giá</dt><dd class="mt-1">{{ booking.base_amount }} · {{ booking.discount_amount }} {{ booking.currency }}</dd></div>
-                        <div><dt class="text-muted-foreground">Thành tiền toàn đơn</dt><dd class="mt-1 text-xl font-bold text-orange-700 dark:text-orange-300">{{ booking.total_amount }} {{ booking.currency }}</dd></div>
+                        <div class="border-t border-border pt-3"><dt class="text-muted-foreground">Tạm tính · giảm giá</dt><dd class="mt-1">{{ formatMoney(booking.base_amount, booking.currency) }} · {{ formatMoney(booking.discount_amount, booking.currency) }}</dd></div>
+                        <div><dt class="text-muted-foreground">Thành tiền toàn đơn</dt><dd class="mt-1 text-xl font-bold text-orange-700 dark:text-orange-300">{{ formatMoney(booking.total_amount, booking.currency) }}</dd></div>
                     </dl>
                 </section>
             </div>
@@ -119,7 +123,7 @@ async function updateStatus() {
                         <thead class="text-xs uppercase text-muted-foreground"><tr><th class="py-2">Nguồn</th><th class="py-2">Mã tham chiếu</th><th class="py-2">Mã giao dịch</th><th class="py-2">Số tiền</th><th class="py-2">Ảnh chuyển khoản</th><th class="py-2">Thời điểm</th></tr></thead>
                         <tbody class="divide-y divide-border">
                             <tr v-for="payment in booking.payments" :key="payment.id">
-                                <td class="py-3">{{ payment.payment_method || payment.provider }}</td><td class="py-3 break-all">{{ payment.payment_reference || '—' }}</td><td class="py-3 break-all">{{ payment.provider_transaction_id || '—' }}</td><td class="py-3">{{ payment.amount }} {{ payment.currency }}</td>
+                                <td class="py-3">{{ payment.payment_method || payment.provider }}</td><td class="py-3 break-all">{{ payment.payment_reference || '—' }}</td><td class="py-3 break-all">{{ payment.provider_transaction_id || '—' }}</td><td class="py-3">{{ formatMoney(payment.amount, payment.currency) }}</td>
                                 <td class="py-3">
                                     <button v-if="payment.proof_url" type="button" class="group flex items-center gap-2 text-left" @click="selectedProof = { url: payment.proof_url, label: `Ảnh thanh toán ${payment.id}` }">
                                         <img :src="payment.proof_url" :alt="`Ảnh chuyển khoản booking ${booking.booking_code}`" class="size-14 rounded-md border border-border object-cover transition group-hover:opacity-80" loading="lazy" />
@@ -138,7 +142,7 @@ async function updateStatus() {
                 <h2 class="text-lg font-bold">Lịch sử trạng thái</h2>
                 <ol class="mt-4 space-y-4">
                     <li v-for="(item, index) in booking.history" :key="`${item.created_at}-${index}`" class="border-l-2 border-orange-500/50 pl-4">
-                        <p class="font-semibold">{{ item.old_status || 'Mới tạo' }} → {{ item.new_status }}</p><p class="mt-1 text-xs text-muted-foreground">{{ item.created_at }} · {{ item.change_source }}</p><p v-if="item.note" class="mt-1 text-sm text-muted-foreground">{{ item.note }}</p>
+                        <p class="font-semibold">{{ item.old_status || 'Mới tạo' }} →︎ {{ item.new_status }}</p><p class="mt-1 text-xs text-muted-foreground">{{ item.created_at }} · {{ item.change_source }}</p><p v-if="item.note" class="mt-1 text-sm text-muted-foreground">{{ item.note }}</p>
                     </li>
                     <li v-if="!booking.history.length" class="text-sm text-muted-foreground">Chưa có lịch sử chuyển trạng thái.</li>
                 </ol>

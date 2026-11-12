@@ -27,7 +27,7 @@ let loadedInitially = false;
 let requestActive = false;
 
 function money(value: string | number, currency = 'VND') {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency }).format(Number(value));
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(value));
 }
 
 async function refreshNotifications() {

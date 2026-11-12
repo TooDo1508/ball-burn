@@ -103,7 +103,7 @@ onMounted(() => {
 
             <section class="about-manifesto">
                 <div class="about-manifesto-image"><img :src="'/images/pickleball/court-community.jpg'" alt="Các sân pickleball và người chơi cùng tham gia một buổi giao lưu" loading="lazy" /></div>
-                <div class="about-manifesto-copy"><p class="eyebrow">MORE THAN JUST A GAME</p><h2>Chơi.<br />Kết nối.<br /><em>Lặp lại.</em></h2><p>Đến vì một trận đấu. Ở lại vì những người bạn, món ngon và năng lượng tích cực quanh tám sân chơi.</p><BaseButton to="/booking" variant="light">Tìm sân chơi của bạn <span aria-hidden="true">↗</span></BaseButton></div>
+                <div class="about-manifesto-copy"><p class="eyebrow">MORE THAN JUST A GAME</p><h2>Chơi.<br />Kết nối.<br /><em>Lặp lại.</em></h2><p>Đến vì một trận đấu. Ở lại vì những người bạn, món ngon và năng lượng tích cực quanh tám sân chơi.</p><BaseButton to="/booking" variant="light">Tìm sân chơi của bạn <span aria-hidden="true">↗︎</span></BaseButton></div>
             </section>
 
             <section id="facilities" class="about-facilities">
@@ -120,9 +120,9 @@ onMounted(() => {
 
             <section class="about-visit">
                 <div><p class="about-label"><span>03</span><span>HẸN GẶP Ở HỒ TÂY</span></p><h2>Ngay tại<br /><em>614 Lạc Long Quân.</em></h2><p>Chúng tôi mở cửa mỗi ngày từ 05:00 đến 24:00. Chọn giờ chơi, rủ đồng đội và để BALLBURN lo phần còn lại.</p></div>
-                <div class="about-visit-actions"><a class="button button--outline" href="https://maps.app.goo.gl/q4FVTh8toEBiqxgo9" target="_blank" rel="noopener noreferrer">Mở Google Maps <span aria-hidden="true">↗</span></a><a class="button button--outline" href="tel:0886688614">Gọi 0886 688 614 <span aria-hidden="true">↗</span></a></div>
+                <div class="about-visit-actions"><a class="button button--outline" href="https://maps.app.goo.gl/q4FVTh8toEBiqxgo9" target="_blank" rel="noopener noreferrer">Mở Google Maps <span aria-hidden="true">↗︎</span></a><a class="button button--outline" href="tel:0886688614">Gọi 0886 688 614 <span aria-hidden="true">↗︎</span></a></div>
             </section>
         </div>
-        <section class="about-final-cta"><div><p class="eyebrow">YOUR COURT IS WAITING</p><h2>Trận đấu tiếp theo<br />bắt đầu từ đây.</h2></div><BaseButton to="/booking">Đặt sân ngay <span aria-hidden="true">↗</span></BaseButton></section>
+        <section class="about-final-cta"><div><p class="eyebrow">YOUR COURT IS WAITING</p><h2>Trận đấu tiếp theo<br />bắt đầu từ đây.</h2></div><BaseButton to="/booking">Đặt sân ngay <span aria-hidden="true">↗︎</span></BaseButton></section>
     </main>
 </template>

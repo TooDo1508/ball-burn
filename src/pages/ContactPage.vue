@@ -94,7 +94,7 @@ function fieldError(name) {
                 <div class="contact-detail-list">
                     <div class="contact-detail-item">
                         <span class="contact-detail-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
-                        <div><h3>Địa chỉ</h3><p class="contact-address">{{ contact.address }}</p><p class="contact-coordinates">Tọa độ: {{ contact.map_coordinates }}</p><a :href="contact.map_url" target="_blank" rel="noopener noreferrer">Chỉ đường đến BALLBURN <span aria-hidden="true">↗</span></a></div>
+                        <div><h3>Địa chỉ</h3><p class="contact-address">{{ contact.address }}</p><p class="contact-coordinates">Tọa độ: {{ contact.map_coordinates }}</p><a :href="contact.map_url" target="_blank" rel="noopener noreferrer">Chỉ đường đến BALLBURN <span aria-hidden="true">↗︎</span></a></div>
                     </div>
                     <div class="contact-detail-item">
                         <span class="contact-detail-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 16.5v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 1.1 3.8 2 2 0 0 1 3.1 1.6h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L7 9.5a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.8 2.1Z"/></svg></span>
@@ -112,9 +112,9 @@ function fieldError(name) {
 
                 <a class="contact-map-card" :href="contact.map_url" target="_blank" rel="noopener noreferrer">
                     <img :src="'/images/pickleball/court-community.jpg'" alt="Không khí giao lưu tại sân pickleball BALLBURN" loading="lazy" />
-                    <span><strong>Hẹn bạn ở Tây Hồ</strong><small>Mở bản đồ <span aria-hidden="true">↗</span></small></span>
+                    <span><strong>Hẹn bạn ở Tây Hồ</strong><small>Mở bản đồ <span aria-hidden="true">↗︎</span></small></span>
                 </a>
-                <div class="contact-social-links"><a v-if="contact.facebook_url" :href="contact.facebook_url" target="_blank" rel="noopener noreferrer">Facebook <span aria-hidden="true">↗</span></a><a v-if="contact.instagram_url" :href="contact.instagram_url" target="_blank" rel="noopener noreferrer">Instagram <span aria-hidden="true">↗</span></a></div>
+                <div class="contact-social-links"><a v-if="contact.facebook_url" :href="contact.facebook_url" target="_blank" rel="noopener noreferrer">Facebook <span aria-hidden="true">↗︎</span></a><a v-if="contact.instagram_url" :href="contact.instagram_url" target="_blank" rel="noopener noreferrer">Instagram <span aria-hidden="true">↗︎</span></a></div>
             </div>
 
             <div class="contact-form-panel">
@@ -167,7 +167,7 @@ function fieldError(name) {
                     </div>
 
                     <button class="contact-submit" type="submit" :disabled="submitting">
-                        {{ submitting ? 'Đang gửi lời nhắn…' : 'Gửi lời nhắn' }} <span aria-hidden="true">{{ submitting ? '' : '↗' }}</span>
+                        {{ submitting ? 'Đang gửi lời nhắn…' : 'Gửi lời nhắn' }} <span aria-hidden="true">{{ submitting ? '' : '↗︎' }}</span>
                     </button>
                     <p class="contact-privacy-note">Thông tin của bạn chỉ được dùng để phản hồi yêu cầu này.</p>
                 </form>

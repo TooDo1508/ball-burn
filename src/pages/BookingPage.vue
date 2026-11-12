@@ -164,7 +164,7 @@ onUnmounted(() => {
 });
 
 function formatMoney(amount, currency = 'VND') {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency, maximumFractionDigits: currency === 'VND' ? 0 : 2 }).format(Number(amount));
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(amount));
 }
 
 function formatDate(value) {
@@ -557,7 +557,7 @@ watch(() => route.params.token, (token) => {
                             </dl>
                         </article>
                     </div>
-                    <a v-if="bookingStatus.status_url" :href="bookingStatus.status_url" class="booking-status-link">Liên kết xem trạng thái đơn ↗</a>
+                    <a v-if="bookingStatus.status_url" :href="bookingStatus.status_url" class="booking-status-link">Liên kết xem trạng thái đơn ↗︎</a>
                 </template>
                 <template v-else>
                     <h2>{{ bookingStatus.status === 'CANCELLED' ? 'Đơn đặt sân đã bị hủy' : bookingStatus.payment_submitted ? 'Đã nhận ảnh chuyển khoản' : 'Thông tin đơn đặt sân' }}</h2>
@@ -592,7 +592,7 @@ watch(() => route.params.token, (token) => {
                                 <img v-if="court.image_url" :src="court.image_url" :alt="court.name" loading="lazy" />
                                 <div v-else class="booking-court-placeholder" aria-hidden="true">BALLBURN</div>
                                 <div class="booking-court-copy"><strong>{{ court.name }}</strong><span>{{ court.surface_type || 'Sân pickleball' }}</span><small>Từ {{ formatMoney(court.price_per_hour, court.currency) }} / giờ</small></div>
-                                <span class="booking-court-check" aria-hidden="true">{{ selectedCourtId === court.id ? '✓' : '›' }}</span>
+                                <span v-if="selectedCourtId === court.id" class="booking-court-check" aria-hidden="true">✓</span>
                             </button>
                         </div>
                         <p v-else class="booking-empty-slots">Hiện chưa có sân nhận đặt lịch.</p>
@@ -606,14 +606,19 @@ watch(() => route.params.token, (token) => {
                                     <div class="booking-calendar-control">
                                         <button type="button" class="booking-date-toggle" :aria-expanded="showCalendar" aria-controls="booking-calendar-popup" @click="showCalendar = !showCalendar">
                                             <span><strong>{{ formatDate(selectedDate) }}</strong><small>Nhấn để chọn ngày khác</small></span>
-                                            <span class="booking-date-toggle-icon" aria-hidden="true">{{ showCalendar ? '−' : '+' }}</span>
+                                            <span class="booking-date-toggle-icon" aria-hidden="true">
+                                                <svg viewBox="0 0 24 24" fill="none" focusable="false">
+                                                    <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+                                                    <path d="M7.5 3.5v3M16.5 3.5v3M4 9.5h16M8 13h.01M12 13h.01M16 13h.01M8 16.5h.01M12 16.5h.01" />
+                                                </svg>
+                                            </span>
                                         </button>
                                         <div v-if="showCalendar && data" id="booking-calendar-popup" class="booking-calendar-popup">
                                             <BookingCalendar :date="selectedDate" :today="data.today" :max-date="data.max_date" @select="chooseDate" />
                                         </div>
                                     </div>
                                     <p class="booking-selection-hint">{{ bookingMode === 'single' ? 'Chọn một hoặc nhiều khung giờ 30 phút, không cần liền nhau.' : 'Chọn nhiều sân và khung giờ, không cần liền nhau.' }}</p>
-                                    <span v-if="loading" class="booking-loading-inline">Đang cập nhật…</span>
+                                    <span class="booking-loading-inline" role="status">{{ loading ? 'Đang cập nhật lịch sân…' : '' }}</span>
                                 </div>
                                 <template v-if="bookingMode === 'single'">
                                     <div id="single-court-slots">
@@ -657,7 +662,7 @@ watch(() => route.params.token, (token) => {
 
                     <section v-else-if="currentStep === 2" class="booking-panel" aria-labelledby="details-title">
                         <header class="booking-section-heading"><div><p class="booking-section-index">02 / THÔNG TIN</p><h2 id="details-title">Thông tin liên hệ</h2></div><span>Không cần tạo tài khoản</span></header>
-                        <button type="button" class="booking-back-button" @click="goToCourtSelection">← Quay lại chọn sân và giờ</button>
+                        <button type="button" class="booking-back-button" @click="goToCourtSelection">←︎ Quay lại chọn sân và giờ</button>
                         <div class="booking-form-grid">
                             <label class="booking-field">Họ và tên *<input id="customer-name" v-model="form.customer_name" autocomplete="name" maxlength="150" placeholder="Tên của bạn" /><small v-if="fieldErrors.customer_name">{{ fieldErrors.customer_name[0] }}</small></label>
                             <label class="booking-field">Email (không bắt buộc)<input id="customer-email" v-model="form.customer_email" type="email" autocomplete="email" maxlength="255" placeholder="ban@example.com" /><small v-if="fieldErrors.customer_email">{{ fieldErrors.customer_email[0] }}</small></label>
@@ -668,7 +673,7 @@ watch(() => route.params.token, (token) => {
 
                     <section v-else-if="currentStep === 3 && paymentSession" class="booking-panel booking-payment-panel" aria-labelledby="payment-title">
                         <header class="booking-section-heading"><div><p class="booking-section-index">03 / THANH TOÁN</p><h2 id="payment-title">Quét mã và gửi ảnh chuyển khoản</h2></div><span>Giữ chỗ trong 5 phút</span></header>
-                        <button type="button" class="booking-back-button" @click="returnToContactInformation">← Quay lại thông tin</button>
+                        <button type="button" class="booking-back-button" @click="returnToContactInformation">←︎ Quay lại thông tin</button>
                         <div class="booking-payment-layout">
                             <div class="booking-qr-card">
                                 <img v-if="paymentQrUrl" :src="paymentQrUrl" alt="Mã QR nhận thanh toán BALLBURN" />
@@ -798,4 +803,10 @@ watch(() => route.params.token, (token) => {
 .booking-content.is-multi-court .booking-matrix-court-head{z-index:3;white-space:nowrap}
 @media(max-width:800px){.booking-content.is-multi-court{grid-template-columns:minmax(0,1fr)}.booking-content.is-multi-court .booking-summary{grid-column:1;grid-row:auto}}
 .booking-step-jump{font:inherit;cursor:pointer}
+.booking-court-card.is-selected .booking-court-check{background:var(--color-brand);color:#fff}
+.booking-loading-inline{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.booking-date-toggle-icon{display:grid;width:34px;height:34px;place-items:center;flex:0 0 34px;border-radius:50%;background:var(--color-surface-muted);color:var(--color-brand)}
+.booking-date-toggle-icon svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.booking-court-card.is-selected{border-width:3px;padding:5px}
+@media(max-width:520px){.booking-court-card.is-selected{padding:3px}}
 </style>

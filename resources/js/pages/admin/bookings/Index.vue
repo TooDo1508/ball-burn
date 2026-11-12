@@ -70,7 +70,7 @@ const bookingLabels: Record<BookingStatus, string> = { PENDING_PAYMENT: 'Ch\u1ed
 const bookingClasses: Record<BookingStatus, string> = { PENDING_PAYMENT: 'border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300', PAID: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300', CANCELLED: 'border-rose-500/30 bg-rose-500/10 text-rose-800 dark:text-rose-300' };
 
 function money(value: string | number, currency = 'VND') {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency }).format(Number(value));
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(value));
 }
 
 function applyFilters() {
@@ -254,7 +254,7 @@ function pageLabel(label: string) {
 
                     <section class="mt-4 rounded-xl border border-border bg-card p-4 sm:p-5"><h3 class="flex items-center gap-2 font-bold"><CreditCard class="size-4 text-orange-600" />Thanh to&#225;n</h3><div v-if="!selectedBooking.payments.length" class="mt-3 rounded-lg bg-muted/50 p-4 text-sm text-muted-foreground">Ch&#432;a c&#243; th&#244;ng tin thanh to&#225;n.</div><article v-for="payment in selectedBooking.payments" :key="payment.id" class="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3"><div><p class="font-semibold">{{ payment.payment_method || payment.provider }} &#183; {{ money(payment.amount, payment.currency) }}</p><p v-if="payment.payment_reference" class="mt-1 text-xs text-muted-foreground">M&#227; tham chi&#7871;u: {{ payment.payment_reference }}</p></div><button v-if="payment.proof_url" type="button" class="flex items-center gap-2 text-sm font-semibold text-orange-700 hover:underline dark:text-orange-300" @click="selectedProof = { url: payment.proof_url, label: `Payment ${payment.id}` }"><img :src="payment.proof_url" :alt="`Payment proof ${selectedBooking.booking_code}`" class="size-12 rounded-md border border-border object-cover" />Xem &#7843;nh</button></article></section>
 
-                    <section class="mt-4 rounded-xl border border-border bg-card p-4 sm:p-5"><h3 class="font-bold">Lịch sử trạng thái đơn</h3><ol class="mt-3 space-y-3"><li v-for="(item, index) in selectedBooking.history" :key="`${item.created_at}-${index}`" class="border-l-2 border-orange-500/50 pl-3"><p class="text-sm font-semibold">{{ item.old_status || 'Mới tạo' }} → {{ item.new_status }}</p><p class="text-xs text-muted-foreground">{{ item.created_at }} · {{ item.change_source }}</p><p v-if="item.note" class="text-sm text-muted-foreground">{{ item.note }}</p></li><li v-if="!selectedBooking.history.length" class="text-sm text-muted-foreground">Chưa có lịch sử.</li></ol></section>
+                    <section class="mt-4 rounded-xl border border-border bg-card p-4 sm:p-5"><h3 class="font-bold">Lịch sử trạng thái đơn</h3><ol class="mt-3 space-y-3"><li v-for="(item, index) in selectedBooking.history" :key="`${item.created_at}-${index}`" class="border-l-2 border-orange-500/50 pl-3"><p class="text-sm font-semibold">{{ item.old_status || 'Mới tạo' }} →︎ {{ item.new_status }}</p><p class="text-xs text-muted-foreground">{{ item.created_at }} · {{ item.change_source }}</p><p v-if="item.note" class="text-sm text-muted-foreground">{{ item.note }}</p></li><li v-if="!selectedBooking.history.length" class="text-sm text-muted-foreground">Chưa có lịch sử.</li></ol></section>
                 </div>
             </section>
         </div>

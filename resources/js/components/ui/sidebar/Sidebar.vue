@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { watch } from 'vue'
+import { usePage } from '@inertiajs/vue3'
 import type { SidebarProps } from "."
 import { cn } from "@/lib/utils"
 import { Sheet, SheetContent } from '@/components/ui/sheet'
@@ -18,6 +20,9 @@ const props = withDefaults(defineProps<SidebarProps>(), {
 })
 
 const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+const page = usePage()
+
+watch(() => page.url, () => setOpenMobile(false))
 </script>
 
 <template>

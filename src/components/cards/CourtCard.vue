@@ -19,7 +19,7 @@ defineProps({
                 <p>{{ court.surface }}</p>
             </div>
             <BaseButton :to="court.to ?? '/booking'" variant="outline" size="small">
-                Đặt sân <span aria-hidden="true">↗</span>
+                Đặt sân <span aria-hidden="true">↗︎</span>
             </BaseButton>
         </div>
     </article>
