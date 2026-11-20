@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Blog;
 
 use App\Http\Controllers\Controller;
 use App\Services\Blog\PublicBlogService;
+use App\Support\SeoUrl;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 
@@ -15,13 +16,13 @@ class PublicBlogController extends Controller
     {
         $title = 'Tin tức pickleball, luật chơi và mẹo tập luyện | BALLBURN';
         $description = 'Cẩm nang pickleball bằng tiếng Việt: luật chơi, chiến thuật, dụng cụ và văn hóa giao lưu từ BALLBURN PickleClub & Bistro tại Hà Nội.';
-        $canonical = url('/blog');
+        $canonical = SeoUrl::to('/blog');
         $listing = $this->blog->listing();
 
         return view('welcome', ['seo' => [
             'title' => $title,
             'description' => $description,
-            'image' => url('/images/pickleball/court-rally-wide.jpg'),
+            'image' => SeoUrl::to('/images/pickleball/court-rally-wide.jpg'),
             'canonical' => $canonical,
             'structured_data' => [
                 '@context' => 'https://schema.org',
@@ -55,7 +56,7 @@ class PublicBlogController extends Controller
     {
         $posts = $this->blog->listing()->through(fn (array $post): array => [
             ...$this->summary($post),
-            'url' => url('/blog/'.$post['slug']),
+            'url' => SeoUrl::to('/blog/'.$post['slug']),
         ]);
 
         return response()->json($posts);
@@ -91,8 +92,11 @@ class PublicBlogController extends Controller
     private function articleSeo(array $post, string $description): array
     {
         $title = $post['meta_title'] ?: $post['title'].' | BALLBURN';
-        $canonical = url('/blog/'.$post['slug']);
+        $canonical = SeoUrl::to('/blog/'.$post['slug']);
         $image = $this->blog->imageUrl($post['cover_image_path']);
+        if ($image && str_starts_with($image, '/')) {
+            $image = SeoUrl::to($image);
+        }
         $publishedAt = $post['published_at'];
         $modifiedAt = $post['updated_at'];
         $structuredData = [

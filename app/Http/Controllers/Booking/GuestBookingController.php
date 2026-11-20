@@ -10,6 +10,7 @@ use App\Http\Resources\GuestBookingOrderResource;
 use App\Services\Booking\GuestBookingService;
 use App\Services\Payments\VietQrImageUrlService;
 use App\Services\Settings\ContactSettingsService;
+use App\Support\SeoUrl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -139,15 +140,15 @@ class GuestBookingController extends Controller
         return [
             'title' => 'Đặt sân | BALLBURN PickleClub & Bistro',
             'description' => $description,
-            'canonical' => url('/booking'),
-            'image' => url('/images/pickleball/court-rally-wide.jpg'),
+            'canonical' => SeoUrl::to('/booking'),
+            'image' => SeoUrl::to('/images/pickleball/court-rally-wide.jpg'),
             'structured_data' => [
                 '@context' => 'https://schema.org',
                 '@type' => 'SportsActivityLocation',
                 'name' => 'BALLBURN PickleClub & Bistro',
                 'description' => $description,
-                'url' => url('/booking'),
-                'image' => url('/images/pickleball/court-rally-wide.jpg'),
+                'url' => SeoUrl::to('/booking'),
+                'image' => SeoUrl::to('/images/pickleball/court-rally-wide.jpg'),
             ],
         ];
     }

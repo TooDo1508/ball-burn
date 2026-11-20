@@ -12,6 +12,8 @@ interface BlogPostRepository
 
     public function paginatePublished(int $perPage = 12): LengthAwarePaginator;
 
+    public function publishedForSitemap(): Collection;
+
     public function findPublishedBySlug(string $slug): BlogPost;
 
     public function stats(): array;

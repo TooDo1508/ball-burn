@@ -11,9 +11,11 @@
         @if (isset($seo))
             <meta name="description" content="{{ $seo['description'] }}">
             <meta property="og:type" content="{{ $seo['type'] ?? 'website' }}">
+            <meta property="og:site_name" content="BALLBURN PickleClub &amp; Bistro">
+            <meta property="og:locale" content="vi_VN">
             <meta property="og:title" content="{{ $seo['title'] }}">
             <meta property="og:description" content="{{ $seo['description'] }}">
-            @if (!empty($seo['image']))<meta property="og:image" content="{{ $seo['image'] }}">@endif
+            @if (!empty($seo['image']))<meta property="og:image" content="{{ $seo['image'] }}"><meta property="og:image:alt" content="{{ $seo['image_alt'] ?? $seo['title'] }}">@endif
             <meta property="og:url" content="{{ $seo['canonical'] }}">
             @if (!empty($seo['published_at']))<meta property="article:published_time" content="{{ $seo['published_at'] }}">@endif
             @if (!empty($seo['modified_at']))<meta property="article:modified_time" content="{{ $seo['modified_at'] }}">@endif

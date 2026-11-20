@@ -14,6 +14,7 @@ type ContactInfo = {
 };
 type HomeCourt = { name: string; type: string; description: string; surface: string; image: string; imageAlt: string };
 type HomePost = { title: string; slug: string; excerpt: string | null; image: string | null; imageAlt: string; category: string | null; publishedAt: string | null };
+type HomeSeo = { title: string; description: string; canonical: string; image: string; structured_data: Record<string, unknown> };
 
 const props = defineProps<{
     content: Record<string, string>;
@@ -21,20 +22,14 @@ const props = defineProps<{
     courtCount: number;
     courts: HomeCourt[];
     posts: HomePost[];
+    seo: HomeSeo;
 }>();
 
 const heroTitle = (props.content.hero_title || '').replace(/\\n/g, '\n');
 const venueHours = props.contactInfo.business_hours.match(/\d{1,2}:\d{2}/g) ?? [];
 const opensAt = venueHours[0] ?? '05:00';
 const closesAt = venueHours.at(-1) ?? '24:00';
-const structuredData = JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'SportsActivityLocation',
-    name: props.content.site_name,
-    description: props.content.meta_description,
-    image: props.content.og_image,
-    url: '/',
-});
+const structuredData = JSON.stringify(props.seo.structured_data);
 
 function articleDate(value: string | null): string {
     if (!value) return '';
@@ -52,7 +47,14 @@ const phoneHref = `tel:${props.contactInfo.phone.replace(/[^+\d]/g, '')}`;
         <meta head-key="og:image" property="og:image" :content="props.content.og_image" />
         <meta head-key="og:type" property="og:type" content="website" />
         <meta head-key="twitter:card" name="twitter:card" content="summary_large_image" />
-        <link head-key="canonical" rel="canonical" href="/" />
+        <meta head-key="og:site_name" property="og:site_name" :content="props.content.site_name" />
+        <meta head-key="og:locale" property="og:locale" content="vi_VN" />
+        <meta head-key="og:url" property="og:url" :content="props.seo.canonical" />
+        <meta head-key="og:image:alt" property="og:image:alt" content="Sân pickleball BALLBURN tại Tây Hồ, Hà Nội" />
+        <meta head-key="twitter:title" name="twitter:title" :content="props.seo.title" />
+        <meta head-key="twitter:description" name="twitter:description" :content="props.seo.description" />
+        <meta head-key="twitter:image" name="twitter:image" :content="props.seo.image" />
+        <link head-key="canonical" rel="canonical" :href="props.seo.canonical" />
         <component :is="'script'" head-key="structured-data" type="application/ld+json" v-text="structuredData" />
     </Head>
 

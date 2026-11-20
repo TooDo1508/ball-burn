@@ -52,6 +52,17 @@ class EloquentBlogPostRepository implements BlogPostRepository
             ->paginate($perPage);
     }
 
+    public function publishedForSitemap(): Collection
+    {
+        return BlogPost::query()
+            ->select(['id', 'title', 'slug', 'excerpt', 'published_at', 'updated_at'])
+            ->where('status', 'PUBLISHED')
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now())
+            ->orderByDesc('published_at')
+            ->get();
+    }
+
     public function findPublishedBySlug(string $slug): BlogPost
     {
         return BlogPost::query()

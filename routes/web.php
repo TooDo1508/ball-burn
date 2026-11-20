@@ -14,27 +14,31 @@ use App\Http\Controllers\Booking\GuestBookingController;
 use App\Http\Controllers\Contact\ContactMessageController;
 use App\Http\Controllers\Contact\ContactPageController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\SeoDiscoveryController;
+use App\Support\SeoUrl;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
+Route::get('/sitemap.xml', [SeoDiscoveryController::class, 'sitemap'])->name('seo.sitemap');
+Route::get('/llms.txt', [SeoDiscoveryController::class, 'llms'])->name('seo.llms');
 
 Route::get('/about', function () {
     $title = 'Về BALLBURN | PickleClub & Bistro';
     $description = 'Khám phá BALLBURN PickleClub & Bistro tại Hà Nội — điểm hẹn sân pickleball, ẩm thực và cộng đồng dành cho mọi người yêu vận động.';
-    $image = url('/images/pickleball/court-rally-wide.jpg');
+    $image = SeoUrl::to('/images/pickleball/court-rally-wide.jpg');
 
     return view('welcome', [
         'seo' => [
             'title' => $title,
             'description' => $description,
             'image' => $image,
-            'canonical' => url('/about'),
+            'canonical' => SeoUrl::to('/about'),
             'structured_data' => [
                 '@context' => 'https://schema.org',
                 '@type' => 'Organization',
                 'name' => 'BALLBURN PickleClub & Bistro',
                 'description' => $description,
-                'url' => url('/about'),
+                'url' => SeoUrl::to('/about'),
                 'image' => $image,
             ],
         ],

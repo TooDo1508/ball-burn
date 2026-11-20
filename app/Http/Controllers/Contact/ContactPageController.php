@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Contact;
 
 use App\Http\Controllers\Controller;
 use App\Services\Settings\ContactSettingsService;
+use App\Support\SeoUrl;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 
@@ -21,14 +22,14 @@ class ContactPageController extends Controller
             'seo' => [
                 'title' => $title,
                 'description' => $description,
-                'image' => url('/images/pickleball/court-rally-wide.jpg'),
-                'canonical' => url('/contact'),
+                'image' => SeoUrl::to('/images/pickleball/court-rally-wide.jpg'),
+                'canonical' => SeoUrl::to('/contact'),
                 'structured_data' => [
                     '@context' => 'https://schema.org',
                     '@type' => 'ContactPage',
                     'name' => $title,
                     'description' => $description,
-                    'url' => url('/contact'),
+                    'url' => SeoUrl::to('/contact'),
                 ],
             ],
             'initialContactSettings' => $contact,
