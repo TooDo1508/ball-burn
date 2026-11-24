@@ -5,9 +5,11 @@ import AppHeader from '../components/layout/AppHeader.vue';
 </script>
 
 <template>
-    <AppContainer>
+    <div class="public-layout">
         <AppHeader />
-        <RouterView />
+        <AppContainer>
+            <RouterView />
+        </AppContainer>
         <AppFooter />
-    </AppContainer>
+    </div>
 </template>

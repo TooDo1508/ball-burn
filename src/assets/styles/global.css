@@ -19,12 +19,20 @@
     top: 0;
     z-index: 30;
     min-height: 82px;
+    width: 100%;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+}
+
+.site-header-inner {
+    width: min(1440px, 100%);
+    min-height: inherit;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 24px;
-    border-bottom: 1px solid var(--color-border);
-    background: var(--color-surface);
+    margin-inline: auto;
+    padding-inline: clamp(20px, 5vw, 76px);
 }
 
 .brand {
@@ -704,7 +712,7 @@
         border-top: 1px solid var(--color-border);
     }
 
-    .site-header > .button {
+    .site-header-inner > .button {
         display: none;
     }
 
