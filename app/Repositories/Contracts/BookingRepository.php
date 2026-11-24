@@ -12,7 +12,9 @@ interface BookingRepository
     /** @param array<int, array<string, mixed>> $items */
     public function guestPaymentInstructions(array $items, string $holdTokenHash): array;
 
-    public function createPendingBatchForGuest(array $items, array $orderAttributes, string $paymentReference, string $holdTokenHash, string $proofImagePath): BookingOrder;
+    public function createPendingBatchForGuest(array $items, array $orderAttributes, string $paymentReference, string $holdTokenHash, ?string $proofImagePath = null, string $provider = 'MANUAL_QR', array $providerMetadata = []): BookingOrder;
+
+    public function attachGuestPaymentProof(BookingOrder $order, string $paymentReference, string $proofImagePath): BookingOrder;
 
     /** @param array<int, array<string, mixed>> $slots */
     public function syncGuestHolds(string $tokenHash, array $slots): array;

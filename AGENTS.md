@@ -35,7 +35,7 @@ This file describes the implemented application. Check routes, migrations and te
 - Time intervals are half-open: overlap means `starts_at < requested_end AND ends_at > requested_start`. Adjacent bookings must remain allowed.
 - Lock court rows inside the transaction and recheck availability before inserting holds/bookings/closures. Lock multiple courts in ascending ID order. Preserve atomicity and existing idempotency when refactoring.
 - Expired holds and pending orders are ignored by deadline-aware reads. There is currently no expiry command registered in `routes/console.php`; do not describe a scheduled cleanup job as implemented.
-- There is no integrated payment webhook or automatic bank confirmation. OCR matching is advisory and must never mark an order paid.
+- SePay bank-transaction webhook support is implemented at `/api/webhooks/sepay`, with API-key authentication, durable inbox/idempotency, recovery scheduling and conservative automatic confirmation. It remains inactive unless `SEPAY_CHECKOUT_ENABLED` and `SEPAY_AUTO_CONFIRM_ENABLED` are enabled separately. OCR proof upload remains optional support evidence in SePay checkout and must never mark an order paid.
 - Existing admin status changes do not recheck newly conflicting reservations when marking an old pending order paid. Treat late-payment reconciliation and that overlap check as follow-up work, not an implemented guarantee.
 
 ### Content and contact
@@ -65,6 +65,13 @@ This file describes the implemented application. Check routes, migrations and te
 - `PaymentReceiptProcessingService` claims work, reads the private image, calls Tesseract, parses text and stores mapping results. Repeated claims/results are guarded in the receipt repository; failures queue retries and eventually mark failure.
 - Receipt states include QUEUED, PROCESSING, MATCHED, NEEDS_REVIEW and FAILED. MATCHED describes receipt content only.
 - Mapping checks reference uniqueness, amount, currency, order/deadline eligibility, recipient account when readable, and duplicate bank transaction IDs. Never treat OCR text as proof of settled funds or log unmasked bank accounts unnecessarily.
+
+## SePay lifecycle
+
+- With `SEPAY_CHECKOUT_ENABLED=true`, payment instructions atomically create the pending order, segments and one `SEPAY` payment before returning the QR. The receiver account is snapshotted in payment metadata and the original hold deadline is retained.
+- `POST /api/webhooks/sepay` requires `Authorization: Apikey <secret>`. Incoming events are stored in `payment_webhook_events`; duplicate provider event IDs are idempotent and conflicting payload reuse is rejected.
+- Automatic `PAID` confirmation additionally requires `SEPAY_AUTO_CONFIRM_ENABLED=true`, an incoming transfer, one valid payment reference, exact VND amount and receiver, an unexpired pending order, and a conflict-free schedule checked while rows are locked. Other received funds are retained for review.
+- `payments:sepay-reprocess` recovers received/failed and stale-processing inbox events; the scheduler invokes it every minute when reprocessing is enabled.
 
 ## Development and validation
 

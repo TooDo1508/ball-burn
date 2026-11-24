@@ -25,6 +25,7 @@ class StoreGuestBookingRequest extends FormRequest
             'customer_email' => ['nullable', 'email:rfc', 'max:255'],
             'customer_phone' => ['required', 'string', 'max:30'],
             'customer_note' => ['nullable', 'string', 'max:1000'],
+            'status_token' => ['nullable', 'string', 'size:64', 'regex:/^[A-Za-z0-9]+$/'],
         ];
     }
 

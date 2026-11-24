@@ -32,6 +32,7 @@ const fieldErrors = ref({});
 const form = reactive({ customer_name: '', customer_email: '', customer_phone: '', customer_note: '' });
 let availabilityRequest = 0;
 let paymentCountdownTimer = null;
+let statusPollingTimer = null;
 let holdSyncQueue = Promise.resolve();
 let holdSelectionVersion = 0;
 
@@ -77,19 +78,23 @@ const summaryItems = computed(() => selectedBookingSegments.value.map((segment) 
 const activeStep = computed(() => bookingStatus.value ? 4 : currentStep.value);
 const paymentExpired = computed(() => Boolean(paymentSession.value) && paymentSecondsLeft.value <= 0);
 const paymentCountdownLabel = computed(() => `${String(Math.floor(paymentSecondsLeft.value / 60)).padStart(2, '0')}:${String(paymentSecondsLeft.value % 60).padStart(2, '0')}`);
-const summaryActionLabel = computed(() => ({ 1: 'Tiếp tục: thông tin', 2: 'Tiếp tục: thanh toán', 3: 'Gửi ảnh chuyển khoản' })[currentStep.value] ?? 'Hoàn tất');
+const summaryActionLabel = computed(() => currentStep.value === 3 && paymentSession.value?.sepay_checkout
+    ? 'Xem trạng thái thanh toán'
+    : ({ 1: 'Tiếp tục: thông tin', 2: 'Tiếp tục: thanh toán', 3: 'Gửi ảnh chuyển khoản' })[currentStep.value] ?? 'Hoàn tất');
 const summaryActionDisabled = computed(() => currentStep.value === 1
     ? selectedBookingSegments.value.length === 0
     : currentStep.value === 2
         ? !form.customer_name.trim() || !form.customer_phone.trim() || (Boolean(form.customer_email.trim()) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.customer_email.trim()))
         : currentStep.value === 3
-            ? !receiptFile.value || paymentExpired.value
+            ? (!paymentSession.value?.sepay_checkout && !receiptFile.value) || paymentExpired.value
             : true);
 const summaryNote = computed(() => currentStep.value === 1
     ? 'Chọn sân, ngày và các khung giờ bạn muốn đặt.'
     : currentStep.value === 2
         ? 'Nhập thông tin liên hệ để xem mã thanh toán. Đơn chưa được tạo ở bước này.'
-        : 'Gửi ảnh chuyển khoản trước khi mã thanh toán hết hạn. Booking chỉ được xác nhận sau khi nhân viên đối soát.');
+        : paymentSession.value?.sepay_checkout
+            ? 'SePay sẽ tự xác nhận khi nhận đúng mã, đúng số tiền và đơn vẫn còn thời gian giữ sân. Ảnh chuyển khoản chỉ là tùy chọn.'
+            : 'Gửi ảnh chuyển khoản trước khi mã thanh toán hết hạn. Booking chỉ được xác nhận sau khi nhân viên đối soát.');
 
 function statusLabel(status) {
     if (status === 'PAID') return 'Đã thanh toán';
@@ -111,6 +116,7 @@ function venueDate() {
 
 function startPaymentCountdown(deadline) {
     if (paymentCountdownTimer) window.clearInterval(paymentCountdownTimer);
+    if (statusPollingTimer) window.clearInterval(statusPollingTimer);
     const updateRemaining = () => {
         paymentSecondsLeft.value = Math.max(0, Math.ceil((Date.parse(deadline) - Date.now()) / 1000));
         if (paymentSecondsLeft.value === 0 && paymentCountdownTimer) {
@@ -150,6 +156,7 @@ function clearPaymentSelection() {
     paymentSecondsLeft.value = 300;
     if (paymentCountdownTimer) window.clearInterval(paymentCountdownTimer);
     paymentCountdownTimer = null;
+    statusPollingTimer = null;
     receiptFile.value = null;
     if (receiptPreviewUrl.value) URL.revokeObjectURL(receiptPreviewUrl.value);
     receiptPreviewUrl.value = '';
@@ -157,6 +164,7 @@ function clearPaymentSelection() {
 
 onUnmounted(() => {
     if (paymentCountdownTimer) window.clearInterval(paymentCountdownTimer);
+    if (statusPollingTimer) window.clearInterval(statusPollingTimer);
     if (receiptPreviewUrl.value) URL.revokeObjectURL(receiptPreviewUrl.value);
     if (holdToken.value && !bookingStatus.value) {
         fetch('/booking/holds', { method: 'DELETE', credentials: 'same-origin', headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '' }, body: JSON.stringify({ hold_token: holdToken.value }) });
@@ -382,6 +390,7 @@ async function createPaymentSession() {
         return;
     }
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+    statusToken.value ||= createStatusToken();
     try {
         const response = await fetch('/booking/payment-instructions', {
             method: 'POST',
@@ -390,6 +399,7 @@ async function createPaymentSession() {
             body: JSON.stringify({
                 date: selectedDate.value,
                 hold_token: holdToken.value,
+                status_token: statusToken.value,
                 slots: selectedBookingSegments.value.map((segment) => ({ court_id: segment.court_id, starts_at: segment.starts_at, ends_at: segment.ends_at })),
                 ...form,
             }),
@@ -402,6 +412,19 @@ async function createPaymentSession() {
         paymentSession.value = result.data;
         currentStep.value = 3;
         startPaymentCountdown(result.data.payment_deadline_at);
+        if (result.data.sepay_checkout) {
+            statusPollingTimer = window.setInterval(async () => {
+                const response = await fetch(`/booking/status/${encodeURIComponent(statusToken.value)}/data`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+                if (!response.ok) return;
+                const statusResult = await response.json();
+                paymentSession.value = { ...paymentSession.value, ...statusResult.data };
+                if (['PAID', 'CANCELLED'].includes(statusResult.data.status)) {
+                    bookingStatus.value = statusResult.data;
+                    window.clearInterval(statusPollingTimer);
+                    statusPollingTimer = null;
+                }
+            }, 4000);
+        }
         window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
         pageError.value = error instanceof Error ? error.message : 'Không thể tải thông tin thanh toán.';
@@ -483,6 +506,7 @@ async function submitPaymentProof() {
 function continueBookingFlow() {
     if (currentStep.value === 1) goToInformation();
     else if (currentStep.value === 2) createPaymentSession();
+    else if (currentStep.value === 3 && paymentSession.value?.sepay_checkout && !receiptFile.value) bookingStatus.value = paymentSession.value;
     else if (currentStep.value === 3) submitPaymentProof();
 }
 
@@ -684,8 +708,8 @@ watch(() => route.params.token, (token) => {
                             </div>
                             <div class="booking-proof-form">
                                 <p class="booking-payment-countdown" :class="{ 'is-expired': paymentExpired }">{{ paymentExpired ? 'Mã thanh toán đã hết hạn' : `Thời gian còn lại ${paymentCountdownLabel}` }}</p>
-                                <p class="booking-payment-note">Chưa có đơn đặt sân nào được tạo. Sau khi tải ảnh chuyển khoản lên và gửi, hệ thống sẽ tạo đơn ở trạng thái chờ thanh toán và báo cho admin. Nhân viên sẽ kiểm tra ảnh trước khi xác nhận đã thanh toán.</p>
-                                <label class="booking-field booking-upload-field">Ảnh chuyển khoản thành công *
+                                <p class="booking-payment-note">{{ paymentSession.sepay_checkout ? 'Đơn đã được tạo. SePay sẽ xác nhận tự động từ giao dịch ngân hàng; ảnh chuyển khoản bên dưới chỉ dùng để hỗ trợ đối soát khi cần.' : 'Chưa có đơn đặt sân nào được tạo. Sau khi tải ảnh chuyển khoản lên và gửi, hệ thống sẽ tạo đơn ở trạng thái chờ thanh toán và báo cho admin.' }}</p>
+                                <label class="booking-field booking-upload-field">Ảnh chuyển khoản {{ paymentSession.sepay_checkout ? '(tùy chọn)' : '*' }}
                                     <input type="file" accept="image/jpeg,image/png,image/webp" :disabled="paymentExpired" @change="chooseReceipt" />
                                     <small v-if="fieldErrors.proof_image">{{ fieldErrors.proof_image[0] }}</small>
                                 </label>

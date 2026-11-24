@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
-    'booking_code', 'status', 'status_token_hash', 'hold_token_hash', 'customer_name', 'customer_email', 'customer_phone',
+    'booking_code', 'status', 'status_token_hash', 'hold_token_hash', 'payment_reference', 'customer_name', 'customer_email', 'customer_phone',
     'payment_deadline_at', 'paid_at', 'base_amount', 'discount_amount', 'total_amount', 'currency', 'customer_note',
 ])]
 class BookingOrder extends Model

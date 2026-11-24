@@ -72,9 +72,9 @@ class EloquentBookingRepository implements BookingRepository
         return $this->assertGuestHoldsMatch($items, $holds);
     }
 
-    public function createPendingBatchForGuest(array $items, array $orderAttributes, string $paymentReference, string $holdTokenHash, string $proofImagePath): BookingOrder
+    public function createPendingBatchForGuest(array $items, array $orderAttributes, string $paymentReference, string $holdTokenHash, ?string $proofImagePath = null, string $provider = 'MANUAL_QR', array $providerMetadata = []): BookingOrder
     {
-        return DB::transaction(function () use ($items, $orderAttributes, $paymentReference, $holdTokenHash, $proofImagePath): BookingOrder {
+        return DB::transaction(function () use ($items, $orderAttributes, $paymentReference, $holdTokenHash, $proofImagePath, $provider, $providerMetadata): BookingOrder {
             $courtIds = collect($items)->pluck('court.id')->unique()->sort()->values();
             $lockedCourts = [];
             foreach ($courtIds as $courtId) {
@@ -89,7 +89,7 @@ class EloquentBookingRepository implements BookingRepository
             if ($existingOrder) {
                 $existingOrder->load(['bookings.court', 'bookings.payments.receipt']);
                 $hasSamePayment = $existingOrder->bookings->flatMap(fn (Booking $booking) => $booking->payments)
-                    ->contains(fn (Payment $payment): bool => $payment->qr_payload === $paymentReference);
+                    ->contains(fn (Payment $payment): bool => $payment->qr_payload === $paymentReference && $payment->provider === $provider);
                 $hasSameStatusToken = hash_equals((string) $existingOrder->status_token_hash, (string) $orderAttributes['status_token_hash']);
 
                 $submittedSlotKeys = [];
@@ -133,6 +133,7 @@ class EloquentBookingRepository implements BookingRepository
                 ...$orderAttributes,
                 'status' => 'PENDING_PAYMENT',
                 'payment_deadline_at' => $paymentDeadlineAt,
+                'payment_reference' => $paymentReference,
             ]);
             $created = [];
             foreach ($items as $index => $item) {
@@ -194,15 +195,17 @@ class EloquentBookingRepository implements BookingRepository
             BookingHold::query()->where('token_hash', $holdTokenHash)->delete();
             $payment = Payment::query()->create([
                 'booking_id' => $primaryBooking->id,
-                'provider' => 'MANUAL_QR',
+                'provider' => $provider,
                 'amount' => $order->total_amount,
                 'currency' => $order->currency,
                 'payment_method' => 'BANK_TRANSFER',
                 'qr_payload' => $paymentReference,
                 'proof_image_path' => $proofImagePath,
-                'provider_metadata' => ['payment_reference' => $paymentReference, 'booking_order_code' => $order->booking_code],
+                'provider_metadata' => [...$providerMetadata, 'payment_reference' => $paymentReference, 'booking_order_code' => $order->booking_code],
             ]);
-            $payment->receipt()->create(['status' => 'QUEUED']);
+            if ($proofImagePath !== null) {
+                $payment->receipt()->create(['status' => 'QUEUED']);
+            }
 
             $admins = DB::table('users')->where('is_active', true)
                 ->whereIn(DB::raw('UPPER(role)'), ['ADMIN', 'STAFF'])
@@ -228,6 +231,21 @@ class EloquentBookingRepository implements BookingRepository
             }
 
             return $order->load(['bookings.court', 'bookings.payments.receipt']);
+        });
+    }
+
+    public function attachGuestPaymentProof(BookingOrder $order, string $paymentReference, string $proofImagePath): BookingOrder
+    {
+        return DB::transaction(function () use ($order, $paymentReference, $proofImagePath): BookingOrder {
+            $locked = BookingOrder::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
+            $payment = Payment::query()->whereIn('booking_id', Booking::query()->select('id')->where('booking_order_id', $locked->id))
+                ->where('qr_payload', $paymentReference)->lockForUpdate()->firstOrFail();
+            if ($payment->proof_image_path === null) {
+                $payment->update(['proof_image_path' => $proofImagePath]);
+                $payment->receipt()->firstOrCreate([], ['status' => 'QUEUED']);
+            }
+
+            return $locked->load(['bookings.court', 'bookings.payments.receipt']);
         });
     }
 

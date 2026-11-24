@@ -104,3 +104,9 @@ The cloud install/start helpers live outside the checkout under `/workspace/.clo
 - Added canonical URL configuration for `https://ballburn.site`, sitemap generation for the public static routes and currently published blog posts, `llms.txt` discovery content, homepage metadata/JSON-LD in the initial HTML, and noindex response headers for admin, API, booking availability and status URLs.
 - `php -l`, Pint, Blade view compilation, route registration, frontend types and `git diff --check` passed. The focused PHPUnit file could not execute because this host PHP has no SQLite PDO driver; Docker Engine is unavailable, so the isolated MySQL test configuration could not run. Vite build is blocked by host Node 21.7.0; the repository requires Node 22.12 or newer.
 - Production deployment, post-deploy URL checks, crawler/structured-data validators and Google Search Console submission remain pending; Search Console credentials are not available in this checkout.
+# SePay implementation validation — 2026-11-24
+
+- Added feature-flagged SePay checkout, authenticated webhook inbox, conservative confirmation, polling UI and scheduled inbox recovery.
+- Verified PHP syntax, route/command discovery, webhook authentication tests (3 passed), Vue type checking and production Vite build.
+- Docker was unavailable in the local execution PATH, so the new migration and locking behavior have not yet been exercised against the repository MySQL 8.4 test database. Run the documented disposable MySQL PHPUnit workflow before enabling checkout or auto-confirm.
+

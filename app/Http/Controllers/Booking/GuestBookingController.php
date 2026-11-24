@@ -80,7 +80,9 @@ class GuestBookingController extends Controller
 
     public function paymentInstructions(StoreGuestBookingRequest $request): JsonResponse
     {
-        $accountNumber = $this->settings->paymentAccountNumber();
+        $accountNumber = config('sepay.checkout_enabled')
+            ? (string) config('sepay.account_number', '')
+            : $this->settings->paymentAccountNumber();
         if (! $accountNumber) {
             throw ValidationException::withMessages([
                 'payment_account_number' => 'Website chưa cấu hình số tài khoản VPBank nhận thanh toán.',
@@ -91,7 +93,9 @@ class GuestBookingController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Lượt giữ sân và thông tin thanh toán đã sẵn sàng. Đơn đặt sân sẽ được tạo khi bạn gửi ảnh chuyển khoản.',
+            'message' => config('sepay.checkout_enabled')
+                ? 'Đơn đã được tạo và đang chờ SePay xác nhận thanh toán.'
+                : 'Lượt giữ sân và thông tin thanh toán đã sẵn sàng. Đơn đặt sân sẽ được tạo khi bạn gửi ảnh chuyển khoản.',
             'data' => [
                 'payment_reference' => $instructions['payment_reference'],
                 'payment_deadline_at' => $instructions['payment_deadline_at']->toISOString(),
@@ -103,6 +107,11 @@ class GuestBookingController extends Controller
                     $instructions['currency'],
                     $instructions['payment_reference'],
                 ),
+                ...($instructions['order'] ? [
+                    ...(new GuestBookingOrderResource($instructions['order']))->resolve($request),
+                    'status_url' => url('/booking/status/'.$request->validated('status_token')),
+                    'sepay_checkout' => true,
+                ] : ['sepay_checkout' => false]),
             ],
         ]);
     }

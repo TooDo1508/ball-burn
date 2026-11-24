@@ -155,13 +155,31 @@ class GuestBookingService
     public function paymentInstructions(array $validated): array
     {
         $context = $this->guestOrderContext($validated);
-        $hold = $this->bookings->guestPaymentInstructions($context['items'], hash('sha256', $validated['hold_token']));
+        $holdTokenHash = hash('sha256', $validated['hold_token']);
+        $hold = $this->bookings->guestPaymentInstructions($context['items'], $holdTokenHash);
+
+        $order = null;
+        if (config('sepay.checkout_enabled')) {
+            if (empty($validated['status_token'])) {
+                throw ValidationException::withMessages(['status_token' => 'Thiếu mã bảo mật để theo dõi đơn.']);
+            }
+            $accountNumber = (string) config('sepay.account_number', '');
+            if ($accountNumber === '') {
+                throw ValidationException::withMessages(['payment_account_number' => 'Chưa cấu hình tài khoản nhận tiền SePay.']);
+            }
+            $order = $this->bookings->createPendingBatchForGuest($context['items'], $this->guestOrderAttributes($validated, $context), $hold['payment_reference'], $holdTokenHash, null, 'SEPAY', [
+                'environment' => config('sepay.environment'),
+                'bank_code' => config('sepay.bank_code'),
+                'account_number' => $accountNumber,
+            ]);
+        }
 
         return [
             'payment_reference' => $hold['payment_reference'],
             'payment_deadline_at' => $hold['expires_at'],
             'total_amount' => $context['total_amount'],
             'currency' => $context['currency'],
+            'order' => $order,
         ];
     }
 
@@ -177,21 +195,15 @@ class GuestBookingService
             $context = $this->guestOrderContext($validated);
             $holdTokenHash = hash('sha256', $validated['hold_token']);
             $statusToken = $validated['status_token'];
-            $order = $this->bookings->createPendingBatchForGuest($context['items'], [
-                'booking_code' => 'BB-'.$context['date']->format('Ymd').'-'.Str::upper(Str::random(6)),
-                'status_token_hash' => hash('sha256', $statusToken),
-                'hold_token_hash' => $holdTokenHash,
-                'customer_name' => trim($validated['customer_name']),
-                'customer_email' => isset($validated['customer_email']) && trim($validated['customer_email']) !== ''
-                    ? strtolower(trim($validated['customer_email']))
-                    : null,
-                'customer_phone' => trim($validated['customer_phone']),
-                'customer_note' => $validated['customer_note'] ?? null,
-                'base_amount' => $context['total_amount'],
-                'discount_amount' => '0.00',
-                'total_amount' => $context['total_amount'],
-                'currency' => $context['currency'],
-            ], $validated['payment_reference'], $holdTokenHash, $path);
+            if (config('sepay.checkout_enabled')) {
+                $order = $this->bookings->findGuestStatusByTokenHash(hash('sha256', $statusToken));
+                if (! $order || ! hash_equals((string) $order->hold_token_hash, $holdTokenHash)) {
+                    throw ValidationException::withMessages(['hold_token' => 'Không tìm thấy đơn SePay tương ứng.']);
+                }
+                $order = $this->bookings->attachGuestPaymentProof($order, $validated['payment_reference'], $path);
+            } else {
+                $order = $this->bookings->createPendingBatchForGuest($context['items'], $this->guestOrderAttributes($validated, $context), $validated['payment_reference'], $holdTokenHash, $path);
+            }
         } catch (Throwable $exception) {
             Storage::disk('local')->delete($path);
             throw $exception;
@@ -211,6 +223,21 @@ class GuestBookingService
         }
 
         return ['order' => $order, 'status_token' => $statusToken];
+    }
+
+    private function guestOrderAttributes(array $validated, array $context): array
+    {
+        return [
+            'booking_code' => 'BB-'.$context['date']->format('Ymd').'-'.Str::upper(Str::random(6)),
+            'status_token_hash' => hash('sha256', $validated['status_token']),
+            'hold_token_hash' => hash('sha256', $validated['hold_token']),
+            'customer_name' => trim($validated['customer_name']),
+            'customer_email' => isset($validated['customer_email']) && trim($validated['customer_email']) !== '' ? strtolower(trim($validated['customer_email'])) : null,
+            'customer_phone' => trim($validated['customer_phone']),
+            'customer_note' => $validated['customer_note'] ?? null,
+            'base_amount' => $context['total_amount'], 'discount_amount' => '0.00',
+            'total_amount' => $context['total_amount'], 'currency' => $context['currency'],
+        ];
     }
 
     /**

@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
-    'bank_transaction_id', 'booking_id', 'payment_id', 'amount', 'currency', 'transaction_at',
+    'bank_transaction_id', 'provider', 'provider_transaction_id', 'bank_reference_code', 'receiver_bank_code',
+    'receiver_account_number', 'receiver_sub_account', 'booking_id', 'payment_id', 'amount', 'currency', 'transaction_at',
     'transfer_description', 'status', 'recorded_by', 'reviewed_by', 'reviewed_at', 'review_note',
 ])]
 class BankTransferTransaction extends Model
