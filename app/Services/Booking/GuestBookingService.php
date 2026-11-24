@@ -163,14 +163,9 @@ class GuestBookingService
             if (empty($validated['status_token'])) {
                 throw ValidationException::withMessages(['status_token' => 'Thiếu mã bảo mật để theo dõi đơn.']);
             }
-            $accountNumber = (string) config('sepay.account_number', '');
-            if ($accountNumber === '') {
-                throw ValidationException::withMessages(['payment_account_number' => 'Chưa cấu hình tài khoản nhận tiền SePay.']);
-            }
             $order = $this->bookings->createPendingBatchForGuest($context['items'], $this->guestOrderAttributes($validated, $context), $hold['payment_reference'], $holdTokenHash, null, 'SEPAY', [
                 'environment' => config('sepay.environment'),
                 'bank_code' => config('sepay.bank_code'),
-                'account_number' => $accountNumber,
             ]);
         }
 

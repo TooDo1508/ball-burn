@@ -68,9 +68,9 @@ This file describes the implemented application. Check routes, migrations and te
 
 ## SePay lifecycle
 
-- With `SEPAY_CHECKOUT_ENABLED=true`, payment instructions atomically create the pending order, segments and one `SEPAY` payment before returning the QR. The receiver account is snapshotted in payment metadata and the original hold deadline is retained.
+- With `SEPAY_CHECKOUT_ENABLED=true`, payment instructions atomically create the pending order, segments and one `SEPAY` payment before returning the QR. The QR account continues to come from admin venue contact/payment settings, while SePay configuration supplies the bank code; the original hold deadline is retained.
 - `POST /api/webhooks/sepay` requires `Authorization: Apikey <secret>`. Incoming events are stored in `payment_webhook_events`; duplicate provider event IDs are idempotent and conflicting payload reuse is rejected.
-- Automatic `PAID` confirmation additionally requires `SEPAY_AUTO_CONFIRM_ENABLED=true`, an incoming transfer, one valid payment reference, exact VND amount and receiver, an unexpired pending order, and a conflict-free schedule checked while rows are locked. Other received funds are retained for review.
+- Automatic `PAID` confirmation additionally requires `SEPAY_AUTO_CONFIRM_ENABLED=true`, an incoming transfer, one valid payment reference, matching bank code and exact VND amount, an unexpired pending order, and a conflict-free schedule checked while rows are locked. The webhook account number is retained for audit but is not an automatic-confirmation condition. Other received funds are retained for review.
 - `payments:sepay-reprocess` recovers received/failed and stale-processing inbox events; the scheduler invokes it every minute when reprocessing is enabled.
 
 ## Development and validation

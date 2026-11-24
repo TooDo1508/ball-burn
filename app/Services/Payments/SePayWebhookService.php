@@ -107,14 +107,13 @@ class SePayWebhookService
             }
 
             $metadata = $payment->provider_metadata ?? [];
-            $receiverMatches = strcasecmp((string) $payload['gateway'], (string) ($metadata['bank_code'] ?? '')) === 0
-                && hash_equals((string) ($metadata['account_number'] ?? ''), (string) $payload['accountNumber']);
+            $gatewayMatches = strcasecmp((string) $payload['gateway'], (string) ($metadata['bank_code'] ?? '')) === 0;
             $normalizedAmount = $this->normalizeAmount((string) $payload['transferAmount']);
             $amountMatches = $normalizedAmount === (string) $payment->amount;
             $now = CarbonImmutable::now('UTC');
             $eligible = $order->status === 'PENDING_PAYMENT' && $order->payment_deadline_at?->gt($now);
 
-            if (! $receiverMatches || ! $amountMatches || ! $eligible || ! config('sepay.auto_confirm_enabled')) {
+            if (! $gatewayMatches || ! $amountMatches || ! $eligible || ! config('sepay.auto_confirm_enabled')) {
                 $transaction->update(['status' => 'NEEDS_REVIEW']);
                 $this->finish($event, 'PROCESSED', 'NEEDS_REVIEW', $order, $payment, $transaction);
 

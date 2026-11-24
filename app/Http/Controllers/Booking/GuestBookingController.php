@@ -80,9 +80,7 @@ class GuestBookingController extends Controller
 
     public function paymentInstructions(StoreGuestBookingRequest $request): JsonResponse
     {
-        $accountNumber = config('sepay.checkout_enabled')
-            ? (string) config('sepay.account_number', '')
-            : $this->settings->paymentAccountNumber();
+        $accountNumber = $this->settings->paymentAccountNumber();
         if (! $accountNumber) {
             throw ValidationException::withMessages([
                 'payment_account_number' => 'Website chưa cấu hình số tài khoản VPBank nhận thanh toán.',
