@@ -27,6 +27,7 @@ This file describes the implemented application. Check routes, migrations and te
 - Submission is idempotent for the same hold token, status token, payment reference, slots and customer/amount details. A conflicting reuse must fail. Remove a newly uploaded file when the transaction fails or an existing order wins the retry.
 - The order retains the hold's payment deadline. Do not restart the countdown on submission.
 - Secure status pages are `/booking/status/{token}` and `/booking/status/{token}/data`. Persist only the SHA-256 token hash; use `no-store, private` on status responses. `GuestBookingOrderResource` is the shared public payload for submission and status. Keep customer contacts, token hashes, proof paths and internal OCR data out of it.
+- `/booking/lookup` provides a rate-limited public order lookup requiring the exact booking code and booking phone number. Its response is `no-store, private`, masks customer contacts and excludes tokens, proof paths, webhook/OCR internals and provider metadata. The token status URL remains the preferred post-checkout tracking path.
 
 ### Current status and concurrency rules
 
@@ -42,7 +43,9 @@ This file describes the implemented application. Check routes, migrations and te
 
 - `/about`, `/blog`, `/blog/{slug}` and `/contact` render public pages. Blog JSON endpoints live under `/api/blog/posts`; contact information is available from `/api/site/contact-info`.
 - Blog readers return only published content. Keep body sanitization via `BlogContentSanitizer`, image URL handling, pagination and article SEO/JSON-LD consistent between HTML and JSON responses.
+- JSON/API errors use the generic public message `Hệ thống đang bận xin vui lòng thử lại sau!` and preserve the HTTP status; exception details remain in server logs, not API responses.
 - The contact form requires name, email, subject and message; phone is optional. It is rate limited. Submission queues an acknowledgement and an admin email after commit.
+- Public header/footer navigation includes “Tra cứu” linking to `/booking/lookup`; the booking CTA uses the outlined orange “Đặt sân ngay” treatment in both public frontend entry points.
 - The configured contact email is both the public venue address and the admin inquiry recipient; SMTP settings are environment configuration.
 
 ## Implemented admin workflows

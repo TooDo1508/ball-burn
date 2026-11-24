@@ -254,6 +254,13 @@ class EloquentBookingRepository implements BookingRepository
         return BookingOrder::query()->with(['bookings.court', 'bookings.payments'])->where('status_token_hash', $tokenHash)->first();
     }
 
+    public function findGuestOrderByCode(string $bookingCode): ?BookingOrder
+    {
+        return BookingOrder::query()->with([
+            'bookings.court.images', 'bookings.statusHistory', 'paymentWebhookEvents',
+        ])->where('booking_code', $bookingCode)->first();
+    }
+
     public function createConfirmedForAdmin(
         Court $court,
         CarbonImmutable $startsAtUtc,

@@ -66,7 +66,9 @@ class EloquentAdminBookingRepository implements AdminBookingRepository
                 ? Booking::query()->where('booking_order_id', $snapshot->booking_order_id)->orderBy('id')->pluck('id')
                 : collect([$snapshot->id]);
             $courtIds = Booking::query()->whereIn('id', $bookingIds)->distinct()->orderBy('court_id')->pluck('court_id');
-            foreach ($courtIds as $courtId) Court::query()->whereKey($courtId)->lockForUpdate()->firstOrFail();
+            foreach ($courtIds as $courtId) {
+                Court::query()->whereKey($courtId)->lockForUpdate()->firstOrFail();
+            }
 
             $order = BookingOrder::query()->whereKey($snapshot->booking_order_id)->lockForUpdate()->firstOrFail();
             $segments = Booking::query()->whereIn('id', $bookingIds)->orderBy('id')->lockForUpdate()->get();
@@ -128,7 +130,9 @@ class EloquentAdminBookingRepository implements AdminBookingRepository
             }
             $segments = Booking::query()->whereIn('booking_order_id', $orderIds)->orderBy('id')->lockForUpdate()->get();
             foreach ($orders as $order) {
-                if ($order->status === $status) continue;
+                if ($order->status === $status) {
+                    continue;
+                }
 
                 $oldStatus = $order->status;
                 $order->forceFill(['status' => $status, 'paid_at' => $status === 'PAID' ? now() : null])->save();
@@ -193,6 +197,7 @@ class EloquentAdminBookingRepository implements AdminBookingRepository
             DB::table('booking_status_history')->whereIn('booking_id', $segmentIds)->delete();
             DB::table('notifications')->whereIn('booking_id', $segmentIds)
                 ->where('channel', 'IN_APP')->where('type', 'BOOKING_PENDING_PAYMENT')->delete();
+            DB::table('payment_receipts')->whereIn('payment_id', $paymentIds)->delete();
             DB::table('payments')->whereIn('booking_id', $segmentIds)->delete();
             DB::table('bookings')->whereIn('id', $segmentIds)->delete();
             DB::table('booking_orders')->whereIn('id', $orderIds)->delete();
@@ -303,5 +308,4 @@ class EloquentAdminBookingRepository implements AdminBookingRepository
                 });
             });
     }
-
 }

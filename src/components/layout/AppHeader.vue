@@ -18,11 +18,12 @@ watch(() => route.fullPath, () => { mobileMenuOpen.value = false; });
             <a href="/" @click="mobileMenuOpen = false">Trang chủ</a>
             <RouterLink to="/about" @click="mobileMenuOpen = false">Về chúng tôi</RouterLink>
             <RouterLink to="/booking" @click="mobileMenuOpen = false">Đặt sân</RouterLink>
+            <RouterLink to="/booking/lookup" @click="mobileMenuOpen = false">Tra cứu</RouterLink>
             <RouterLink to="/blog" @click="mobileMenuOpen = false">Tin tức</RouterLink>
             <RouterLink to="/contact" @click="mobileMenuOpen = false">Liên hệ</RouterLink>
         </nav>
 
-        <BaseButton to="/booking" size="small">Đặt sân</BaseButton>
+        <BaseButton to="/booking" variant="booking" size="small"><span aria-hidden="true">▣</span> Đặt sân ngay</BaseButton>
         <button
             type="button"
             class="mobile-menu-toggle"

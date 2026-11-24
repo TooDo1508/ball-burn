@@ -303,6 +303,19 @@ class GuestBookingService
         return $this->bookings->findGuestStatusByTokenHash(hash('sha256', $token));
     }
 
+    public function lookup(string $bookingCode, string $phone): ?BookingOrder
+    {
+        $order = $this->bookings->findGuestOrderByCode($bookingCode);
+        if (! $order) {
+            return null;
+        }
+        $normalize = fn (string $value): string => preg_replace('/\D+/', '', $value) ?? '';
+        $expected = $normalize((string) $order->customer_phone);
+        $provided = $normalize($phone);
+
+        return $expected !== '' && hash_equals($expected, $provided) ? $order : null;
+    }
+
     private function validateBookingDate(CarbonImmutable $date, string $timezone): void
     {
         $today = CarbonImmutable::now($timezone)->startOfDay();

@@ -130,7 +130,7 @@ async function deleteSelectedOrders() {
         data: { booking_order_ids: selectedOrderIds.value },
         preserveScroll: true,
         onSuccess: () => { clearSelection(); },
-        onError: (errors) => { bulkError.value = errors.booking_order_ids || ''; },
+        onError: (errors) => { bulkError.value = errors.booking_order_ids || 'Không thể xóa đơn đã chọn. Vui lòng tải lại trang và kiểm tra trạng thái thanh toán.'; },
     });
 }
 

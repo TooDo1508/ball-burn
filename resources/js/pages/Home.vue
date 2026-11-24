@@ -59,15 +59,17 @@ const phoneHref = `tel:${props.contactInfo.phone.replace(/[^+\d]/g, '')}`;
     </Head>
 
     <main class="ballburn-home">
-        <div class="home-shell">
-            <header class="home-header">
+        <header class="home-header">
+            <div class="home-shell home-header-inner">
                 <a class="home-brand" href="/" aria-label="BALLBURN - Trang chủ">BALLBURN<span>®</span><small>PICKLECLUB & BISTRO</small></a>
                 <nav class="home-nav" aria-label="Điều hướng chính">
-                    <a href="/">Trang chủ</a><a href="/about">Về chúng tôi</a><a href="/booking">Đặt sân</a><a href="/blog">Tin tức</a><a href="/contact">Liên hệ</a>
+                    <a href="/">Trang chủ</a><a href="/about">Về chúng tôi</a><a href="/booking">Đặt sân</a><a href="/booking/lookup">Tra cứu</a><a href="/blog">Tin tức</a><a href="/contact">Liên hệ</a>
                 </nav>
-                <a class="home-button home-button--small" href="/booking">Đặt sân <span aria-hidden="true">↗︎</span></a>
-            </header>
+                <a class="home-button home-button--small home-button--booking" href="/booking"><span aria-hidden="true">▣</span> Đặt sân ngay</a>
+            </div>
+        </header>
 
+        <div class="home-shell">
             <section id="home" class="home-hero" aria-labelledby="hero-title">
                 <img class="hero-photo" :src="props.content.hero_image" alt="Các vận động viên chơi pickleball tại BALLBURN" fetchpriority="high" />
                 <div class="hero-shade"></div>
@@ -163,7 +165,6 @@ const phoneHref = `tel:${props.contactInfo.phone.replace(/[^+\d]/g, '')}`;
 
         <footer class="home-footer"><div class="home-shell footer-inner">
             <div class="footer-brand"><a class="home-brand home-brand--light" href="/">BALLBURN<span>®</span><small>PICKLECLUB & BISTRO</small></a><p>Chơi hết mình. Vui hết cỡ.</p><span>© {{ new Date().getFullYear() }} BALLBURN. All rights reserved.</span></div>
-            <nav class="footer-nav" aria-label="Liên kết chân trang"><a href="/about">Về chúng tôi</a><a href="/booking">Đặt sân</a><a href="/blog">Tin tức</a><a href="/contact">Liên hệ</a></nav>
             <address class="footer-contact">
                 <p class="footer-contact-title">Ghé chơi với BALLBURN</p>
                 <a class="footer-contact-row" :href="phoneHref"><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.2 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.35 1.9.7 2.8a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.35 1.84.58 2.8.7A2 2 0 0 1 22 16.92Z" /></svg></span><span>{{ props.contactInfo.phone }}</span></a>

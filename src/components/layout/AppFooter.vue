@@ -1,6 +1,5 @@
 <script setup>
 import { onMounted, reactive } from 'vue';
-import { RouterLink } from 'vue-router';
 
 const contact = reactive({
     email: '',
@@ -30,16 +29,6 @@ onMounted(async () => {
                 <a class="brand brand--footer" href="/" aria-label="BALLBURN - Trang chủ">BALLBURN<span>®</span></a>
                 <p>Chơi hết mình. Vui hết cỡ.</p>
                 <small>© {{ new Date().getFullYear() }} BALLBURN. All rights reserved.</small>
-            </div>
-
-            <div class="footer-center">
-                <nav class="footer-nav" aria-label="Liên kết chân trang">
-                    <a href="/">Trang chủ</a>
-                    <RouterLink to="/about">Về chúng tôi</RouterLink>
-                    <RouterLink to="/booking">Đặt sân</RouterLink>
-                    <RouterLink to="/blog">Tin tức</RouterLink>
-                    <RouterLink to="/contact">Liên hệ</RouterLink>
-                </nav>
             </div>
 
             <address class="footer-contact">

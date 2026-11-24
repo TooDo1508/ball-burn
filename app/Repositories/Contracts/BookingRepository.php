@@ -23,6 +23,8 @@ interface BookingRepository
 
     public function findGuestStatusByTokenHash(string $tokenHash): ?BookingOrder;
 
+    public function findGuestOrderByCode(string $bookingCode): ?BookingOrder;
+
     public function createConfirmedForAdmin(
         Court $court,
         CarbonImmutable $startsAtUtc,

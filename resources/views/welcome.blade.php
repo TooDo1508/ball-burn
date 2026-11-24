@@ -39,10 +39,10 @@
             <script id="initial-contact-settings" type="application/json">{!! json_encode($initialContactSettings, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
         @endisset
         <div id="app">
-            @if (request()->is('booking', 'booking/status/*'))
+            @if (request()->is('booking', 'booking/status/*', 'booking/lookup'))
                 <main role="status" aria-live="polite" style="min-height:45vh;display:grid;place-content:center;gap:8px;padding:40px 20px;text-align:center;color:#171717">
-                    <strong>Đang mở lịch đặt sân…</strong>
-                    <span style="font-size:14px;color:#666">Đang tải danh sách sân và khung giờ.</span>
+                    <strong>{{ request()->is('booking/lookup') ? 'Đang mở trang tra cứu…' : 'Đang mở lịch đặt sân…' }}</strong>
+                    <span style="font-size:14px;color:#666">{{ request()->is('booking/lookup') ? 'Đang tải công cụ tra cứu đơn hàng.' : 'Đang tải danh sách sân và khung giờ.' }}</span>
                 </main>
             @elseif (isset($initialBlogPost))
                 <main class="app-container blog-article-page">

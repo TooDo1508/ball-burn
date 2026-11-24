@@ -5,6 +5,7 @@ const BlogPage = () => import('../pages/BlogPage.vue');
 const BlogArticlePage = () => import('../pages/BlogArticlePage.vue');
 const BookingPage = () => import('../pages/BookingPage.vue');
 const ContactPage = () => import('../pages/ContactPage.vue');
+const BookingLookupPage = () => import('../pages/BookingLookupPage.vue');
 const PublicLayout = () => import('../layouts/PublicLayout.vue');
 
 const router = createRouter({
@@ -20,6 +21,7 @@ const router = createRouter({
                 { path: 'blog/:slug', name: 'blog-article', component: BlogArticlePage },
                 { path: 'booking/status/:token', name: 'booking-status', component: BookingPage },
                 { path: 'booking', name: 'booking', component: BookingPage },
+                { path: 'booking/lookup', name: 'booking-lookup', component: BookingLookupPage },
                 { path: 'contact', name: 'contact', component: ContactPage },
             ],
         },

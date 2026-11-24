@@ -16,7 +16,7 @@ class VerifySePayWebhook
         $provided = str_starts_with($authorization, 'Apikey ') ? substr($authorization, 7) : '';
 
         if ($secret === '' || $provided === '' || ! hash_equals($secret, $provided)) {
-            return new JsonResponse(['success' => false, 'message' => 'Unauthorized.'], 401);
+            return new JsonResponse(['success' => false, 'message' => config('api.error_message')], 401);
         }
 
         return $next($request);

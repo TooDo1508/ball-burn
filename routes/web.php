@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\News\NewsController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Blog\PublicBlogController;
 use App\Http\Controllers\Booking\GuestBookingController;
+use App\Http\Controllers\Booking\GuestBookingLookupController;
 use App\Http\Controllers\Contact\ContactMessageController;
 use App\Http\Controllers\Contact\ContactPageController;
 use App\Http\Controllers\HomeController;
@@ -47,6 +48,8 @@ Route::get('/about', function () {
 Route::get('/blog', [PublicBlogController::class, 'indexPage'])->name('blog.index');
 Route::get('/blog/{slug}', [PublicBlogController::class, 'showPage'])->name('blog.show');
 Route::get('/booking', [GuestBookingController::class, 'indexPage'])->name('booking.index');
+Route::get('/booking/lookup', [GuestBookingLookupController::class, 'index'])->name('booking.lookup');
+Route::post('/booking/lookup', [GuestBookingLookupController::class, 'lookup'])->middleware('throttle:10,1')->name('booking.lookup.submit');
 Route::get('/booking/data', [GuestBookingController::class, 'availability'])->name('booking.availability');
 Route::post('/booking/holds', [GuestBookingController::class, 'syncHolds'])->middleware('throttle:30,1')->name('booking.holds.sync');
 Route::delete('/booking/holds', [GuestBookingController::class, 'releaseHolds'])->middleware('throttle:30,1')->name('booking.holds.release');

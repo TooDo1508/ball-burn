@@ -109,4 +109,7 @@ The cloud install/start helpers live outside the checkout under `/workspace/.clo
 - Added feature-flagged SePay checkout, authenticated webhook inbox, conservative confirmation, polling UI and scheduled inbox recovery.
 - Verified PHP syntax, route/command discovery, webhook authentication tests (3 passed), Vue type checking and production Vite build.
 - Docker was unavailable in the local execution PATH, so the new migration and locking behavior have not yet been exercised against the repository MySQL 8.4 test database. Run the documented disposable MySQL PHPUnit workflow before enabling checkout or auto-confirm.
+- Fixed pending-order deletion with an OCR receipt by deleting `payment_receipts` before their parent payments. Orders linked to bank transactions or SePay webhook evidence remain intentionally protected from deletion.
+- Implemented `/booking/lookup` with exact booking-code plus normalized-phone verification, masked public data, rate limiting and no-store responses. Added responsive lookup UI, public navigation links and updated booking CTA. Unit/auth tests (4 total), PHP lint/Pint, Vue type-check and production Vite build passed; MySQL functional and browser visual QA remain pending because Docker/browser validation was unavailable in this run.
+- Standardized JSON/API exception responses on the generic busy message while preserving HTTP status codes, including validation and authorization failures; converted direct webhook-auth and lookup-miss responses to the same message.
 
